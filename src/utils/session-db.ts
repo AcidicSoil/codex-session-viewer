@@ -34,7 +34,7 @@ let dbPromise: Promise<IDBPDatabase<SessionDBSchema>> | undefined
 function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<SessionDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db: IDBPDatabase<SessionDBSchema>) {
         if (!db.objectStoreNames.contains('sessions')) {
           db.createObjectStore('sessions', { keyPath: 'id' })
         }

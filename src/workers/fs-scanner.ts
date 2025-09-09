@@ -8,7 +8,7 @@ async function hashFile(file: File): Promise<string> {
 }
 
 async function scanDir(dir: FileSystemDirectoryHandle, prefix = ''): Promise<void> {
-  for await (const [name, handle] of dir.entries()) {
+  for await (const [name, handle] of (dir as any).entries()) {
     const path = prefix ? `${prefix}/${name}` : name
     if (handle.kind === 'file') {
       const file = await handle.getFile()
