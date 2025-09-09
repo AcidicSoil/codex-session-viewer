@@ -53,6 +53,17 @@ Bookmarks
 - On first load, any existing `localStorage` bookmarks are migrated to IndexedDB.
 - The Timeline toolbar has a toggle to show only bookmarked items and a count of current bookmarks. Clearing bookmarks removes them from both stores.
 
+Session Database
+----------------
+
+- `src/utils/session-db.ts` wraps IndexedDB to cache session data and file hashes.
+- Stores:
+  - `sessions`: full session payloads keyed by `id` with metadata, events, and timestamps.
+  - `fileHashes`: hash of each file path to avoid recomputing diffs.
+- Sessions opened in the viewer are persisted with `saveSession(id, meta, events)` and can be restored later via `loadSession(id)` or enumerated with `listSessions()`. Use `deleteSession(id)` to remove one.
+
+See [docs/session-db.md](docs/session-db.md) for a schema overview and CRUD examples.
+
 Export (JSON / Markdown / HTML)
 -------------------------------
 
