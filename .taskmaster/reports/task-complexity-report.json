@@ -1,149 +1,109 @@
 {
 	"meta": {
-		"generatedAt": "2025-09-09T13:34:52.193Z",
-		"tasksAnalyzed": 32,
+		"generatedAt": "2025-09-09T16:21:18.218Z",
+		"tasksAnalyzed": 12,
 		"totalTasks": 32,
-		"analysisCount": 32,
+		"analysisCount": 13,
 		"thresholdScore": 5,
 		"projectName": "codex-session-viewer",
 		"usedResearch": true
 	},
 	"complexityAnalysis": [
 		{
-			"taskId": 29,
-			"taskTitle": "Initialize Project Foundation",
-			"complexityScore": 3,
-			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for setting up a new Vite+React+TS project. Include steps for installing and configuring Tailwind CSS with the Headless UI plugin, setting up a basic Zustand store for global state, and creating the initial directory structure for components, hooks, services, and types.",
-			"reasoning": "This is a foundational, greenfield task. The complexity is low-to-moderate because it involves integrating multiple standard tools (Vite, TS, Tailwind, Zustand) and ensuring their configurations work together correctly. It requires creating several config files (`vite.config.ts`, `tailwind.config.ts`, `postcss.config.js`) and establishing the initial directory structure (`src/components`, `src/hooks`, `src/store`, etc.) from scratch."
-		},
-		{
-			"taskId": 30,
-			"taskTitle": "Define Core Data Models in TypeScript",
-			"complexityScore": 1,
-			"recommendedSubtasks": 1,
-			"expansionPrompt": "This task is simple enough that it doesn't require further expansion. Create a single TypeScript file, `src/types/session.ts`, and define and export the interfaces for `SessionMeta`, `ResponseItem`, `FileChange`, and `ParsedSession` as described in the project requirements.",
-			"reasoning": "This is a very low-complexity task. It consists of creating a single file (`src/types/session.ts`) and writing TypeScript interface definitions. There is no runtime logic, UI, or complex configuration involved. It is a purely declarative task that is fundamental for the rest of the application's type safety."
-		},
-		{
-			"taskId": 33,
-			"taskTitle": "Implement Session Loading via Drag-and-Drop",
+			"taskId": 38,
+			"taskTitle": "Create File Tree Component",
 			"complexityScore": 4,
 			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for implementing drag-and-drop file loading. The subtasks should cover: 1. Creating the UI drop zone within the main application view (e.g., `WelcomeScreen.tsx`) and adding the necessary `dragover`, `dragleave`, and `drop` event handlers with `preventDefault`. 2. Implementing the logic within the `drop` handler to access the file from the `DataTransfer` object. 3. Passing the file to the existing JSONL parser service and updating the application's Zustand store with the parsed session data, including handling loading and error states.",
-			"reasoning": "This task involves direct DOM manipulation and event handling (`dragover`, `drop`), which adds a layer of complexity over typical React component logic. It requires modifying a core UI component (e.g., `App.tsx` or a welcome screen), correctly handling the browser's File API via `DataTransfer`, and integrating with two other parts of the system: the streaming parser (Task 31) and the state management store."
+			"expansionPrompt": "Based on the existing files `FileTree.tsx`, `FileTreeNode.tsx`, and `fileTreeUtils.ts`, break this task down. The first subtask should focus on completing the tree-building logic in `fileTreeUtils.ts` to convert a flat list of file paths into a hierarchical data structure. The second should focus on implementing the recursive rendering in `FileTreeNode.tsx` to display the tree. The final subtask should be about handling state, specifically what happens when a file is clicked, including triggering an action and visually highlighting the selected node.",
+			"reasoning": "Codebase analysis shows that component files (`FileTree.tsx`, `FileTreeNode.tsx`, `fileTreeUtils.ts`) already exist. The task is 'in-progress', so the complexity is reduced from greenfield development to completing the implementation. The core challenge is the tree-building algorithm in `fileTreeUtils.ts`, which is moderately complex. The rest is straightforward recursive component rendering and state management."
 		},
 		{
-			"taskId": 51,
-			"taskTitle": "Implement Export to HTML",
-			"complexityScore": 5,
-			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for implementing an 'Export to HTML' feature. The subtasks should include: 1. Creating a new export utility module (e.g., `src/lib/export.ts`). 2. Defining a function that generates a self-contained HTML document as a string, including inlined CSS for styling. 3. Implementing the logic to transform an array of `ResponseItem` objects into formatted HTML elements within the document string. 4. Adding a UI button that uses a Zustand selector to get the current events, calls the export utility, and triggers a client-side download of the resulting HTML blob.",
-			"reasoning": "This task is more complex than a simple data export (like JSON) because it involves generating presentation (HTML and CSS). The main challenge is creating a robust function that transforms session events into a well-structured, self-contained HTML document with inlined styles. This requires both data transformation logic and string-based HTML/CSS generation, which can be tedious to get right. It also depends on existing export/download patterns (Task 44)."
-		},
-		{
-			"taskId": 50,
-			"taskTitle": "Implement Artifact Extraction and Download",
-			"complexityScore": 6,
-			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for implementing artifact extraction and download. The subtasks should cover: 1. Installing the `jszip` library and creating a wrapper service in `src/lib/zip.ts`. 2. Creating a function that filters the main event list for 'Artifact' events and uses the `jszip` service to asynchronously generate a zip blob containing the artifact contents. 3. Building a new UI component (`ArtifactsPanel.tsx`) to list discovered artifacts and provide a 'Download All' button. 4. Integrating this new panel into the main session view and wiring the button to the zip generation and download logic.",
-			"reasoning": "This task's complexity comes from introducing a significant new client-side dependency (`jszip`) for creating zip archives in the browser. The implementation requires learning and using the `jszip` API, handling the asynchronous generation of a potentially large zip blob without blocking the UI, creating a new UI component to display the artifacts, and wiring everything together. It's a self-contained but multi-step feature."
-		},
-		{
-			"taskId": 32,
-			"taskTitle": "Implement Session Loading via File Picker",
+			"taskId": 39,
+			"taskTitle": "Integrate Basic Diff Viewer",
 			"complexityScore": 3,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for implementing file loading via a file picker. The subtasks should cover: 1. Creating the UI button and a visually hidden `<input type='file' accept='.jsonl'>` element in the appropriate component (e.g., `WelcomeScreen.tsx`). 2. Implementing the `onChange` event handler on the input element to access the selected `File` object from the event. 3. Connecting the handler to the existing session parser service and Zustand store to process the file and update the application state upon successful load.",
-			"reasoning": "This is a standard web development task with a well-defined pattern. The complexity is low as it primarily involves wiring a standard HTML element (`<input type='file'>`) to existing application logic (the parser from Task 31 and the state store). It's slightly simpler than drag-and-drop as it relies on a single `onChange` event rather than multiple coordinated drag events."
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "The `DiffViewer.tsx` component already exists. Break this down into two parts. First, implement the core `DiffViewer` component to accept `original` and `modified` content strings and correctly configure the `@monaco-editor/react` DiffEditor with these values and basic options. Second, integrate this component into the main `SessionView`, ensuring it receives the correct diff content when a file is selected in the `FileTree` component (from Task 38).",
+			"reasoning": "A `DiffViewer.tsx` component file already exists. The task relies on the `@monaco-editor/react` library, which handles the heavy lifting of diff rendering. The complexity is low, primarily involving passing props from a parent component (driven by the file tree selection) to the Monaco editor component and setting up its initial configuration."
 		},
 		{
-			"taskId": 47,
-			"taskTitle": "Implement Deep Linking and URL State",
-			"complexityScore": 7,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Expand this task into subtasks for implementing URL-based state management. The subtasks should cover: 1. Designing a serialization format (e.g., URL-safe JSON or a custom format) for the state to be persisted. 2. Creating a custom hook (`useUrlStateSync.ts`) that subscribes to relevant slices of the Zustand store (e.g., filters, selected event ID). 3. Implementing a `useEffect` within the hook to serialize state changes and update `window.location.hash`. 4. Implementing logic that runs on application startup to parse the `window.location.hash`, deserialize it, and hydrate the Zustand store. 5. Integrating the hook into the top-level `App.tsx` component and carefully selecting which state to synchronize to avoid performance issues or infinite loops.",
-			"reasoning": "This task is deceptively complex. Synchronizing application state with the URL requires careful management of the component lifecycle and state updates to avoid infinite loops (state change -> URL update -> component re-read -> state change). It involves creating a robust two-way binding between the Zustand store and the browser's Location API, including serialization/deserialization logic and careful handling of the initial app load. This touches the core architecture of the application's state flow."
+			"id": 41,
+			"title": "Add Syntax Highlighting to Diff Viewer",
+			"complexityScore": 2,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "This task enhances the existing `DiffViewer.tsx`. Break it down into two small subtasks. First, create a utility function `getLanguageForPath(path: string)` that takes a file path, extracts its extension, and returns the corresponding Monaco language ID (e.g., '.ts' -> 'typescript', '.py' -> 'python'). Second, modify the `DiffViewer` component to accept the file path as a prop, call this utility, and pass the resulting language to the Monaco Diff Editor's `language` option.",
+			"reasoning": "This is a minor enhancement to an existing component (`DiffViewer.tsx`). The logic involves creating a simple utility function to map file extensions to language identifiers and passing an additional `language` prop to the Monaco editor. The implementation is straightforward and has a very small footprint."
 		},
 		{
 			"taskId": 48,
 			"taskTitle": "Implement Session Library with IndexedDB",
 			"complexityScore": 8,
 			"recommendedSubtasks": 7,
-			"expansionPrompt": "The existing subtasks provide an excellent breakdown. Re-generate them, ensuring they cover: 1. Defining the IndexedDB schema and creating a DB service using the `idb` library. 2. Implementing the core data access layer (CRUD functions) for session entries. 3. Integrating session saving into the file loader hook to write metadata to the DB on successful load. 4. Creating a new `SessionLibrary.tsx` component to display saved sessions. 5. Embedding the session library into the `WelcomeScreen.tsx`. 6. Implementing the re-open (using File System Access API handles) and remove functionality. 7. Adding robust error handling for all DB operations.",
-			"reasoning": "This task has high complexity because it introduces a new persistence layer using a complex browser API, IndexedDB. It requires a full feature slice: a data access layer (`src/lib/session-db.ts`), modifications to existing file loading logic (`useFileLoader.ts`), a new UI component (`SessionLibrary.tsx`), and integration into the main welcome screen. The additional requirement to use persisted `FileHandle` objects for re-opening adds another layer of API interaction and complexity."
+			"expansionPrompt": "This task is already well-defined with 7 subtasks. The current breakdown is excellent. Please proceed with generating detailed implementation steps for each of the existing subtasks, starting with 'Define IndexedDB Schema and Create DB Service'. Ensure the plan uses the `idb` library for simplicity and includes robust error handling for all DB operations, as well as graceful degradation if IndexedDB is unavailable.",
+			"reasoning": "This is a large feature that introduces a persistence layer. It involves schema design, creating a data access layer (`session-db.ts`), building new UI components (`SessionLibrary.tsx`), and integrating with the existing file loading flow (`useFileLoader.ts`). Working with IndexedDB, even with a library like `idb`, adds significant complexity due to its asynchronous nature, version management, and error handling requirements. The existing 7 subtasks accurately reflect this high complexity."
 		},
 		{
-			"taskId": 42,
-			"taskTitle": "Create Command History Timeline",
+			"taskId": 53,
+			"taskTitle": "Package as Web App or NPM Package (replace Electron)",
+			"complexityScore": 7,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "This task is well-decomposed into 7 subtasks covering both the static web app and npm package distribution paths. The plan is solid. Please proceed with generating detailed implementation steps for each subtask, starting with 'Decide distribution targets and package naming'. Pay close attention to the `vite.config.ts` changes for library mode and the `package.json` `exports` map, as these are critical and error-prone for the npm package.",
+			"reasoning": "This task involves no application logic changes but is complex due to its focus on build tooling and packaging. Configuring Vite for both SPA and library builds, correctly setting up `package.json` fields (`exports`, `peerDependencies`, etc.), and creating a verification process are non-trivial. The complexity lies in the configuration details and potential for cross-environment issues, not in writing React components."
+		},
+		{
+			"taskId": 54,
+			"taskTitle": "All Sessions View (auto-discovery + selector)",
+			"complexityScore": 5,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "This task has a solid 6-subtask breakdown. The plan correctly leverages the existing `useAutoDiscovery` hook. Proceed with generating detailed implementation steps for each subtask, starting with 'Create `SessionsList` Component Scaffold'. Ensure the plan uses the project's existing UI library (e.g., Chakra UI) for the modal and list components, and details the `fetch -> Blob -> File` logic for loading a selected session.",
+			"reasoning": "Codebase analysis indicates a `useAutoDiscovery` hook already exists, providing the necessary data. The task is therefore primarily UI development. It involves creating a new modal and a list component with stateful search/sort (`SessionsList.tsx`), and wiring it into `App.tsx`. The complexity is medium as it requires building new, non-trivial UI components and interaction logic, but it leverages existing data-fetching logic."
+		},
+		{
+			"taskId": 55,
+			"taskTitle": "Reload Sessions Button (re-scan without page refresh)",
 			"complexityScore": 4,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for creating a command history view. The subtasks should cover: 1. Creating a new `CommandHistoryView.tsx` component. 2. Implementing logic within this component to subscribe to the session's events, filter for `LocalShellCall` types, and group them with their corresponding output events (stdout/stderr). 3. Designing and implementing a custom rendering for these command-output pairs that is clearer than the generic event card. 4. Adding a UI control (e.g., a tab or button) in the main view to toggle the visibility of this specialized timeline.",
-			"reasoning": "The complexity is moderate. While a simple version could just be a filter, the description 'clearly pair each command with its corresponding standard output' implies creating a new, specialized component. This component needs its own logic to process the event stream, group related events (the command and its output), and render them in a custom format, which is more involved than just reusing the existing generic timeline with a filter."
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "This task and its 6 subtasks are marked as 'done'. The breakdown was excellent, covering the hook refactoring, UI integration in two places, loading state feedback, debouncing, and testing. No further expansion is needed. If this were a new task, the prompt would be: 'Break this down into subtasks covering: 1. Refactoring `useAutoDiscovery` to expose a `reload` function. 2. Adding the UI button to the main view. 3. Adding the button to the `AllSessionsView`. 4. Implementing loading state feedback. 5. Adding debounce logic. 6. Writing unit tests for the refactored hook.'",
+			"reasoning": "The task is marked as complete. The original complexity was moderate (4/10) because it required refactoring a core hook (`useAutoDiscovery`) to expose new functionality, updating multiple UI consumers (`App.tsx`, `AllSessionsView.tsx`) with the new state (`isLoading`) and actions (`reload`), and implementing non-trivial logic like debouncing. The 6 completed subtasks accurately reflect this scope."
 		},
 		{
-			"taskId": 31,
-			"taskTitle": "Implement Streaming JSONL Parser",
+			"taskId": 56,
+			"taskTitle": "Newest-First Sorting for Detected Sessions",
 			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on implement streaming jsonl parser.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
+			"recommendedSubtasks": 1,
+			"expansionPrompt": "This task is nearly complete, with only the unit tests for the timestamp parser remaining. The expansion should focus solely on subtask 56.5: 'Write Unit Tests for Timestamp Parser'. The prompt should be: 'Create a comprehensive test suite in `src/utils/timestamp.test.ts` for the `parseTimestampFromPath` function. Ensure you cover all specified patterns (rollout-style, ISO-like, YYYY/MM/DD paths), as well as edge cases like malformed dates, paths with no dates, and paths with multiple potential timestamps to verify priority.'",
+			"reasoning": "Most subtasks are 'done'. The core complexity was in creating a robust timestamp parsing utility (`src/utils/timestamp.ts`) with regex to handle multiple formats, which is moderately difficult. The remaining work is to write unit tests for this utility. The overall task involved touching the data hook, multiple UI components, and adding new utility code, justifying a medium complexity score."
 		},
 		{
-			"taskId": 34,
-			"taskTitle": "Create Session Metadata Display Panel",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on create session metadata display panel.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
+			"taskId": 57,
+			"taskTitle": "Complete Diff Viewer Functionality",
+			"complexityScore": 7,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "This is a large feature enhancement with an excellent 8-subtask breakdown. The plan covers parser improvements, new UI controls, and testing. Proceed with generating detailed implementation steps for each subtask, starting with 'Enhance Diff Parser for Headerless and Hunkless Diffs'. Pay special attention to the unit tests for the parser to ensure its new resilience doesn't cause regressions.",
+			"reasoning": "This task is a significant enhancement of the `DiffViewer`. The complexity is high due to the combination of multiple distinct features: refactoring a diff parser to be more resilient (a tricky and high-risk task), adding a suite of new UI controls (toggles, buttons), handling edge cases like binary/large files, and the corresponding testing effort. The 8 well-defined subtasks confirm the large scope."
 		},
 		{
-			"taskId": 35,
-			"taskTitle": "Build Virtualized Timeline for Events",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on build virtualized timeline for events.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
+			"taskId": 58,
+			"taskTitle": "Filter‑Aware Granular Export",
+			"complexityScore": 9,
+			"recommendedSubtasks": 9,
+			"expansionPrompt": "This task and its 9 subtasks are marked as 'done'. The breakdown was comprehensive, covering everything from spec definition to UI, a Web Worker pipeline, and testing. No further expansion is needed. If this were a new task, the prompt would be: 'This is a highly complex feature. Use the existing 9 subtasks as a guide to create a detailed implementation plan. Start with defining the data spec, then build the data transformation pipeline, implement the exporters (CSV/JSON), wrap it in a Web Worker, build the UI modal, and finally add tests and docs.'",
+			"reasoning": "This task is marked as complete, but its original scope was highly complex. Codebase analysis shows dedicated `export` and `export/worker` directories. The feature required a Web Worker for performance, deep integration with state management (Zustand) to respect filters, a complex UI modal for granular selection, and multiple data formatters. This combination of performance optimization, complex UI, and data transformation pipelines makes it one of the most challenging features."
 		},
 		{
-			"taskId": 36,
-			"taskTitle": "Develop Basic Event Card Component",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on develop basic event card component.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
+			"taskId": 59,
+			"taskTitle": "Theme Color Picker + Light/Dark Mode",
+			"complexityScore": 6,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "This task has an excellent 8-subtask breakdown for adding a complete theming system. The plan correctly identifies using CSS variables with Tailwind and a Zustand store for persistence. Proceed with generating detailed implementation steps for each subtask, starting with 'Specify theme tokens and mode behavior'. The plan should detail how to set up the CSS variables in a global stylesheet and reference them in `tailwind.config.ts`.",
+			"reasoning": "This is a greenfield feature of moderate complexity. It requires foundational changes to the app's styling by integrating CSS variables with `tailwind.config.ts`. The complexity comes from coordinating multiple parts: the Tailwind setup, a new Zustand store with `localStorage` persistence, a UI for the theme picker, and logic to handle the 'system' preference. While not algorithmically difficult, the number of interconnected pieces is significant."
 		},
 		{
-			"taskId": 37,
-			"taskTitle": "Implement Basic Full-Text Search",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on implement basic full-text search.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 38,
-			"taskTitle": "Create File Tree Component",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on create file tree component.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 39,
-			"taskTitle": "Integrate Basic Diff Viewer",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on integrate basic diff viewer.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 40,
-			"taskTitle": "Implement Advanced Timeline Filters",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on implement advanced timeline filters.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
+			"taskId": 60,
+			"taskTitle": "Workspace Scanner for CWD + .codex/sessions (diff tracking)",
+			"complexityScore": 10,
+			"recommendedSubtasks": 10,
+			"expansionPrompt": "This is a very large and complex feature with a 10-subtask breakdown. The plan correctly identifies the major components: using the File System Access API, performant scanning/hashing, IndexedDB for persistence, and change detection. Proceed with generating detailed implementation steps for each subtask, starting with 'Decide directory access + security approach'. The plan must emphasize performance (using async generators or workers for scanning) and robust error/permission handling for the File System Access API.",
+			"reasoning": "This is an extremely complex, high-impact feature. It introduces a new paradigm of interacting with the local file system, akin to a lightweight version control system. The complexity stems from using the advanced File System Access API, the critical need for high performance when scanning large directories (requiring workers or yielding loops), managing cryptographic hashing, and persisting large snapshots and directory handles in IndexedDB. Each of the 10 subtasks represents a significant engineering effort."
 		},
 		{
 			"taskId": 41,
@@ -151,118 +111,6 @@
 			"complexityScore": 5,
 			"recommendedSubtasks": 3,
 			"expansionPrompt": "Break down this task with a focus on add syntax highlighting to diff viewer.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 43,
-			"taskTitle": "Implement Event Bookmarking",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on implement event bookmarking.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 44,
-			"taskTitle": "Implement Export to JSON",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on implement export to json.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 45,
-			"taskTitle": "Implement Export to Markdown",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on implement export to markdown.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 46,
-			"taskTitle": "Ensure Responsive UI Layout",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on ensure responsive ui layout.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 49,
-			"taskTitle": "Optimize Large-File Parsing with a Web Worker",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on optimize large-file parsing with a web worker.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 52,
-			"taskTitle": "Enhance Accessibility (a11y)",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on enhance accessibility (a11y).",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 53,
-			"taskTitle": "Package as Web App or NPM Package (replace Electron)",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on package as web app or npm package (replace electron).",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 54,
-			"taskTitle": "All Sessions View (auto-discovery + selector)",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on all sessions view (auto-discovery + selector).",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 55,
-			"taskTitle": "Reload Sessions Button (re-scan without page refresh)",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on reload sessions button (re-scan without page refresh).",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 56,
-			"taskTitle": "Newest-First Sorting for Detected Sessions",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on newest-first sorting for detected sessions.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 57,
-			"taskTitle": "Complete Diff Viewer Functionality",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on complete diff viewer functionality.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 58,
-			"taskTitle": "Filter‑Aware Granular Export",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on filter‑aware granular export.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 59,
-			"taskTitle": "Theme Color Picker + Light/Dark Mode",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on theme color picker + light/dark mode.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
-		},
-		{
-			"taskId": 60,
-			"taskTitle": "Workspace Scanner for CWD + .codex/sessions (diff tracking)",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on workspace scanner for cwd + .codex/sessions (diff tracking).",
 			"reasoning": "Automatically added due to missing analysis in AI response."
 		}
 	]

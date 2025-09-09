@@ -9,7 +9,7 @@
         "testStrategy": "Verify that the development server runs successfully and that a basic 'Hello World' component renders with Tailwind styles applied.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -22,7 +22,7 @@
         "dependencies": [
           29
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -35,7 +35,7 @@
         "dependencies": [
           30
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -48,7 +48,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -61,7 +61,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -74,7 +74,7 @@
         "dependencies": [
           32
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -87,7 +87,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -100,7 +100,7 @@
         "dependencies": [
           30
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -113,7 +113,7 @@
         "dependencies": [
           35
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -126,7 +126,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -139,7 +139,7 @@
         "dependencies": [
           38
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -153,7 +153,7 @@
           35,
           37
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -166,7 +166,7 @@
         "dependencies": [
           39
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -179,7 +179,7 @@
         "dependencies": [
           40
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -192,7 +192,7 @@
         "dependencies": [
           35
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -206,7 +206,7 @@
           40,
           43
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -220,7 +220,7 @@
           40,
           43
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -235,7 +235,7 @@
           35,
           38
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -248,7 +248,7 @@
         "dependencies": [
           40
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -262,7 +262,7 @@
           32,
           33
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -353,7 +353,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -366,7 +366,7 @@
         "dependencies": [
           31
         ],
-        "status": "pending",
+        "status": "review",
         "subtasks": []
       },
       {
@@ -380,7 +380,7 @@
           44,
           45
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -393,7 +393,7 @@
         "dependencies": [
           46
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -491,7 +491,7 @@
         "description": "Add a UI to list and search all auto-detected session files (from .codex/sessions, sessions, artifacts/sessions) and allow loading any of them. Keep it lightweight, client-only. Integrate with current loader.",
         "details": "- Build a reusable component `SessionsList` that accepts discovered assets and exposes an `onSelect` callback. \n- Add search, count badge, and sort by filename (desc) with quick actions (copy path, open). \n- Wire into App: show \"View all (N)\" near the session chips and open the list in a modal/card. \n- Reuse existing `handleFile` to load a selected asset (fetch -> blob -> File). \n- Keep discovery in `useAutoDiscovery()`; no runtime fs access. \n- Add docs to README under Usage.",
         "testStrategy": "Manual: add multiple sample .jsonl files under ./.codex/sessions and ./sessions, run dev, click \"View all (N)\", filter, and load a file. Verify Timeline renders and Diff Viewer opens for FileChange events.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "medium",
         "subtasks": [
@@ -567,7 +567,7 @@
         "description": "Add a UI button to re-run session auto-discovery without a full page reload, updating the quick chips and All Sessions list.",
         "details": "- Refactor `useAutoDiscovery()` to expose a `reload()` signal that re-evaluates the globs and updates state. At dev time, Vite HMR should pick up newly added files under watched folders; `reload()` forces the hook to refresh its results.\n- Add a small spinner/disabled state while recalculating.\n- Place the button next to the session chips (and in the All Sessions list header).",
         "testStrategy": "Manual: add a new .jsonl under ./.codex/sessions while dev server runs, click Reload; verify it appears in chips and list. Remove a file, click Reload; verify it's removed. If Vite does not pick it up immediately, note the limitation in README and suggest a page refresh as fallback.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "medium",
         "subtasks": [
@@ -645,7 +645,7 @@
         "description": "Add robust newest-first sorting for auto-detected sessions and All Sessions list by parsing timestamps from filenames/directories, with fallback to lexicographic order.",
         "details": "- Parse timestamps from common patterns like `rollout-YYYY-MM-DDTHH-mm-ss`, `YYYY/MM/DD/...`, and ISO-like tokens in the path.\n- Compute and cache a `sortKey` (epoch ms) per asset.\n- Provide a UI toggle between `Newest` and `Name` sort, defaulting to `Newest`.\n- Ensure sorting is stable and resilient when timestamps are missing.",
         "testStrategy": "Manual: seed mixed session filenames; verify order matches expected timestamps. Unit test the parser against representative names and directory patterns.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "medium",
         "subtasks": [
@@ -718,7 +718,7 @@
         "description": "Make the Diff Viewer robust for real-world diffs and add essential controls.",
         "details": "- Parser resilience: handle diffs without @@ hunks; tolerate missing ---/+++ headers; keep context lines; ignore 'No newline at end of file'.\n- Viewer controls: toggles for side-by-side vs inline, word wrap, ignore whitespace; copy and download raw diff; surface language.\n- Large/binary guards: show clear notices and allow opening raw.\n- Tests: unit tests for the diff parser and a couple of snapshot tests for the viewer config.\n- Docs: expand README Diff Viewer section and note supported formats/limits.",
         "testStrategy": "Unit tests for parser branches; manual test with diverse diffs (single-hunk, multi-hunk, headerless, only +/- lines, and binary-looking).",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "medium",
         "subtasks": [
@@ -808,7 +808,7 @@
         "description": "Implement export functionality that respects the currently selected filters and allows granular field/column and scope selection, with CSV and JSON formats.",
         "details": "Goal: Enable users to export exactly what they’re viewing based on active filters, with fine-grained selection of fields and row scope.\n\nRequirements:\n- Respect current filter state (via Zustand selectors) so exported rows match the filtered dataset (and current sort if feasible).\n- Provide export formats: CSV and JSON (extensible to Parquet in future; design for pluggable exporters).\n- Granular field selection: allow users to pick columns/attributes to include.\n- Row scope options: current page vs. all filtered results vs. selected rows.\n- UI: Export button opens a modal/dialog with format, fields, and scope controls. Show row count estimate.\n- Performance: Handle large exports without freezing the UI (use Web Worker and streaming/chunking for CSV where possible).\n- Accessibility: Keyboard navigable modal and focus management.\n- Telemetry: basic timing metrics around export generation (optional).\n\nAcceptance Criteria:\n- Exported file row count equals filtered dataset for chosen scope.\n- Included columns match selections; CSV headers match field labels.\n- CSV opens correctly in common spreadsheet apps; JSON validates.\n- Operation completes for 50k+ rows without locking the main thread.\n- Unit tests cover field mapping and CSV generation; smoke/E2E verifies end-to-end export respects filters.\n",
         "testStrategy": "",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "high",
         "subtasks": [
@@ -1019,7 +1019,7 @@
         "description": "Scan the launch directory (cwd) and its .codex/sessions folder to detect file changes and feed the Diff Viewer with a timeline of modifications since the session started.",
         "details": "Objective: Allow the viewer to connect to a workspace folder (the cwd it was started from) and scan both the root and .codex/sessions to detect changes to files, so the Diff Viewer can show diffs between original and current states and keep a running history.\n\nKey Behaviors:\n- User chooses a workspace folder via the File System Access API (DirectoryPicker) or drags a folder onto the app; we persist a handle (with permission) for subsequent scans.\n- Initial snapshot: recursively index files (configurable globs), compute lightweight hashes (Web Crypto) and sizes; store path->hash/size/handle.\n- Rescan on demand: compare snapshots to detect adds/mods/deletes; produce a change set for the Diff Viewer.\n- .codex/sessions integration: specifically scan .codex/sessions for JSONL session files and map events to workspace paths to correlate code changes with file diffs.\n- Performance: chunked traversal, progress reporting, and ability to cancel scans.\n- Persistence: store snapshot metadata and handles in IndexedDB (with user consent) so rescans persist across reloads.\n\nAcceptance Criteria:\n- Selecting a folder indexes files and identifies .codex/sessions automatically.\n- A Rescan action updates a “Changed files” list and the Diff Viewer can open a before/after for any changed file.\n- Change types (added/modified/deleted) and counts are displayed; large trees (50k+ files) do not freeze the UI (workers/yielding loops).\n- Permissions and errors are handled gracefully with clear user messaging.\n- Docs describe limitations (browser FS APIs) and fallback flows.\n",
         "testStrategy": "",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "high",
         "subtasks": [
@@ -1129,7 +1129,7 @@
     ],
     "metadata": {
       "created": "2025-09-08T17:44:30.733Z",
-      "updated": "2025-09-09T14:10:15.540Z",
+      "updated": "2025-09-09T15:19:44.979Z",
       "description": "Tasks for master context"
     }
   }
