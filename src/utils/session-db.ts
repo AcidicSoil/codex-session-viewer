@@ -16,6 +16,7 @@ export interface FileHashRecord {
   path: string
   hash: string
   updatedAt: number
+  mtime?: number
 }
 
 interface SessionDBSchema extends DBSchema {
@@ -76,9 +77,9 @@ export async function deleteSession(id: string) {
   await db.delete('sessions', id)
 }
 
-export async function putHash(path: string, hash: string) {
+export async function putHash(path: string, hash: string, mtime?: number) {
   const db = await getDB()
-  const rec: FileHashRecord = { path, hash, updatedAt: Date.now() }
+  const rec: FileHashRecord = { path, hash, mtime, updatedAt: Date.now() }
   await db.put('fileHashes', rec)
 }
 
