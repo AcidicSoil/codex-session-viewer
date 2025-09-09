@@ -131,7 +131,8 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
       return { type: 'Message', role, content, model, id: base.id, at: base.at, index: base.index }
     }
     case 'reasoning': {
-      const content = flattenContent((base as any).content) ?? ''
+      const content = flattenContent((base as any).content)
+      if (content === undefined) return null
       return { type: 'Reasoning', content, id: base.id, at: base.at, index: base.index }
     }
     case 'function_call': {
