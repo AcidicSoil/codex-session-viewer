@@ -1,0 +1,21 @@
+:root {
+  --background: 255 255 255;
+  --foreground: 0 0 0;
+  --primary: 13 148 136; /* teal */
+  --primary-foreground: 255 255 255;
+}
+
+[data-mode='dark'] {
+  --background: 15 23 42;
+  --foreground: 255 255 255;
+}
+
+[data-theme='teal'] {
+  --primary: 13 148 136;
+}
+[data-theme='rose'] {
+  --primary: 244 63 94;
+}
+[data-theme='indigo'] {
+  --primary: 79 70 229;
+}

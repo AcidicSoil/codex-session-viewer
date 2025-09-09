@@ -48,7 +48,7 @@ export function parseResponseItemLine(line: string): SafeResult<ResponseItemPars
   // Preserve base fields when available, and tuck the original payload under `data`.
   if (isRecord(j.data)) {
     const base = j.data
-    const t = typeof base.type === 'string' ? base.type : undefined
+    const t = typeof (base as any).type === 'string' ? (base as any).type : undefined
     const known = [
       'Message',
       'Reasoning',
@@ -59,6 +59,7 @@ export function parseResponseItemLine(line: string): SafeResult<ResponseItemPars
       'FileChange',
       'Other',
     ]
+    // Only coerce to Other when type is missing or unknown
     if (!t || !known.includes(t)) {
       const fallback = {
         type: 'Other',
@@ -122,9 +123,10 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
 
   switch (t) {
     case 'message': {
-      const content = flattenContent((base as any).content)
-      if (content === undefined) return null
+      if ((base as any).content == null) return null
       const role = typeof base.role === 'string' ? base.role : 'assistant'
+      const content = flattenContent((base as any).content)
+      if (content == null) return null
       const model = typeof (base as any).model === 'string' ? (base as any).model : undefined
       return { type: 'Message', role, content, model, id: base.id, at: base.at, index: base.index }
     }
