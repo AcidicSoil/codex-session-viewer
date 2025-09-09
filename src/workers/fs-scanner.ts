@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import { putHash } from '../utils/session-db'
+import { getHash, putHash } from '../utils/session-db'
 
 async function hashFile(file: File): Promise<string> {
   const buf = await file.arrayBuffer()
@@ -14,7 +14,10 @@ async function scanDir(dir: FileSystemDirectoryHandle, prefix = ''): Promise<voi
     if (aborted) return
     const path = prefix ? `${prefix}/${name}` : name
     if (handle.kind === 'file') {
+      const existing = await getHash(path)
       const file = await handle.getFile()
+      const mtime = file.lastModified
+      if (existing?.mtime === mtime) continue
       const hash = await hashFile(file)
       await putHash(path, hash)
       ;(self as any).postMessage({ type: 'progress', path })

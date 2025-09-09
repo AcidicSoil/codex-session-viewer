@@ -12,6 +12,11 @@ describe('parseTimestampFromPath', () => {
     expect(ts).toBe(Date.UTC(2024, 5, 10))
   })
 
+  it('parses yyyy-mm-ddThh-mm-ss', () => {
+    const ts = parseTimestampFromPath('logs/2024-06-10T12-30-00.txt')
+    expect(ts).toBe(Date.UTC(2024, 5, 10, 12, 30, 0))
+  })
+
   it('parses epoch seconds', () => {
     const ts = parseTimestampFromPath('foo/1718025600.json')
     expect(ts).toBe(1718025600 * 1000)
