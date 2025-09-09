@@ -1,6 +1,6 @@
 # Task ID: 47
 # Title: Implement Deep Linking and URL State
-# Status: done
+# Status: deferred
 # Dependencies: 40
 # Priority: medium
 # Description: Preserve the application state (like selected event, filter settings) in the URL hash to allow for sharing specific views.

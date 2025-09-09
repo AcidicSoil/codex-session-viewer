@@ -6,6 +6,8 @@ import { Button } from './ui/button'
 import { ClipboardIcon, StarFilledIcon, StarIcon } from './ui/icons'
 import { useBookmarks } from '../state/bookmarks'
 import { eventKey as computeEventKey } from '../utils/eventKey'
+import { containsApplyPatchAnywhere } from '../utils/applyPatchHints'
+import ApplyPatchView from './ApplyPatchView'
 
 function formatAt(at?: string | number) {
   if (!at) return undefined
@@ -126,6 +128,7 @@ export interface EventCardProps {
   onRevealFile?: (path: string) => void
   onOpenDiff?: (opts: { path: string; diff?: string }) => void
   highlight?: string
+  applyPatchResultMeta?: { exit_code?: number; exitCode?: number; duration_seconds?: number; durationSeconds?: number } | null
 }
 
 function ReasoningEventView({ item }: { item: Extract<ResponseItem, { type: 'Reasoning' }> }) {
@@ -154,6 +157,18 @@ function JsonBlock({ value, maxChars = 4000 }: { value: unknown; maxChars?: numb
 }
 
 function FunctionCallView({ item }: { item: Extract<ResponseItem, { type: 'FunctionCall' }> }) {
+  const isApplyPatch = item.name === 'shell' && typeof (item as any).args !== 'undefined' && (() => {
+    try {
+      const a: any = (item as any).args
+      const parsed = typeof a === 'string' ? JSON.parse(a) : a
+      return parsed && Array.isArray(parsed.command) && parsed.command[0] === 'apply_patch'
+    } catch { return false }
+  })()
+
+  if (isApplyPatch) {
+    return <ApplyPatchView item={item} pairedResultMeta={(arguments as any)[0]?.applyPatchResultMeta ?? undefined} />
+  }
+
   return (
     <div className="space-y-2">
       <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
@@ -233,7 +248,7 @@ function eventKey(item: ResponseItem, index?: number) {
   return String(id ?? (typeof index === 'number' ? `idx-${index}` : `${(item as any).type}-${Math.random()}`))
 }
 
-export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOpenDiff, highlight }: EventCardProps) {
+export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOpenDiff, highlight, applyPatchResultMeta }: EventCardProps) {
   const { toggle, has } = useBookmarks()
   const key = bookmarkKey ?? computeEventKey(item, typeof index === 'number' ? index : 0)
   const at = 'at' in item ? (item as any).at : undefined
@@ -244,6 +259,7 @@ export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOp
         {typeof index === 'number' && <div className="text-xs text-gray-500">#{index + 1}</div>}
         {at && <div className="text-xs text-gray-500">{formatAt(at)}</div>}
         {has(key) && <Badge variant="secondary">Bookmarked</Badge>}
+        {containsApplyPatchAnywhere(item) && <Badge variant="outline" title="This event references apply_patch">✚ apply_patch</Badge>}
       </CardHeader>
       <CardContent>
         {item.type === 'Message' && <MessageEventView item={item} highlight={highlight} />}

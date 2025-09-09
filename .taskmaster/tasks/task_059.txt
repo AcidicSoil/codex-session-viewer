@@ -1,6 +1,6 @@
 # Task ID: 59
 # Title: Theme Color Picker + Light/Dark Mode
-# Status: pending
+# Status: in-progress
 # Dependencies: None
 # Priority: medium
 # Description: Let users select custom theme colors and choose Light, Dark, or System mode. Persist preferences and apply across the UI using Tailwind + CSS variables.
@@ -31,25 +31,25 @@ Implementation Notes:
 ### Details:
 Deliver docs/theme.md with tokens, variable names, and example mappings. Include decision on using HSL vs HEX and shade derivation (e.g., HSL adjustments).
 
-## 2. Wire Tailwind + CSS variables [pending]
+## 2. Wire Tailwind + CSS variables [done]
 ### Dependencies: 59.1
 ### Description: Introduce CSS variables for theme tokens and map them to Tailwind theme via `tailwind.config.*` extensions. Support `[data-theme="dark"]` or `class="dark"` toggling and live updates.
 ### Details:
 Files: `src/styles/theme.css` (variables), `tailwind.config.ts` (extend colors using CSS vars), ensure dark mode strategy aligns with existing config. Provide a safe default palette.
 
-## 3. Add Zustand theme store + persistence [pending]
+## 3. Add Zustand theme store + persistence [done]
 ### Dependencies: 59.1
 ### Description: Create a theme slice with mode (light/dark/system) and color tokens. Add localStorage persistence and hydration (with schema version). Expose selectors for resolved mode and computed variables.
 ### Details:
 Files: `src/state/theme.ts`. Include migration from older schema if present. Provide helper to apply root attributes/classes on change.
 
-## 4. Build Theme Picker UI (modal) [pending]
+## 4. Build Theme Picker UI (modal) [done]
 ### Dependencies: 59.2
 ### Description: Create a Headless UI modal for theme settings: System/Light/Dark toggle; color pickers for primary/accent; live preview; Reset to default.
 ### Details:
 Files: `src/components/ThemePicker.tsx` and integration in a settings menu. Use `<input type="color">` initially; structure to allow future advanced picker.
 
-## 5. Apply theme to app and root toggling [pending]
+## 5. Apply theme to app and root toggling [done]
 ### Dependencies: 59.2, 59.3
 ### Description: Ensure mode toggling sets the correct root attribute/class and CSS variables update across the app. Provide a small hook to subscribe and apply changes.
 ### Details:
@@ -72,4 +72,12 @@ Files: `src/state/theme.test.ts`, `src/components/ThemePicker.test.tsx` (lightwe
 ### Description: Document theme settings in README and docs/theme.md: how to open picker, modes, persistence, and troubleshooting (e.g., contrast warnings).
 ### Details:
 Include screenshots/GIFs where useful. Mention System mode behavior and how it responds to OS changes.
+
+## 9. Sync Diff Viewer with app theme + per-view editor theme picker [done]
+### Dependencies: None
+### Description: Make the Monaco DiffViewer honor app light/dark mode and add a per-view picker (auto/light/dark).
+### Details:
+- Detect app mode via theme store and data-mode attribute and set Monaco theme to `vs` or `vs-dark` accordingly when editor theme is `auto`.
+- Add a small select (auto/light/dark) in the DiffViewer header to override per-view.
+- Keep word-wrap/split toggles as-is; ensure no runtime errors when monaco packages are missing (lazy already covers).
 

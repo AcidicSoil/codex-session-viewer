@@ -1,6 +1,6 @@
 # Task ID: 60
 # Title: Workspace Scanner for CWD + .codex/sessions (diff tracking)
-# Status: pending
+# Status: in-progress
 # Dependencies: None
 # Priority: high
 # Description: Scan the launch directory (cwd) and its .codex/sessions folder to detect file changes and feed the Diff Viewer with a timeline of modifications since the session started.
@@ -33,44 +33,44 @@ Acceptance Criteria:
 ### Details:
 Deliver docs/scanner.md section outlining browser support, permission flows, and why live watchers aren’t available; rescans are manual or scheduled.
 
-## 2. Implement recursive scanner + hashing [pending]
+## 2. Implement recursive scanner + hashing [done]
 ### Dependencies: None
 ### Description: Build utilities to traverse selected directory, filter by globs, and compute content hashes (Web Crypto) + sizes. Yield progress incrementally.
 ### Details:
 Files: src/scanner/scan.ts, src/scanner/hash.ts. Use async generators and chunked reads; support cancel via AbortSignal.
 
-## 3. Create initial snapshot index + persistence [pending]
+## 3. Create initial snapshot index + persistence [done]
 ### Dependencies: None
 ### Description: Store path→{hash,size} plus handle references in IndexedDB. Support loading/saving named snapshots per workspace.
 ### Details:
 Files: src/scanner/indexStore.ts using existing IndexedDB service (if available).
 
 ## 4. Rescan + change detection [pending]
-### Dependencies: None
+### Dependencies: 60.2
 ### Description: Compute deltas (added/modified/deleted) by comparing current scan vs snapshot; produce a consumable ChangeSet for the Diff Viewer.
 ### Details:
 Files: src/scanner/diffIndex.ts. Include mtime if available; detect text/binary via simple sniff; expose summary counts.
 
 ## 5. .codex/sessions integration [pending]
-### Dependencies: None
+### Dependencies: 60.2
 ### Description: Scan `.codex/sessions` under the chosen root; parse session JSONL and correlate events with file paths to annotate changes with session context.
 ### Details:
 Files: src/scanner/sessionsLink.ts. Reuse existing JSONL parser; produce mapping for Diff Viewer to jump from event → file and vice versa.
 
 ## 6. Diff Viewer integration [pending]
-### Dependencies: None
+### Dependencies: 39, 60.4
 ### Description: Expose a provider that supplies before/after content for changed files and session-linked diffs so the Diff Viewer can render unified/side-by-side views.
 ### Details:
 Wire a new diff data source into existing viewer controls; add a Changed Files panel with counts and quick open.
 
 ## 7. UI: Connect Workspace + Rescan + Progress [pending]
-### Dependencies: None
+### Dependencies: 60.2
 ### Description: Add a UI flow to connect a folder, show the selected root, display changed files list, progress/estimates, and a Rescan button (with debounce).
 ### Details:
 Use Headless UI modal or settings panel; surface permission errors and tips; integrate with existing reload button if present.
 
 ## 8. Persistence via IndexedDB (workspaces + snapshots) [pending]
-### Dependencies: None
+### Dependencies: 48
 ### Description: Persist workspace handles (where supported) and snapshot metadata to IndexedDB with versioned schema; allow switching workspaces and restoring previous snapshot.
 ### Details:
 Extend existing DB service from Task 48 or add a new store. Handle permission revocation gracefully.
@@ -81,7 +81,7 @@ Extend existing DB service from Task 48 or add a new store. Handle permission re
 ### Details:
 Mock FS handles where possible; include text/binary edge cases and large directory simulation.
 
-## 10. Docs: workspace scanning and limitations [pending]
+## 10. Docs: workspace scanning and limitations [done]
 ### Dependencies: None
 ### Description: Document how to connect a folder, how rescans work, and limitations (browser support, permissions, no live watchers). Include troubleshooting for common errors.
 ### Details:

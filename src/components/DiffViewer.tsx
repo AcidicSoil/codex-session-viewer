@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { analyzeText } from '../utils/guards'
+import { useTheme } from '../state/theme'
 import { getLanguageForPath } from '../utils/language'
 
 // Lazy-load Monaco to keep baseline bundle light and to avoid hard failure
@@ -22,6 +23,13 @@ export interface DiffViewerProps {
   height?: number | string
 }
 
+export function computeMonacoTheme(appMode: string, pref: 'auto'|'light'|'dark', dataMode: string | null): 'vs'|'vs-dark' {
+  if (pref === 'light') return 'vs'
+  if (pref === 'dark') return 'vs-dark'
+  const finalMode = appMode === 'system' ? (dataMode === 'dark' ? 'dark' : 'light') : appMode
+  return finalMode === 'dark' ? 'vs-dark' : 'vs'
+}
+
 export default function DiffViewer({ path, original, modified, language, height = 420 }: DiffViewerProps) {
   const lang = language ?? getLanguageForPath(path)
   const stats = React.useMemo(() => analyzeText(`${original}\n${modified}`), [original, modified])
@@ -29,12 +37,28 @@ export default function DiffViewer({ path, original, modified, language, height 
   const isBinary = stats.binary
   const [sideBySide, setSideBySide] = React.useState(true)
   const [wrap, setWrap] = React.useState(true)
+  // Theme: auto uses global mode; allow per-view override
+  const { mode } = useTheme()
+  const [editorThemePref, setEditorThemePref] = React.useState<'auto' | 'light' | 'dark'>('auto')
+  const monacoTheme = React.useMemo(() => computeMonacoTheme(mode, editorThemePref, document.documentElement.getAttribute('data-mode')), [mode, editorThemePref])
 
   return (
     <div className="border rounded">
       <div className="px-2 py-1 text-xs text-gray-600 border-b bg-gray-50 flex items-center justify-between">
         <span className="truncate" title={path}>{path || 'Diff'}</span>
         <div className="flex items-center gap-2">
+          <label className="sr-only">Editor theme</label>
+          <select
+            aria-label="Editor theme"
+            className="border rounded px-1 py-0.5 bg-white text-gray-700"
+            value={editorThemePref}
+            onChange={(e) => setEditorThemePref(e.target.value as any)}
+            title="Editor theme"
+          >
+            <option value="auto">auto</option>
+            <option value="light">light</option>
+            <option value="dark">dark</option>
+          </select>
           <button className="text-gray-500 hover:text-gray-700" onClick={() => setWrap((w) => !w)} title="Toggle wrap">
             {wrap ? 'Wrap' : 'No wrap'}
           </button>
@@ -82,7 +106,7 @@ export default function DiffViewer({ path, original, modified, language, height 
             original={original}
             modified={modified}
             language={lang}
-            theme="vs"
+            theme={monacoTheme}
             options={{
               readOnly: true,
               renderSideBySide: sideBySide,

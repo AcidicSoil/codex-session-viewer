@@ -13,6 +13,7 @@ import { Badge } from './components/ui/badge'
 import { ScrollArea } from './components/ui/scroll-area'
 import { generateSyntheticEvents } from './utils/synthetic'
 import { BookmarksProvider } from './state/bookmarks'
+import ErrorBoundary from './components/ErrorBoundary'
 import { useBookmarks } from './state/bookmarks'
 import { Button } from './components/ui/button'
 import { eventKey } from './utils/eventKey'
@@ -22,13 +23,16 @@ import type { ResponseItem } from './types'
 import FileTree from './components/FileTree'
 import FilePreview from './components/FilePreview'
 import DiffViewer from './components/DiffViewer'
+import { extractApplyPatchText } from './parsers/applyPatch'
 import { parseUnifiedDiffToSides } from './utils/diff'
+import { isApplyPatchFunction, passesFunctionNameFilter, sanitizeFnFilterList } from './utils/functionFilters'
 import { getLanguageForPath } from './utils/language'
 import useAutoDiscovery from './hooks/useAutoDiscovery'
 import SessionsList from './components/SessionsList'
 import { matchesEvent } from './utils/search'
 import ExportModal from './components/ExportModal'
 import ThemePicker from './components/ThemePicker'
+import { containsApplyPatchAnywhere } from './utils/applyPatchHints'
 
 function DevButtons({ onGenerate }: { onGenerate: () => void }) {
   return (
@@ -53,9 +57,35 @@ function DevButtons({ onGenerate }: { onGenerate: () => void }) {
 export default function App() {
   return (
     <BookmarksProvider>
-      <AppInner />
+      <ErrorBoundary name="App">
+        <AppInner />
+      </ErrorBoundary>
     </BookmarksProvider>
   )
+}
+
+function pairApplyPatchResultMeta(events: readonly any[], startIndex: number) {
+  const start = events[startIndex]
+  if (!start || (start as any).type !== 'FunctionCall') return null
+  try {
+    const args = (start as any).args
+    const parsed = typeof args === 'string' ? JSON.parse(args) : args
+    const isApply = parsed && Array.isArray(parsed.command) && parsed.command[0] === 'apply_patch'
+    if (!isApply) return null
+  } catch { return null }
+
+  // Prefer status on the same event
+  const metaSame = (start as any)?.result?.metadata ?? (start as any)?.result?.meta
+  if (metaSame) return metaSame
+
+  // Heuristic: look ahead a few events for a result-like FunctionCall with metadata
+  for (let i = startIndex + 1; i < Math.min(events.length, startIndex + 6); i++) {
+    const ev = events[i]
+    if (!ev || ev.type !== 'FunctionCall') continue
+    const meta = (ev as any)?.result?.metadata ?? (ev as any)?.result?.meta
+    if (meta && (meta.exit_code != null || meta.exitCode != null)) return meta
+  }
+  return null
 }
 
 function AppInner() {
@@ -77,9 +107,27 @@ function AppInner() {
   const [roleFilter, setRoleFilter] = useState<'All' | 'user' | 'assistant' | 'system'>('All')
   const [scrollToIndex, setScrollToIndex] = useState<number | null>(null)
   const [showOther, setShowOther] = useState(false)
+  // Dynamic FunctionCall name filter (e.g., 'shell', 'web.run', plus special 'apply_patch')
+  const [fnFilter, setFnFilter] = useState<string[]>([])
   const { projectFiles, sessionAssets, isLoading, reload } = useAutoDiscovery()
   const [showAllSessions, setShowAllSessions] = useState(false)
   const [showExport, setShowExport] = useState(false)
+  const [onlyApplyText, setOnlyApplyText] = useState(false)
+  // Chip-level bulk marking for auto-detected sessions
+  const [chipScanQuery, setChipScanQuery] = useState('')
+  const [chipMarks, setChipMarks] = useState<Record<string, boolean>>({})
+  const [chipScanning, setChipScanning] = useState(false)
+  const [chipProgress, setChipProgress] = useState(0)
+  const [chipOnlyMatches, setChipOnlyMatches] = useState(false)
+
+  function safeMatches(ev: any, q: string) {
+    try {
+      return matchesEvent(ev, q)
+    } catch (e) {
+      console.warn('matchesEvent failed', e)
+      return false
+    }
+  }
 
   function getFilteredItems(input?: { ev: any; key: string; absIndex: number }[]) {
     const full = input ?? loader.state.events.map((ev, i) => ({ ev, key: eventKey(ev as any, i), absIndex: i }))
@@ -100,7 +148,10 @@ function AppInner() {
         return t === typeFilter
       })
       .filter(({ ev }) => (typeFilter === 'All' && !showOther ? (ev as any).type !== 'Other' : true))
-      .filter(({ ev }) => (search ? matchesEvent(ev as any, search) : true))
+      .filter(({ ev }) => (onlyApplyText ? containsApplyPatchAnywhere(ev as any) : true))
+      // Function name filter (applies to FunctionCall; special 'apply_patch')
+      .filter(({ ev }) => passesFunctionNameFilter(ev as any, fnFilter, typeFilter))
+      .filter(({ ev }) => (search ? safeMatches(ev as any, search) : true))
       .filter(({ ev }) => {
         const q = pathFilter.trim()
         if (!q) return true
@@ -108,8 +159,9 @@ function AppInner() {
         const p = (anyEv.path ? String(anyEv.path) : '').toLowerCase()
         const qq = q.toLowerCase()
         if (p.includes(qq)) return true
-        return matchesEvent(anyEv, qq)
+        return safeMatches(anyEv, qq)
       })
+      .filter(Boolean)
   }
 
   async function handleFile(file: File) {
@@ -127,14 +179,18 @@ function AppInner() {
 
   // Hash → state (on load)
   useEffect(() => {
-    const h = parseHash()
+    let h: any = {}
+    try { h = parseHash() } catch (e) { console.warn('parseHash failed', e); h = {} }
     const b = String(h.b || '').toLowerCase()
     setShowBookmarksOnly(b === '1' || b === 'true')
     if (h.f) setSelectedFile(h.f)
     if (h.q) setSearch(h.q)
+    if ((h as any).fn) setFnFilter(sanitizeFnFilterList(String((h as any).fn).split(',')))
     if ((h as any).pf) setPathFilter(String((h as any).pf))
     const o = String((h as any).o || '').toLowerCase()
     setShowOther(o === '1' || o === 'true')
+    const ap = String((h as any).ap || '').toLowerCase()
+    setOnlyApplyText(ap === '1' || ap === 'true')
     const validTypes = new Set(['All','Message','Reasoning','FunctionCall','LocalShellCall','WebSearchCall','CustomToolCall','FileChange','Other','ToolCalls'])
     if (h.t && validTypes.has(h.t)) setTypeFilter(h.t as any)
     const validRoles = new Set(['All','user','assistant','system'])
@@ -161,9 +217,13 @@ function AppInner() {
       else delete (next as any).pf
       if (showOther) (next as any).o = '1'
       else delete (next as any).o
+      if (onlyApplyText) (next as any).ap = '1'
+      else delete (next as any).ap
+      if (fnFilter && fnFilter.length) (next as any).fn = sanitizeFnFilterList(fnFilter).join(',')
+      else delete (next as any).fn
       return next
     })
-  }, [showBookmarksOnly, selectedFile, typeFilter, roleFilter, search, pathFilter, showOther])
+  }, [showBookmarksOnly, selectedFile, typeFilter, roleFilter, search, pathFilter, showOther, fnFilter, onlyApplyText])
 
   // Auto-open diff when a file is selected
   useEffect(() => {
@@ -237,33 +297,93 @@ function AppInner() {
 
       <div className="space-y-3 p-4 bg-white rounded shadow">
         <h2 className="font-medium">Open a session file</h2>
-        <div className="flex items-center gap-3">
-          <FileInputButton label="Choose .jsonl" onFile={handleFile} />
-          <span className="text-gray-400">or</span>
-          <div className="flex-1">
-            <DropZone onFile={handleFile} />
+        <ErrorBoundary name="OpenSession">
+          <div className="flex items-center gap-3">
+            <FileInputButton label="Choose .jsonl" onFile={handleFile} />
+            <span className="text-gray-400">or</span>
+            <div className="flex-1">
+              <DropZone onFile={handleFile} />
+            </div>
           </div>
-        </div>
+        </ErrorBoundary>
         {sessionAssets.length > 0 && (
           <div className="mt-3">
             <div className="text-xs text-gray-500 mb-1">Auto-detected sessions</div>
             <div className="flex flex-wrap gap-2 items-center">
-              {sessionAssets.slice(0, 12).map((s, idx) => (
-                <Button
-                  key={s.path}
-                  variant="outline"
-                  size="sm"
-                  title={s.path}
-                  onClick={async () => {
-                    const res = await fetch(s.url)
-                    const blob = await res.blob()
-                    const file = new File([blob], s.path, { type: 'text/plain' })
-                    await handleFile(file)
-                  }}
-                >
-                  {(idx + 1) + '. '} {s.path.split('/').slice(-1)[0]}
+              <input
+                type="text"
+                placeholder="Mark matches (e.g., apply_patch)"
+                value={chipScanQuery}
+                onChange={(e) => setChipScanQuery(e.target.value)}
+                className="h-8 px-2 text-xs leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none"
+                title="Fetch and mark sessions whose content contains this text"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={chipScanning || !chipScanQuery.trim() || sessionAssets.length === 0}
+                onClick={async () => {
+                  const needle = chipScanQuery.trim().toLowerCase()
+                  if (!needle) return
+                  setChipScanning(true)
+                  setChipProgress(0)
+                  const next: Record<string, boolean> = {}
+                  for (let i = 0; i < sessionAssets.length; i++) {
+                    const s = sessionAssets[i]!
+                    try {
+                      const res = await fetch(s.url)
+                      const text = await res.text()
+                      const head = text.slice(0, 262144)
+                      next[s.path] = head.toLowerCase().includes(needle)
+                    } catch {
+                      next[s.path] = false
+                    } finally {
+                      setChipProgress(Math.round(((i + 1) / sessionAssets.length) * 100))
+                    }
+                  }
+                  setChipMarks(next)
+                  setChipScanning(false)
+                }}
+                title="Scan and mark chips"
+              >
+                {chipScanning ? `Marking… ${chipProgress}%` : 'Mark matches'}
+              </Button>
+              <Button
+                variant={chipOnlyMatches ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => setChipOnlyMatches((v) => !v)}
+                aria-pressed={chipOnlyMatches}
+                title="Show only chips with a content match"
+              >
+                {chipOnlyMatches ? 'Chips: matches only' : 'Chips: show all'}
+              </Button>
+              {Object.keys(chipMarks).length > 0 && (
+                <Button variant="outline" size="sm" onClick={() => setChipMarks({})} title="Clear chip marks">Clear marks</Button>
+              )}
+              {(() => {
+                // Build list reordered by matches first, optionally filter to matches
+                let chipList = [...sessionAssets]
+                if (Object.keys(chipMarks).length > 0) {
+                  chipList.sort((a, b) => Number(Boolean(chipMarks[b.path])) - Number(Boolean(chipMarks[a.path])))
+                }
+                if (chipOnlyMatches) chipList = chipList.filter((s) => Boolean(chipMarks[s.path]))
+                return chipList.slice(0, 12).map((s, idx) => { const item = s!; return (
+                  <Button
+                    key={item.path}
+                    variant="outline"
+                    size="sm"
+                    title={item.path}
+                    onClick={async () => {
+                      const res = await fetch(item.url)
+                      const blob = await res.blob()
+                      const file = new File([blob], item.path, { type: 'text/plain' })
+                      await handleFile(file)
+                    }}
+                  >
+                  {(idx + 1) + '. '} {item.path.split('/').slice(-1)[0]} {chipMarks[item.path] && <span className="ml-1 text-emerald-600" title="Content match">●</span>}
                 </Button>
-              ))}
+                )})
+              })()}
               {sessionAssets.length > 12 && (
                 <span className="text-xs text-gray-500 self-center">(+{sessionAssets.length - 12} more)</span>
               )}
@@ -403,28 +523,43 @@ function AppInner() {
           <CardHeader>
             <CardTitle>Timeline</CardTitle>
             <div className="mt-2 flex flex-wrap items-center gap-2">
+              <ErrorBoundary name="Toolbar">
               {(() => {
                 const events = loader.state.events ?? []
-                const typeCounts = {
-                  All: events.length,
-                  Message: events.filter((e) => (e as any).type === 'Message').length,
-                  Reasoning: events.filter((e) => (e as any).type === 'Reasoning').length,
-                  FunctionCall: events.filter((e) => (e as any).type === 'FunctionCall').length,
-                  LocalShellCall: events.filter((e) => (e as any).type === 'LocalShellCall').length,
-                  WebSearchCall: events.filter((e) => (e as any).type === 'WebSearchCall').length,
-                  CustomToolCall: events.filter((e) => (e as any).type === 'CustomToolCall').length,
-                  FileChange: events.filter((e) => (e as any).type === 'FileChange').length,
-                  Other: events.filter((e) => (e as any).type === 'Other').length,
+                let typeCounts: any = {
+                  All: 0, Message: 0, Reasoning: 0, FunctionCall: 0, LocalShellCall: 0, WebSearchCall: 0, CustomToolCall: 0, FileChange: 0, Other: 0,
+                }
+                try {
+                  typeCounts = {
+                    All: events.length,
+                    Message: events.filter((e) => (e as any).type === 'Message').length,
+                    Reasoning: events.filter((e) => (e as any).type === 'Reasoning').length,
+                    FunctionCall: events.filter((e) => (e as any).type === 'FunctionCall').length,
+                    LocalShellCall: events.filter((e) => (e as any).type === 'LocalShellCall').length,
+                    WebSearchCall: events.filter((e) => (e as any).type === 'WebSearchCall').length,
+                    CustomToolCall: events.filter((e) => (e as any).type === 'CustomToolCall').length,
+                    FileChange: events.filter((e) => (e as any).type === 'FileChange').length,
+                    Other: events.filter((e) => (e as any).type === 'Other').length,
+                  }
+                } catch (e) {
+                  console.warn('typeCounts failed', e)
                 }
                 const toolCallsCount = typeCounts.FunctionCall + typeCounts.LocalShellCall + typeCounts.WebSearchCall + typeCounts.CustomToolCall
                 const ROLE_OPTIONS: Array<'All' | 'user' | 'assistant' | 'system'> = ['All', 'user', 'assistant', 'system']
-                const roleCounts = {
-                  All: typeCounts.Message,
-                  user: events.filter((e) => (e as any).type === 'Message' && (e as any).role === 'user').length,
-                  assistant: events.filter((e) => (e as any).type === 'Message' && (e as any).role === 'assistant').length,
-                  system: events.filter((e) => (e as any).type === 'Message' && (e as any).role === 'system').length,
+                let roleCounts = { All: typeCounts.Message, user: 0, assistant: 0, system: 0 }
+                try {
+                  roleCounts = {
+                    All: typeCounts.Message,
+                    user: events.filter((e) => (e as any).type === 'Message' && (e as any).role === 'user').length,
+                    assistant: events.filter((e) => (e as any).type === 'Message' && (e as any).role === 'assistant').length,
+                    system: events.filter((e) => (e as any).type === 'Message' && (e as any).role === 'system').length,
+                  }
+                } catch (e) {
+                  console.warn('roleCounts failed', e)
                 }
                 const TYPE_OPTIONS: TypeFilter[] = ['All','Message','Reasoning','FunctionCall','LocalShellCall','WebSearchCall','CustomToolCall','FileChange','Other','ToolCalls']
+                let applyAnyCount = 0
+                try { applyAnyCount = events.filter((e) => containsApplyPatchAnywhere(e as any)).length } catch {}
                 return (
                   <>
                     <select
@@ -439,6 +574,73 @@ function AppInner() {
                         </option>
                       ))}
                     </select>
+                    { (typeFilter === 'FunctionCall' || typeFilter === 'ToolCalls') && (() => {
+                      try {
+                      // Derive function options with counts based on current search/path filters
+                      const filteredForCounts = (loader.state.events as any[])
+                        .filter((ev) => (typeFilter === 'FunctionCall' ? ev.type === 'FunctionCall' : true))
+                        .filter((ev) => {
+                          if (typeFilter === 'ToolCalls') {
+                            // Only consider FunctionCall for function-name counts
+                            return ev.type === 'FunctionCall'
+                          }
+                          return true
+                        })
+                        .filter((ev) => {
+                          const q = pathFilter.trim()
+                          if (!q) return true
+                          const p = (ev as any).path ? String((ev as any).path).toLowerCase() : ''
+                          const qq = q.toLowerCase()
+                          if (p.includes(qq)) return true
+                          return safeMatches(ev as any, qq)
+                        })
+                        .filter((ev) => (search ? safeMatches(ev as any, search) : true))
+
+                      const nameCounts = new Map<string, number>()
+                      let applyPatchCount = 0
+                      for (const ev of filteredForCounts) {
+                        if (ev.type !== 'FunctionCall') continue
+                        const name = String(ev.name ?? 'unknown')
+                        nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1)
+                        if (isApplyPatchFunction(ev)) applyPatchCount++
+                      }
+                      const options = Array.from(nameCounts.entries()).sort((a,b) => b[1]-a[1])
+                      const hasApply = applyPatchCount > 0
+                      return (
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {hasApply && (
+                            <Button
+                              size="sm"
+                              variant={fnFilter.includes('apply_patch') ? 'secondary' : 'outline'}
+                              onClick={() => setFnFilter((prev) => prev.includes('apply_patch') ? prev.filter((v) => v !== 'apply_patch') : [...prev, 'apply_patch'])}
+                              title="Show only apply_patch FunctionCall events"
+                            >
+                              apply_patch ({applyPatchCount})
+                            </Button>
+                          )}
+                          {options.map(([name, cnt]) => (
+                            <Button
+                              key={name}
+                              size="sm"
+                              variant={fnFilter.includes(name) ? 'secondary' : 'outline'}
+                              onClick={() => setFnFilter((prev) => prev.includes(name) ? prev.filter((v) => v !== name) : [...prev, name])}
+                              title={`Filter FunctionCall name: ${name}`}
+                            >
+                              {name} ({cnt})
+                            </Button>
+                          ))}
+                          {fnFilter.length > 0 && (
+                            <Button size="sm" variant="outline" onClick={() => setFnFilter([])}>Clear fn</Button>
+                          )}
+                        </div>
+                      )
+                      } catch (e) {
+                        console.warn('Function filter UI failed', e)
+                        return (
+                          <div className="text-xs text-amber-700">Function filters unavailable. <button className="underline" onClick={() => setFnFilter([])}>Clear</button></div>
+                        )
+                      }
+                    })() }
                     <select
                       value={roleFilter}
                       onChange={(e) => {
@@ -460,6 +662,7 @@ function AppInner() {
                   </>
                 )
               })()}
+              </ErrorBoundary>
               <input
                 type="text"
                 placeholder="Search events…"
@@ -473,7 +676,7 @@ function AppInner() {
                   <summary className="h-9 px-3 text-sm leading-5 border rounded-md cursor-pointer select-none flex items-center gap-2 bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700">
                     Advanced filters ▾
                   </summary>
-                  <div className="absolute left-0 z-10 mt-1 w-[22rem] max-w-[90vw] rounded-md border bg-white shadow p-3">
+                  <div className="absolute left-0 z-10 mt-1 w-[24rem] max-w-[95vw] rounded-md border bg-white shadow p-3">
                     <div className="mb-2 text-xs font-semibold text-gray-600">Advanced filters</div>
                     <div className="flex flex-wrap items-center gap-2">
                       <input
@@ -501,6 +704,16 @@ function AppInner() {
                         title={showOther ? 'Showing Other records' : 'Hiding Other records'}
                       >
                         {showOther ? 'Other: shown' : 'Other: hidden'}
+                      </Button>
+                      {/* apply_patch anywhere toggle with count */}
+                      <Button
+                        variant={onlyApplyText ? 'secondary' : 'outline'}
+                        size="default"
+                        onClick={() => setOnlyApplyText((v) => !v)}
+                        aria-pressed={onlyApplyText}
+                        title="Show only events that contain apply_patch anywhere"
+                      >
+                        {(() => { const count = (() => { try { return (loader.state.events ?? []).filter((e) => containsApplyPatchAnywhere(e as any)).length } catch { return 0 } })(); return onlyApplyText ? `apply_patch: only (${count})` : `apply_patch: any (${count})` })()}
                       </Button>
                     </div>
                   </div>
@@ -543,13 +756,15 @@ function AppInner() {
               </div>
             </div>
 
-            <ExportModal
-              open={showExport}
-              onClose={() => setShowExport(false)}
-              meta={loader.state.meta as any}
-              items={getFilteredItems().map(({ ev }) => ev as ResponseItem)}
-              filters={{ type: typeFilter, role: roleFilter, q: search.trim() || undefined, pf: pathFilter.trim() || undefined, other: showOther || undefined }}
-            />
+            <ErrorBoundary name="ExportModal">
+              <ExportModal
+                open={showExport}
+                onClose={() => setShowExport(false)}
+                meta={loader.state.meta as any}
+                items={(getFilteredItems() || []).map(({ ev }) => ev as ResponseItem)}
+                filters={{ type: typeFilter, role: roleFilter, q: search.trim() || undefined, pf: pathFilter.trim() || undefined, other: showOther || undefined }}
+              />
+            </ErrorBoundary>
 
             {(() => {
               const chips: Array<{ key: string; label: string; onClear: () => void }> = []
@@ -558,6 +773,7 @@ function AppInner() {
               if (search.trim()) chips.push({ key: 'search', label: `search: ${search.trim()}`, onClear: () => setSearch('') })
               if (pathFilter.trim()) chips.push({ key: 'path', label: `path: ${pathFilter.trim()}`, onClear: () => setPathFilter('') })
               if (showBookmarksOnly) chips.push({ key: 'bm', label: 'bookmarks', onClear: () => setShowBookmarksOnly(false) })
+              if (fnFilter.length) chips.push({ key: 'fn', label: `fn: ${fnFilter.join(',')}`, onClear: () => setFnFilter([]) })
               if (chips.length === 0) return null
               return (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -588,36 +804,53 @@ function AppInner() {
           <CardContent>
             <ScrollArea className="h-[60vh] md:h-[70vh]" viewportClassName="overflow-visible">
               {(() => {
-                const full = loader.state.events.map((ev, i) => ({ ev, key: eventKey(ev as any, i), absIndex: i }))
+                let full: { ev: any; key: string; absIndex: number }[] = []
+                try {
+                  full = (loader.state.events ?? []).map((ev, i) => ({ ev, key: eventKey(ev as any, i), absIndex: i }))
+                } catch (e) {
+                  console.warn('events mapping failed', e)
+                  full = []
+                }
 
-                const filtered = getFilteredItems()
+                let filtered = full
+                try { filtered = getFilteredItems(full) } catch (e) { console.warn('getFilteredItems failed', e); filtered = full }
                 return (
-                  <TimelineView
-                    items={filtered}
-                    height={500}
-                    estimateItemHeight={120}
-                    keyForIndex={(it) => it.key}
-                    scrollToIndex={scrollToIndex}
-                    renderItem={(it) => (
-                      <div className="mb-2">
-                        <EventCard
-                          item={it.ev as any}
-                          index={it.absIndex}
-                          bookmarkKey={it.key}
-                          onRevealFile={(p) => setSelectedFile(p)}
-                          highlight={search}
-                          onOpenDiff={({ path, diff }) => {
-                            if (!diff) {
-                              setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
-                              return
-                            }
-                            const { original, modified } = parseUnifiedDiffToSides(diff)
-                            setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
-                          }}
-                        />
-                      </div>
-                    )}
-                  />
+                  <ErrorBoundary name="Timeline">
+                    <TimelineView
+                      items={filtered}
+                      height={500}
+                      estimateItemHeight={120}
+                      keyForIndex={(it) => it.key}
+                      scrollToIndex={scrollToIndex}
+                      renderItem={(it) => (
+                        <div className="mb-2">
+                          <ErrorBoundary name="EventCard">
+                            <EventCard
+                              item={it.ev as any}
+                              index={it.absIndex}
+                              bookmarkKey={it.key}
+                              onRevealFile={(p) => setSelectedFile(p)}
+                              highlight={search}
+                              applyPatchResultMeta={pairApplyPatchResultMeta(loader.state.events as any, it.absIndex)}
+                              onOpenDiff={({ path, diff }) => {
+                                try {
+                                  if (!diff) {
+                                    setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
+                                    return
+                                  }
+                                  const { original, modified } = parseUnifiedDiffToSides(diff)
+                                  setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
+                                } catch (e) {
+                                  console.warn('openDiff failed', e)
+                                  setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
+                                }
+                              }}
+                            />
+                          </ErrorBoundary>
+                        </div>
+                      )}
+                    />
+                  </ErrorBoundary>
                 )
               })()}
             </ScrollArea>

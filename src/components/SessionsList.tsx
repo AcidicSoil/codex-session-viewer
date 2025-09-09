@@ -16,6 +16,11 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
   const [q, setQ] = React.useState('')
   const [busy, setBusy] = React.useState<string | null>(null)
   const [sort, setSort] = React.useState<'Newest' | 'Name'>('Newest')
+  const [scanQuery, setScanQuery] = React.useState('')
+  const [onlyMatches, setOnlyMatches] = React.useState(false)
+  const [marks, setMarks] = React.useState<Record<string, boolean>>({})
+  const [scanning, setScanning] = React.useState(false)
+  const [progress, setProgress] = React.useState(0)
 
   const filtered = React.useMemo(() => {
     const t = q.trim().toLowerCase()
@@ -25,9 +30,15 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
     } else {
       list.sort((a, b) => a.path.localeCompare(b.path))
     }
-    if (!t) return list
-    return list.filter((s) => s.path.toLowerCase().includes(t))
-  }, [sessions, q, sort])
+    // group matched sessions first when marks exist
+    if (Object.keys(marks).length > 0) {
+      list.sort((a, b) => Number(Boolean(marks[b.path])) - Number(Boolean(marks[a.path])))
+    }
+    // path search
+    const byPath = t ? list.filter((s) => s!.path.toLowerCase().includes(t)) : list
+    // content match filtering
+    return onlyMatches ? byPath.filter((s) => Boolean(marks[s!.path])) : byPath
+  }, [sessions, q, sort, marks, onlyMatches])
 
   async function handleLoad(asset: DiscoveredSessionAsset) {
     try {
@@ -36,6 +47,29 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
     } finally {
       setBusy(null)
     }
+  }
+
+  async function scanAllSessions(query: string) {
+    const needle = query.trim().toLowerCase()
+    if (!needle) return
+    setScanning(true)
+    setProgress(0)
+    const next: Record<string, boolean> = {}
+    for (let i = 0; i < sessions.length; i++) {
+      const s = sessions[i]!
+      try {
+        const res = await fetch(s.url)
+        const text = await res.text()
+        const head = text.slice(0, 262144) // scan first 256KB
+        next[s.path] = head.toLowerCase().includes(needle)
+      } catch (e) {
+        next[s.path] = false
+      } finally {
+        setProgress(Math.round(((i + 1) / sessions.length) * 100))
+      }
+    }
+    setMarks(next)
+    setScanning(false)
   }
 
   return (
@@ -56,6 +90,46 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
               )}
             </div>
           )}
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={scanQuery}
+              onChange={(e) => setScanQuery(e.target.value)}
+              placeholder="Content filter (e.g., apply_patch)"
+              className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 w-56"
+              title="Fetch sessions and mark those whose content contains this text"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={scanning || !scanQuery.trim() || sessions.length === 0}
+              onClick={() => scanAllSessions(scanQuery)}
+              title="Scan session files for content matches"
+            >
+              {scanning ? `Scanning… ${progress}%` : 'Scan'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setScanQuery('apply_patch'); scanAllSessions('apply_patch') }}
+              disabled={scanning || sessions.length === 0}
+              title="Scan for apply_patch occurrences"
+            >
+              Scan apply_patch
+            </Button>
+            <Button
+              variant={onlyMatches ? 'secondary' : 'outline'}
+              size="sm"
+              onClick={() => setOnlyMatches((v) => !v)}
+              aria-pressed={onlyMatches}
+              title="Show only sessions that matched the content filter"
+            >
+              {onlyMatches ? 'Matches only' : 'Show all'}
+            </Button>
+            {Object.keys(marks).length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setMarks({})} title="Clear markers">Clear marks</Button>
+            )}
+          </div>
           <select
             className="h-9 px-2 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
             value={sort}
@@ -82,41 +156,79 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
           <div className="text-sm text-gray-500">No discovered sessions found.</div>
         ) : filtered.length === 0 ? (
           <div className="text-sm text-gray-500">No sessions match your search.</div>
-        ) : (
-          <div className="max-h-[50vh] overflow-auto divide-y">
-            {filtered.map((s) => (
-              <div key={s.path} className="py-2 flex items-center gap-2 justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm truncate" title={s.path}>{s.path}</div>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigator.clipboard?.writeText(s.path)}
-                    title="Copy path"
-                  >
-                    Copy
-                  </Button>
-                  <a href={s.url} target="_blank" rel="noreferrer noopener">
-                    <Button variant="outline" size="sm" title="Open raw file">Raw</Button>
-                  </a>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleLoad(s)}
-                    disabled={busy !== null}
-                    title="Load into viewer"
-                  >
-                    {busy === s.path ? 'Loading…' : 'Load'}
-                  </Button>
-                </div>
+        ) : (() => {
+          const hasMarks = Object.keys(marks).length > 0
+          if (!hasMarks) {
+            return (
+              <div className="max-h-[50vh] overflow-auto divide-y">
+                {filtered.map((s) => (
+                  <Row key={s.path} s={s} mark={Boolean(marks[s.path])} busy={busy} onLoad={handleLoad} />
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )
+          }
+          const matches = filtered.filter((s) => marks[s.path])
+          const others = filtered.filter((s) => !marks[s.path])
+          return (
+            <div className="max-h-[50vh] overflow-auto">
+              {matches.length > 0 && (
+                <div>
+                  <div className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 sticky top-0">Matches ({matches.length})</div>
+                  <div className="divide-y">
+                    {matches.map((s) => (
+                      <Row key={s.path} s={s} mark={true} busy={busy} onLoad={handleLoad} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {others.length > 0 && (
+                <div>
+                  <div className="px-2 py-1 text-xs font-semibold text-gray-600 bg-gray-50 sticky top-0">Others ({others.length})</div>
+                  <div className="divide-y">
+                    {others.map((s) => (
+                      <Row key={s.path} s={s} mark={false} busy={busy} onLoad={handleLoad} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </CardContent>
     </Card>
   )
 }
 
+function Row({ s, mark, busy, onLoad }: { s: DiscoveredSessionAsset; mark: boolean; busy: string | null; onLoad: (s: DiscoveredSessionAsset) => void }) {
+  return (
+    <div className="py-2 flex items-center gap-2 justify-between">
+      <div className="min-w-0 flex-1">
+        <div className="text-sm truncate" title={s.path}>
+          {s.path} {mark && <span title="Content match" className="ml-1 text-emerald-600">●</span>}
+        </div>
+      </div>
+      <div className="flex gap-2 shrink-0">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigator.clipboard?.writeText(s.path)}
+          title="Copy path"
+        >
+          Copy
+        </Button>
+        <a href={s.url} target="_blank" rel="noreferrer noopener">
+          <Button variant="outline" size="sm" title="Open raw file">Raw</Button>
+        </a>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => onLoad(s)}
+          disabled={busy !== null}
+          title="Load into viewer"
+        >
+          {busy === s.path ? 'Loading…' : 'Load'}
+        </Button>
+      </div>
+    </div>
+  )
+}

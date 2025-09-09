@@ -1,6 +1,6 @@
 # Task ID: 38
 # Title: Create File Tree Component
-# Status: done
+# Status: in-progress
 # Dependencies: 31
 # Priority: high
 # Description: Build a component that displays a tree view of all files that were modified during the session.

@@ -1,6 +1,6 @@
 # Task ID: 52
 # Title: Enhance Accessibility (a11y)
-# Status: pending
+# Status: deferred
 # Dependencies: 46
 # Priority: low
 # Description: Perform an accessibility audit and implement improvements, including full keyboard navigation, semantic regions, and color-blind safe markers.

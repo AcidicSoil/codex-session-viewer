@@ -1,0 +1,103 @@
+# Task ID: 61
+# Title: Render apply_patch FunctionCall diffs and results
+# Status: done
+# Dependencies: 39, 41
+# Priority: high
+# Description: Parse and render diffs originating from Codex session FunctionCall events where `name === "shell"` and the `args` contain an `apply_patch` envelope; correlate with the corresponding result event to display success/failure.
+# Details:
+Scope:
+- Parse `apply_patch` envelopes from FunctionCall events (e.g., example-patch.json) into structured file operations: Add, Delete, Update with hunks.
+- Support diff line types (+, -, context) and hunk headers starting with `@@`.
+- Pair the initiating event with its completion/result event (e.g., example-success-patch.json) using temporal proximity or explicit `call_id` when available.
+- Render a unified diff view per file, reusing our Diff Viewer styling; include small status header (success/failure, exit_code, duration).
+- Provide a toggle between rendered view and raw patch text.
+- Handle headerless or partial patches gracefully; fall back to raw view when parsing fails.
+- Large patch safety: virtualize long diffs, collapse extra hunks with an expand control.
+- Binary/unsupported: show a clear placeholder message.
+
+Data plumbing:
+- Extend the session parser/types to surface `apply_patch` payloads and result metadata.
+- Emit a normalized `ParsedFileChange` model the viewer consumes (add/delete/update + hunks).
+
+UX wiring:
+- From a timeline event card, clicking an `apply_patch` action opens the Diff Viewer anchored to the first affected file; sidebar lists all files within the patch.
+
+Edge cases:
+- Multiple file ops in a single patch.
+- Missing matching result event; show pending/unknown status.
+- Non-zero exit codes; show error styling and any stderr captured.
+
+
+# Test Strategy:
+Fixture-driven manual + unit tests:
+- Load .deepwiki/Diff Viewer Implementation.md to confirm behavior requirements.
+- Use provided example-patch.json and example-success-patch.json to verify parsing, pairing, and rendering.
+- Add unit tests for the patch parser (good path, headerless, malformed). Snapshot-test the rendered viewer for a multi-file patch.
+
+
+# Subtasks:
+## 1. Implement apply_patch parser [done]
+### Dependencies: None
+### Description: Parse the `apply_patch` envelope into structured operations (Add/Delete/Update) and hunks.
+### Details:
+- Input: raw patch text from FunctionCall.args (example-patch.json).
+- Output: `ParsedFileChange[]` with file path, op type, and hunks with lines marked insert/delete/context.
+- Tolerate headerless diffs and trim trailing newlines.
+- Create a small module `src/parsers/applyPatch.ts` with thorough JSDoc.
+
+## 2. Correlate start/result events [done]
+### Dependencies: None
+### Description: Link `apply_patch` FunctionCall with its corresponding result event.
+### Details:
+- Prefer `call_id` when available; otherwise, correlate by temporal proximity within the same session and name.\n- Surface `exit_code`, `duration_seconds`, and any stdout/stderr in the model for the viewer header.
+
+## 3. Wire into Diff Viewer UI [done]
+### Dependencies: None
+### Description: Render parsed file operations using existing Diff Viewer styling and components.
+### Details:
+- Show a status header with success/failure, exit code, and duration.\n- Support multi-file patches via a sidebar list; default to first file.\n- Reuse virtualization and hunk separation patterns from the spec.
+
+## 4. Add Raw/Rendered toggle [done]
+### Dependencies: None
+### Description: Provide a control to switch between raw patch text and rendered diff.
+### Details:
+- Persist selection per-view using component state.\n- Copy/Download raw buttons for convenience (reuse patterns from task_057 where applicable).
+
+## 5. Edge cases and fallbacks [done]
+### Dependencies: None
+### Description: Handle headerless/malformed patches, binary/unsupported content, and very large patches.
+### Details:
+- Gracefully fallback to raw display on parse errors with a short explanation.\n- Collapse/expand long hunks; avoid rendering performance issues.
+
+## 6. Unit tests for parser [done]
+### Dependencies: None
+### Description: Add tests covering successful parse, headerless diffs, and malformed inputs.
+### Details:
+- Place under `tests/unit/parsers/applyPatch.test.ts`.\n- Use fixtures derived from example-patch.json and hand-crafted edge cases.
+
+## 7. Snapshot tests for viewer [done]
+### Dependencies: None
+### Description: Add Storybook stories and snapshot tests for multi-file patches and status header.
+### Details:
+- Create stories under `src/components/DiffViewer/__stories__/ApplyPatch.stories.tsx`.\n- If storyshots are enabled, ensure snapshots cover rendered/inline and collapsed/expanded states.
+
+## 8. Docs: README Diff Viewer [done]
+### Dependencies: None
+### Description: Document apply_patch support, status header, and known limits.
+### Details:
+- Update README Diff Viewer section with examples and a short troubleshooting note (e.g., parsing fallback to raw).
+
+## 9. Dynamic filters for FunctionCall names (apply_patch and others) [done]
+### Dependencies: None
+### Description: Extend filters to target specific FunctionCall names, including an option for only apply_patch. Discover available function/tool names dynamically from the current session and surface them as selectable chips/options.
+### Details:
+Requirements:
+- Discovery: Scan events for type === 'FunctionCall' and build a unique, stable list of `name` values (e.g., 'shell', 'web.run', 'git', etc.). If args indicate an apply_patch envelope, expose an additional granular option 'apply_patch'.
+- UI: In the Filters toolbar, add a secondary control when Type == 'FunctionCall' or 'ToolCalls' showing dynamic function/tool names with counts. Include a dedicated 'apply_patch' option that filters only `shell` calls where args.command[0] === 'apply_patch'.
+- Behavior: Combine with existing type/role/search/path filters. Multiple selections allowed; default to 'All'. Counts should reflect current search/path filters.
+- State: Store selection in URL hash (e.g., `fn=shell,web.run,apply_patch`) similar to other filters.
+- Performance: Use memoized selectors over the filtered list and avoid recompute per item.
+- Tests: Unit test the name extraction and the filtering predicate for apply_patch vs generic shell calls. Add a quick UI smoke test if jsdom is enabled.
+Dependencies: 35 (timeline plumbing), 40 (advanced filters).
+Acceptance: Selecting 'apply_patch' shows only apply_patch FunctionCall events; selecting other names filters accordingly. Counts and URL state update correctly.
+

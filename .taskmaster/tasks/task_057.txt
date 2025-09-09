@@ -1,6 +1,6 @@
 # Task ID: 57
 # Title: Complete Diff Viewer Functionality
-# Status: pending
+# Status: in-progress
 # Dependencies: None
 # Priority: medium
 # Description: Make the Diff Viewer robust for real-world diffs and add essential controls.

@@ -1,6 +1,6 @@
 # Task ID: 55
 # Title: Reload Sessions Button (re-scan without page refresh)
-# Status: pending
+# Status: in-progress
 # Dependencies: None
 # Priority: medium
 # Description: Add a UI button to re-run session auto-discovery without a full page reload, updating the quick chips and All Sessions list.
@@ -13,37 +13,37 @@
 Manual: add a new .jsonl under ./.codex/sessions while dev server runs, click Reload; verify it appears in chips and list. Remove a file, click Reload; verify it's removed. If Vite does not pick it up immediately, note the limitation in README and suggest a page refresh as fallback.
 
 # Subtasks:
-## 1. Refactor `useAutoDiscovery` Hook to Expose `reload` and `loading` State [pending]
+## 1. Refactor `useAutoDiscovery` Hook to Expose `reload` and `loading` State [done]
 ### Dependencies: None
 ### Description: Modify the `useAutoDiscovery` hook in `src/hooks/useAutoDiscovery.ts` to support manual re-triggering. This involves changing the core logic from a one-time `useEffect` to an on-demand function and adding a loading state.
 ### Details:
 In `src/hooks/useAutoDiscovery.ts`, refactor the existing `useEffect` logic into a `useCallback` function, let's call it `scan`. This function will contain the logic for processing the `import.meta.glob` results. Introduce a `useState` boolean for `isLoading`. The hook should call `scan` once on mount. It should return the existing `discoveredSessions` and `sessionCount`, plus the new `isLoading` state and the `scan` function (exposed as `reload`).
 
-## 2. Add Reload Button to Main App View [pending]
+## 2. Add Reload Button to Main App View [done]
 ### Dependencies: 55.1
 ### Description: Integrate the new `reload` functionality into the main application UI by adding a button next to the session quick-view chips.
 ### Details:
 In `src/App.tsx`, update the call to `useAutoDiscovery` to receive the `reload` function and `isLoading` state. Add a new button, preferably an icon button with a 'refresh' icon, next to the session chips container. The button's `onClick` handler should call the `reload` function. The button should be disabled when `isLoading` is true.
 
-## 3. Add Reload Button to `AllSessionsView` Component [pending]
+## 3. Add Reload Button to `AllSessionsView` Component [done]
 ### Dependencies: 55.1
 ### Description: Add a consistent reload button to the header of the `AllSessionsView` modal/page for a unified user experience.
 ### Details:
 In `src/App.tsx`, pass the `reload` function and `isLoading` state as props to the `AllSessionsView` component. Modify `src/components/AllSessionsView.tsx` to accept these new props. Add a reload button to the component's header, similar to the one in the main view. This button should also call `reload` and be disabled when `isLoading` is true.
 
-## 4. Implement UI Spinner for Loading Feedback [pending]
+## 4. Implement UI Spinner for Loading Feedback [done]
 ### Dependencies: 55.2, 55.3
 ### Description: Provide clear visual feedback during the re-scan process by displaying a spinner next to the reload buttons.
 ### Details:
 Identify an existing spinner component in the project or create a simple CSS-based one. In both `src/App.tsx` and `src/components/AllSessionsView.tsx`, conditionally render this spinner next to the reload button when the `isLoading` state is true. The refresh icon can be hidden and replaced by the spinner during the loading state.
 
-## 5. Implement Debounce on the `reload` Function [pending]
+## 5. Implement Debounce on the `reload` Function [done]
 ### Dependencies: 55.1
 ### Description: Prevent excessive re-scans from rapid button clicks by adding a debounce mechanism to the `reload` function within the `useAutoDiscovery` hook.
 ### Details:
 In `src/hooks/useAutoDiscovery.ts`, modify the exposed `reload` function. Use a combination of `useRef` to hold a timeout ID and `setTimeout`/`clearTimeout` to create a debounce effect. A debounce delay of 300-500ms is appropriate. This ensures that even if the button is clicked multiple times in quick succession, the expensive `scan` logic only runs once after the user stops clicking.
 
-## 6. Write Unit Tests for `useAutoDiscovery` Hook [pending]
+## 6. Write Unit Tests for `useAutoDiscovery` Hook [done]
 ### Dependencies: 55.1, 55.5
 ### Description: Create unit tests for the `useAutoDiscovery` hook to ensure its logic is correct, including the initial load, reload functionality, loading state, and debouncing.
 ### Details:

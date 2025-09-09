@@ -1,6 +1,6 @@
 # Task ID: 56
 # Title: Newest-First Sorting for Detected Sessions
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: medium
 # Description: Add robust newest-first sorting for auto-detected sessions and All Sessions list by parsing timestamps from filenames/directories, with fallback to lexicographic order.
@@ -14,7 +14,7 @@
 Manual: seed mixed session filenames; verify order matches expected timestamps. Unit test the parser against representative names and directory patterns.
 
 # Subtasks:
-## 1. Create Timestamp Parsing Utility [pending]
+## 1. Create Timestamp Parsing Utility [done]
 ### Dependencies: None
 ### Description: Implement a utility function to extract a timestamp from a file path string. This function will be the core of the sorting logic.
 ### Details:
@@ -24,7 +24,7 @@ Create a new file `src/utils/timestamp.ts`. Inside, export a function `parseTime
 3. Directory structures like `YYYY/MM/DD/`.
 Return the parsed timestamp as epoch milliseconds, or `null` if no recognizable timestamp is found.
 
-## 2. Integrate Timestamp Parsing into `useAutoDiscovery` Hook [pending]
+## 2. Integrate Timestamp Parsing into `useAutoDiscovery` Hook [done]
 ### Dependencies: 56.1
 ### Description: Modify the auto-discovery hook to compute and attach a `sortKey` to each discovered session object.
 ### Details:
@@ -34,7 +34,7 @@ In `src/hooks/useAutoDiscovery.ts`:
 3. Within the `useEffect` that processes the `glob` results, call `parseTimestampFromPath` for each file's path.
 4. Attach the returned epoch milliseconds (or `null`) to the new `sortKey` property of the `DiscoveredSession` object being created.
 
-## 3. Add Sort Toggle UI to All Sessions Modal [pending]
+## 3. Add Sort Toggle UI to All Sessions Modal [done]
 ### Dependencies: None
 ### Description: Implement the UI controls for switching between 'Newest' and 'Name' sorting within the 'All Sessions' list.
 ### Details:
@@ -44,7 +44,7 @@ In `src/components/AllSessionsModal.tsx`:
 3. The onClick handler for these controls should update the `sortOrder` state.
 4. Ensure the default selection is 'Newest'.
 
-## 4. Implement Stable Sorting Logic [pending]
+## 4. Implement Stable Sorting Logic [done]
 ### Dependencies: 56.2, 56.3
 ### Description: Apply the sorting logic based on the selected sort order, ensuring a stable sort and proper fallback for items without a timestamp.
 ### Details:
@@ -54,7 +54,7 @@ In `src/components/AllSessionsModal.tsx`, replace the existing `a.name.localeCom
 3. If `sortOrder` is `'name'`, sort by `a.name.localeCompare(b.name)`.
 4. In `src/components/WelcomeScreen.tsx`, apply the default 'newest' sorting logic to the session chips it displays from `useAutoDiscovery`. No UI toggle is needed here, just the default sort behavior.
 
-## 5. Write Unit Tests for Timestamp Parser [pending]
+## 5. Write Unit Tests for Timestamp Parser [done]
 ### Dependencies: 56.1
 ### Description: Create a suite of unit tests to ensure the `parseTimestampFromPath` utility is robust and handles various path formats correctly.
 ### Details:
@@ -65,7 +65,7 @@ Using Vitest (or the project's testing framework), write tests for `parseTimesta
 - Paths with malformed or invalid dates.
 - Edge cases like paths with multiple potential timestamps (ensure priority is handled correctly).
 
-## 6. Update README with Sorting Behavior Documentation [pending]
+## 6. Update README with Sorting Behavior Documentation [done]
 ### Dependencies: None
 ### Description: Document the new sorting feature, its default behavior, and the filename patterns it recognizes.
 ### Details:

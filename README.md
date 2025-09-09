@@ -48,6 +48,14 @@ Diff Viewer
 - The Diff Viewer uses `@monaco-editor/react` + `monaco-editor`, which are listed in `package.json`.
 - It is lazy-loaded at runtime. If the modules are not yet installed, a plain fallback view is shown.
 - Open it from any `FileChange` card via the “Open diff” button.
+- FunctionCall apply_patch support: when a `FunctionCall` event invokes the `shell` tool with an `apply_patch` envelope, the viewer parses the patch into per-file diffs and renders them inline on the event card. A status pill shows success/failure if result metadata is available. Use the Raw/Rendered toggle to copy or download the original patch text.
+
+Themes and Editor Theme
+-----------------------
+
+- Theme: Use the Theme picker (top of the page) to choose a color theme (`teal`, `rose`, `indigo`) and Mode (`light`, `dark`, `system`). The app persists your choice and honors system dark mode when `system` is selected.
+- Contrast guard: If primary/text contrast falls below recommended thresholds, an inline warning appears near the picker.
+- Diff Viewer editor theme: Each Diff Viewer instance has a small selector (auto/light/dark). `auto` tracks the app mode; `light`/`dark` override the Monaco editor theme for that view only.
 
 Notes
 -----

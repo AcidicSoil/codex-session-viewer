@@ -1,6 +1,6 @@
 # Task ID: 50
 # Title: Implement Artifact Extraction and Download
-# Status: pending
+# Status: review
 # Dependencies: 31
 # Priority: low
 # Description: Provide a mechanism to locate and download artifacts generated during the session as a bundled zip file.

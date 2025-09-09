@@ -1,6 +1,6 @@
 # Task ID: 41
 # Title: Add Syntax Highlighting to Diff Viewer
-# Status: done
+# Status: in-progress
 # Dependencies: 39
 # Priority: medium
 # Description: Configure the Monaco diff editor to apply syntax highlighting based on the language of the file being viewed.

@@ -1,0 +1,8 @@
+{
+  "type": "FunctionCall",
+  "name": "function",
+  "result": {
+    "output": "Success. Updated the following files:\nM src/export/columns.ts\n",
+    "metadata": { "exit_code": 0, "duration_seconds": 0 }
+  }
+}

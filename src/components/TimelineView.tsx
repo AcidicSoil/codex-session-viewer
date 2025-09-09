@@ -119,15 +119,22 @@ export function TimelineView<T>({
         return null
       })()}
       <div style={{ height: totalHeight, position: 'relative' }}>
-        {visible.map((i) => (
-          <Row
-            key={keyForIndex ? keyForIndex(items[i]!, i) : i}
-            top={offsets[i]!}
-            onMeasured={(h) => handleMeasured(i, h)}
-          >
-            {renderItem(items[i]!, i)}
-          </Row>
-        ))}
+        {visible.map((i) => {
+          const item = items[i]
+          if (item === undefined || item === null) return null
+          let key: React.Key = i
+          try { key = keyForIndex ? keyForIndex(item, i) : i } catch {}
+          const top = offsets[i] ?? 0
+          return (
+            <Row
+              key={key}
+              top={top}
+              onMeasured={(h) => handleMeasured(i, h)}
+            >
+              {renderItem(item, i)}
+            </Row>
+          )
+        })}
       </div>
     </div>
   )

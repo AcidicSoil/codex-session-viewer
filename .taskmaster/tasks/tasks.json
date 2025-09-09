@@ -270,7 +270,7 @@
             "description": "Create a dedicated service for IndexedDB operations. Define the database schema, including the object store, keys, and indexes for storing session metadata.",
             "dependencies": [],
             "details": "Create a new file `src/lib/session-db.ts`. Use the `idb` library (if available, otherwise plain IndexedDB) to set up a database named `codex-session-viewer`. Create an object store named `sessions`. The key path should be the session ID from `SessionMeta`. Define an index on `lastOpened` for sorting. The stored object type, `SessionLibraryEntry`, should be defined in `src/types/session.ts` and include the session `id`, `fileName`, `lastOpened` (timestamp), the full `SessionMeta` object, and an optional `fileHandle` for re-opening.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify the database and object store are created correctly in the browser's developer tools."
           },
           {
@@ -281,7 +281,7 @@
               "48.1"
             ],
             "details": "In `src/lib/session-db.ts`, export asynchronous functions: `addSession(entry: SessionLibraryEntry)`, `getAllSessions(): Promise<SessionLibraryEntry[]>`, and `deleteSession(sessionId: string)`. The `addSession` function should perform an 'upsert' (add or update). `getAllSessions` should retrieve all entries, sorted by `lastOpened` in descending order. `deleteSession` will remove an entry by its ID.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually call these functions from the browser console to add, retrieve, and delete dummy data to confirm they work as expected."
           },
           {
@@ -292,7 +292,7 @@
               "48.2"
             ],
             "details": "Locate the `useFileLoader` hook in `src/hooks/useFileLoader.ts`. In the function that processes a file (e.g., `loadFile` or a similar function), after the `SessionMeta` is successfully parsed, call the `addSession` function from `src/lib/session-db.ts`. Construct the `SessionLibraryEntry` object using the `sessionMeta`, the `file.name`, a `new Date().getTime()` for `lastOpened`, and the `fileHandle` if available (from File System Access API).",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Open a `.jsonl` file. Use browser dev tools to inspect IndexedDB and verify that a corresponding session entry has been created with the correct metadata."
           },
           {
@@ -303,7 +303,7 @@
               "48.2"
             ],
             "details": "Create a new component `src/components/SessionLibrary.tsx`. This component will use a `useEffect` hook to call `getAllSessions()` on mount and store the results in its state. It will render a list of sessions, displaying key information for each entry like `fileName`, `meta.application`, and a human-readable `lastOpened` time. Include a placeholder for 'Open' and 'Remove' buttons for each item.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Temporarily add this component to `App.tsx` to verify it correctly fetches and displays the list of sessions previously saved to IndexedDB."
           },
           {
@@ -326,7 +326,7 @@
               "48.4"
             ],
             "details": "In `SessionLibrary.tsx`, implement the button logic. The 'Remove' button should call the `deleteSession` DB function and update the component's state to remove the item from the list. The 'Open' button should use the `fileHandle` (if it exists on the entry) to call the appropriate loading function from the `useFileLoader` hook. If no `fileHandle` exists, the 'Open' button should be disabled, with a tooltip explaining that the file must be re-opened manually (e.g., via drag-and-drop).",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Click 'Remove' on a session and verify it disappears from the list and the DB. Click 'Open' on a session that was opened with a file picker and verify it reloads."
           },
           {
@@ -338,7 +338,7 @@
               "48.6"
             ],
             "details": "In `src/lib/session-db.ts`, wrap all IndexedDB API calls in `try...catch` blocks. Handle potential errors, such as `QuotaExceededError` or DB initialization failures. If the database cannot be used, the Session Library feature should fail gracefully (e.g., the UI component shows an informative message or does not render). Update `README.md` to describe the Session Library feature, its benefits, and any limitations (e.g., the re-open mechanism).",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test in a browser's private/incognito mode where IndexedDB might be disabled or restricted to ensure the application does not crash. Review the updated `README.md` for clarity."
           }
         ]
@@ -400,7 +400,7 @@
         "id": 53,
         "title": "Package as Web App or NPM Package (replace Electron)",
         "description": "Provide distribution paths as a static web app and/or an installable npm package so users can either host the viewer or embed it in their apps.",
-        "status": "pending",
+        "status": "deferred",
         "dependencies": [
           29,
           46
@@ -491,7 +491,7 @@
         "description": "Add a UI to list and search all auto-detected session files (from .codex/sessions, sessions, artifacts/sessions) and allow loading any of them. Keep it lightweight, client-only. Integrate with current loader.",
         "details": "- Build a reusable component `SessionsList` that accepts discovered assets and exposes an `onSelect` callback. \n- Add search, count badge, and sort by filename (desc) with quick actions (copy path, open). \n- Wire into App: show \"View all (N)\" near the session chips and open the list in a modal/card. \n- Reuse existing `handleFile` to load a selected asset (fetch -> blob -> File). \n- Keep discovery in `useAutoDiscovery()`; no runtime fs access. \n- Add docs to README under Usage.",
         "testStrategy": "Manual: add multiple sample .jsonl files under ./.codex/sessions and ./sessions, run dev, click \"View all (N)\", filter, and load a file. Verify Timeline renders and Diff Viewer opens for FileChange events.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [],
         "priority": "medium",
         "subtasks": [
@@ -501,7 +501,7 @@
             "description": "Create the basic structure for the `SessionsList` component. It will be a reusable component responsible for displaying a list of discovered session files.",
             "dependencies": [],
             "details": "Create a new file `src/components/SessionsList.tsx`. Define the component to accept `sessions: DiscoveredSession[]` as a prop and an `onSelect: (session: DiscoveredSession) => void` callback. Use Chakra UI components (`List`, `ListItem`, `Flex`, `Box`, `Text`) to render a basic, unstyled list of session paths. For now, the `onSelect` can be triggered via a simple `onClick` on each list item. Include placeholder buttons for 'Copy Path' and 'Open' for each item.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Use Storybook or a temporary mount in `App.tsx` to render the component with mock `DiscoveredSession` data and verify the list appears."
           },
           {
@@ -512,7 +512,7 @@
               "54.1"
             ],
             "details": "In `SessionsList.tsx`, add a state for the search query using a Chakra `Input` component. Implement filtering logic to show only sessions whose paths match the query (case-insensitive). Add a `Heading` that includes a count badge, e.g., `All Sessions ({filteredSessions.length})`. Implement sorting logic to display sessions in descending order by filename by default. Use `useMemo` to optimize the filtering and sorting operations.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "In the component's test environment, verify that typing in the search input filters the list correctly. Verify the count badge updates. Verify the list is sorted by filename descending by default."
           },
           {
@@ -523,7 +523,7 @@
               "54.1"
             ],
             "details": "In `src/App.tsx`, use the `useDisclosure` hook from Chakra UI to manage the modal's state. Add a `Button` or `Chip` next to the quick-access session chips with the text `View all ({discoveredSessions.length})`. The `onClick` of this button should call the `onOpen` function from `useDisclosure`. Render a Chakra `Modal` (`Modal`, `ModalOverlay`, `ModalContent`, `ModalHeader`, `ModalBody`, `ModalCloseButton`) which contains the `SessionsList` component. Pass the `discoveredSessions` from the `useAutoDiscovery` hook to the component.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run the app. Verify the 'View all (N)' button appears with the correct count. Clicking it should open a modal displaying the full list of sessions from `useAutoDiscovery`."
           },
           {
@@ -534,7 +534,7 @@
               "54.3"
             ],
             "details": "In `App.tsx`, define the function that will be passed as the `onSelect` prop to `SessionsList`. This function will receive the selected `DiscoveredSession`. Inside this function, perform the following: 1. Use the `fetch` API to get the session file content from its public path (`session.path`). 2. Convert the response to a `Blob`. 3. Create a `new File(...)` object from the blob and filename. 4. Call the existing `handleFile` function (from the `useSession` hook) with the new `File` object. 5. Close the modal using the `onClose` function from `useDisclosure`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Open the 'All Sessions' modal, click on a session. Verify the modal closes and the application loads the selected session, displaying its timeline and metadata."
           },
           {
@@ -545,7 +545,7 @@
               "54.2"
             ],
             "details": "In `SessionsList.tsx`: 1. If the `sessions` prop is empty, display a message like 'No discovered sessions found.'. 2. If the search filter yields no results, display 'No sessions match your search.'. 3. Implement the 'Copy Path' button using `navigator.clipboard.writeText(session.path)`. Provide user feedback with a Chakra `useToast`. 4. Implement the 'Open' button as an `<a>` tag that opens the raw session file (`.jsonl`) in a new tab.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually test the empty state by providing an empty array. Test the 'no results' state by searching for gibberish. Test the 'Copy Path' and 'Open' buttons for a few sessions to ensure they work as expected."
           },
           {
@@ -556,8 +556,17 @@
               "54.3"
             ],
             "details": "Edit the `README.md` file. Add a section under 'Usage' or 'Features' that describes the session auto-discovery and the 'All Sessions' modal. Explain how to access it (by clicking the 'View all' button) and its functionalities, including search and loading a session.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Review the `README.md` file to ensure the new documentation is clear, concise, and accurately reflects the feature's functionality."
+          },
+          {
+            "id": 7,
+            "title": "Bulk content scan + grouping in All Sessions",
+            "description": "Add a content filter that scans session files in bulk and marks matches; group the All Sessions list into Matches and Others sections with indicators and a matches-only toggle.",
+            "details": "- Add an input and buttons to scan all discovered sessions for a text needle (e.g., 'apply_patch'), reading first ~256KB per file via fetch; show progress.\n- Mark matching sessions (green dot) and group the list into 'Matches' and 'Others' with sticky headers.\n- Provide 'Matches only' and 'Clear marks' actions.\n- Fully guard against network failures and type errors; no blank screens.\n- Include a preset to scan for 'apply_patch'.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 54
           }
         ]
       },
@@ -645,7 +654,7 @@
         "description": "Add robust newest-first sorting for auto-detected sessions and All Sessions list by parsing timestamps from filenames/directories, with fallback to lexicographic order.",
         "details": "- Parse timestamps from common patterns like `rollout-YYYY-MM-DDTHH-mm-ss`, `YYYY/MM/DD/...`, and ISO-like tokens in the path.\n- Compute and cache a `sortKey` (epoch ms) per asset.\n- Provide a UI toggle between `Newest` and `Name` sort, defaulting to `Newest`.\n- Ensure sorting is stable and resilient when timestamps are missing.",
         "testStrategy": "Manual: seed mixed session filenames; verify order matches expected timestamps. Unit test the parser against representative names and directory patterns.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [],
         "priority": "medium",
         "subtasks": [
@@ -698,7 +707,7 @@
               "56.1"
             ],
             "details": "Create a new test file `src/utils/timestamp.test.ts`.\nUsing Vitest (or the project's testing framework), write tests for `parseTimestampFromPath` that cover:\n- Each of the specified patterns (`rollout-`, ISO-like, `YYYY/MM/DD`).\n- Paths containing no timestamp (should return `null`).\n- Paths with malformed or invalid dates.\n- Edge cases like paths with multiple potential timestamps (ensure priority is handled correctly).",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run `npm test` (or equivalent) and ensure all tests pass."
           },
           {
@@ -922,7 +931,7 @@
         "description": "Let users select custom theme colors and choose Light, Dark, or System mode. Persist preferences and apply across the UI using Tailwind + CSS variables.",
         "details": "Objective: Provide user-controlled theming with custom colors and light/dark (including system) mode. Keep accessibility and persistence in mind.\n\nAcceptance Criteria:\n- User can toggle Light/Dark/System; System tracks OS changes via `prefers-color-scheme`.\n- User can pick primary/accent colors; UI updates live via CSS variables; changes persist across reloads.\n- Default theme remains unchanged when no customizations are set.\n- Contrast guidance shown when selected colors risk AA violations (informational warning is sufficient).\n- Works with existing Tailwind setup; no major layout regressions.\n\nImplementation Notes:\n- Tailwind: use CSS variables for color tokens (e.g., `--color-primary`, `--color-accent`) and map them in `tailwind.config.*` so utilities (bg/text/border) reflect user choices.\n- State: store in Zustand (mode: \"light\" | \"dark\" | \"system\"; colors: HEX/HSL); persist to `localStorage` with a small versioned schema and migration.\n- UI: Headless UI modal/drawer with live preview, reset-to-default, and apply actions.\n- Accessibility: basic contrast check and warning.\n- Testing: unit tests for state persistence and theme resolution; smoke test that toggling mode flips root class/attributes and updates CSS variables.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [],
         "priority": "medium",
         "subtasks": [
@@ -940,7 +949,7 @@
             "title": "Wire Tailwind + CSS variables",
             "description": "Introduce CSS variables for theme tokens and map them to Tailwind theme via `tailwind.config.*` extensions. Support `[data-theme=\"dark\"]` or `class=\"dark\"` toggling and live updates.",
             "details": "Files: `src/styles/theme.css` (variables), `tailwind.config.ts` (extend colors using CSS vars), ensure dark mode strategy aligns with existing config. Provide a safe default palette.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "59.1"
             ],
@@ -951,7 +960,7 @@
             "title": "Add Zustand theme store + persistence",
             "description": "Create a theme slice with mode (light/dark/system) and color tokens. Add localStorage persistence and hydration (with schema version). Expose selectors for resolved mode and computed variables.",
             "details": "Files: `src/state/theme.ts`. Include migration from older schema if present. Provide helper to apply root attributes/classes on change.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "59.1"
             ],
@@ -962,7 +971,7 @@
             "title": "Build Theme Picker UI (modal)",
             "description": "Create a Headless UI modal for theme settings: System/Light/Dark toggle; color pickers for primary/accent; live preview; Reset to default.",
             "details": "Files: `src/components/ThemePicker.tsx` and integration in a settings menu. Use `<input type=\"color\">` initially; structure to allow future advanced picker.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "59.2"
             ],
@@ -973,7 +982,7 @@
             "title": "Apply theme to app and root toggling",
             "description": "Ensure mode toggling sets the correct root attribute/class and CSS variables update across the app. Provide a small hook to subscribe and apply changes.",
             "details": "Files: `src/appTheme.ts` or `src/hooks/useApplyTheme.ts`. Verify no FOUC and initial mode resolves before first paint where possible.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "59.2",
               "59.3"
@@ -985,7 +994,7 @@
             "title": "Accessibility: contrast checks and warnings",
             "description": "Add a simple contrast checker for chosen primary/accent against surfaces. Show non-blocking warnings when selections risk failing WCAG AA.",
             "details": "Utility function + inline warning in the Theme Picker. Provide links to documentation for guidance.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 59
           },
@@ -994,7 +1003,7 @@
             "title": "Tests: theme store, persistence, and UI smoke",
             "description": "Unit tests for theme store (mode resolution, persistence, migrations). UI smoke test to ensure toggling mode flips root class and variables update.",
             "details": "Files: `src/state/theme.test.ts`, `src/components/ThemePicker.test.tsx` (lightweight).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "59.3"
             ],
@@ -1005,10 +1014,19 @@
             "title": "Docs: Theme settings and tips",
             "description": "Document theme settings in README and docs/theme.md: how to open picker, modes, persistence, and troubleshooting (e.g., contrast warnings).",
             "details": "Include screenshots/GIFs where useful. Mention System mode behavior and how it responds to OS changes.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "59.5"
             ],
+            "parentTaskId": 59
+          },
+          {
+            "id": 9,
+            "title": "Sync Diff Viewer with app theme + per-view editor theme picker",
+            "description": "Make the Monaco DiffViewer honor app light/dark mode and add a per-view picker (auto/light/dark).",
+            "details": "- Detect app mode via theme store and data-mode attribute and set Monaco theme to `vs` or `vs-dark` accordingly when editor theme is `auto`.\n- Add a small select (auto/light/dark) in the DiffViewer header to override per-view.\n- Keep word-wrap/split toggles as-is; ensure no runtime errors when monaco packages are missing (lazy already covers).",
+            "status": "done",
+            "dependencies": [],
             "parentTaskId": 59
           }
         ]
@@ -1037,7 +1055,7 @@
             "title": "Implement recursive scanner + hashing",
             "description": "Build utilities to traverse selected directory, filter by globs, and compute content hashes (Web Crypto) + sizes. Yield progress incrementally.",
             "details": "Files: src/scanner/scan.ts, src/scanner/hash.ts. Use async generators and chunked reads; support cancel via AbortSignal.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 60
           },
@@ -1046,7 +1064,7 @@
             "title": "Create initial snapshot index + persistence",
             "description": "Store path→{hash,size} plus handle references in IndexedDB. Support loading/saving named snapshots per workspace.",
             "details": "Files: src/scanner/indexStore.ts using existing IndexedDB service (if available).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 60
           },
@@ -1120,16 +1138,112 @@
             "title": "Docs: workspace scanning and limitations",
             "description": "Document how to connect a folder, how rescans work, and limitations (browser support, permissions, no live watchers). Include troubleshooting for common errors.",
             "details": "Add docs/scanner.md and update README with a new section.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 60
+          }
+        ]
+      },
+      {
+        "id": 61,
+        "title": "Render apply_patch FunctionCall diffs and results",
+        "description": "Parse and render diffs originating from Codex session FunctionCall events where `name === \"shell\"` and the `args` contain an `apply_patch` envelope; correlate with the corresponding result event to display success/failure.",
+        "details": "Scope:\n- Parse `apply_patch` envelopes from FunctionCall events (e.g., example-patch.json) into structured file operations: Add, Delete, Update with hunks.\n- Support diff line types (+, -, context) and hunk headers starting with `@@`.\n- Pair the initiating event with its completion/result event (e.g., example-success-patch.json) using temporal proximity or explicit `call_id` when available.\n- Render a unified diff view per file, reusing our Diff Viewer styling; include small status header (success/failure, exit_code, duration).\n- Provide a toggle between rendered view and raw patch text.\n- Handle headerless or partial patches gracefully; fall back to raw view when parsing fails.\n- Large patch safety: virtualize long diffs, collapse extra hunks with an expand control.\n- Binary/unsupported: show a clear placeholder message.\n\nData plumbing:\n- Extend the session parser/types to surface `apply_patch` payloads and result metadata.\n- Emit a normalized `ParsedFileChange` model the viewer consumes (add/delete/update + hunks).\n\nUX wiring:\n- From a timeline event card, clicking an `apply_patch` action opens the Diff Viewer anchored to the first affected file; sidebar lists all files within the patch.\n\nEdge cases:\n- Multiple file ops in a single patch.\n- Missing matching result event; show pending/unknown status.\n- Non-zero exit codes; show error styling and any stderr captured.\n",
+        "testStrategy": "Fixture-driven manual + unit tests:\n- Load .deepwiki/Diff Viewer Implementation.md to confirm behavior requirements.\n- Use provided example-patch.json and example-success-patch.json to verify parsing, pairing, and rendering.\n- Add unit tests for the patch parser (good path, headerless, malformed). Snapshot-test the rendered viewer for a multi-file patch.\n",
+        "status": "done",
+        "dependencies": [
+          39,
+          41
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement apply_patch parser",
+            "description": "Parse the `apply_patch` envelope into structured operations (Add/Delete/Update) and hunks.",
+            "details": "- Input: raw patch text from FunctionCall.args (example-patch.json).\n- Output: `ParsedFileChange[]` with file path, op type, and hunks with lines marked insert/delete/context.\n- Tolerate headerless diffs and trim trailing newlines.\n- Create a small module `src/parsers/applyPatch.ts` with thorough JSDoc.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
+          },
+          {
+            "id": 2,
+            "title": "Correlate start/result events",
+            "description": "Link `apply_patch` FunctionCall with its corresponding result event.",
+            "details": "- Prefer `call_id` when available; otherwise, correlate by temporal proximity within the same session and name.\\n- Surface `exit_code`, `duration_seconds`, and any stdout/stderr in the model for the viewer header.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
+          },
+          {
+            "id": 3,
+            "title": "Wire into Diff Viewer UI",
+            "description": "Render parsed file operations using existing Diff Viewer styling and components.",
+            "details": "- Show a status header with success/failure, exit code, and duration.\\n- Support multi-file patches via a sidebar list; default to first file.\\n- Reuse virtualization and hunk separation patterns from the spec.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
+          },
+          {
+            "id": 4,
+            "title": "Add Raw/Rendered toggle",
+            "description": "Provide a control to switch between raw patch text and rendered diff.",
+            "details": "- Persist selection per-view using component state.\\n- Copy/Download raw buttons for convenience (reuse patterns from task_057 where applicable).",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
+          },
+          {
+            "id": 5,
+            "title": "Edge cases and fallbacks",
+            "description": "Handle headerless/malformed patches, binary/unsupported content, and very large patches.",
+            "details": "- Gracefully fallback to raw display on parse errors with a short explanation.\\n- Collapse/expand long hunks; avoid rendering performance issues.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
+          },
+          {
+            "id": 6,
+            "title": "Unit tests for parser",
+            "description": "Add tests covering successful parse, headerless diffs, and malformed inputs.",
+            "details": "- Place under `tests/unit/parsers/applyPatch.test.ts`.\\n- Use fixtures derived from example-patch.json and hand-crafted edge cases.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
+          },
+          {
+            "id": 7,
+            "title": "Snapshot tests for viewer",
+            "description": "Add Storybook stories and snapshot tests for multi-file patches and status header.",
+            "details": "- Create stories under `src/components/DiffViewer/__stories__/ApplyPatch.stories.tsx`.\\n- If storyshots are enabled, ensure snapshots cover rendered/inline and collapsed/expanded states.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
+          },
+          {
+            "id": 8,
+            "title": "Docs: README Diff Viewer",
+            "description": "Document apply_patch support, status header, and known limits.",
+            "details": "- Update README Diff Viewer section with examples and a short troubleshooting note (e.g., parsing fallback to raw).",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
+          },
+          {
+            "id": 9,
+            "title": "Dynamic filters for FunctionCall names (apply_patch and others)",
+            "description": "Extend filters to target specific FunctionCall names, including an option for only apply_patch. Discover available function/tool names dynamically from the current session and surface them as selectable chips/options.",
+            "details": "Requirements:\n- Discovery: Scan events for type === 'FunctionCall' and build a unique, stable list of `name` values (e.g., 'shell', 'web.run', 'git', etc.). If args indicate an apply_patch envelope, expose an additional granular option 'apply_patch'.\n- UI: In the Filters toolbar, add a secondary control when Type == 'FunctionCall' or 'ToolCalls' showing dynamic function/tool names with counts. Include a dedicated 'apply_patch' option that filters only `shell` calls where args.command[0] === 'apply_patch'.\n- Behavior: Combine with existing type/role/search/path filters. Multiple selections allowed; default to 'All'. Counts should reflect current search/path filters.\n- State: Store selection in URL hash (e.g., `fn=shell,web.run,apply_patch`) similar to other filters.\n- Performance: Use memoized selectors over the filtered list and avoid recompute per item.\n- Tests: Unit test the name extraction and the filtering predicate for apply_patch vs generic shell calls. Add a quick UI smoke test if jsdom is enabled.\nDependencies: 35 (timeline plumbing), 40 (advanced filters).\nAcceptance: Selecting 'apply_patch' shows only apply_patch FunctionCall events; selecting other names filters accordingly. Counts and URL state update correctly.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 61
           }
         ]
       }
     ],
     "metadata": {
       "created": "2025-09-08T17:44:30.733Z",
-      "updated": "2025-09-09T15:19:44.979Z",
+      "updated": "2025-09-09T23:45:55.823Z",
       "description": "Tasks for master context"
     }
   }

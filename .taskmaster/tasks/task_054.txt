@@ -52,3 +52,13 @@ In `SessionsList.tsx`: 1. If the `sessions` prop is empty, display a message lik
 ### Details:
 Edit the `README.md` file. Add a section under 'Usage' or 'Features' that describes the session auto-discovery and the 'All Sessions' modal. Explain how to access it (by clicking the 'View all' button) and its functionalities, including search and loading a session.
 
+## 7. Bulk content scan + grouping in All Sessions [done]
+### Dependencies: None
+### Description: Add a content filter that scans session files in bulk and marks matches; group the All Sessions list into Matches and Others sections with indicators and a matches-only toggle.
+### Details:
+- Add an input and buttons to scan all discovered sessions for a text needle (e.g., 'apply_patch'), reading first ~256KB per file via fetch; show progress.
+- Mark matching sessions (green dot) and group the list into 'Matches' and 'Others' with sticky headers.
+- Provide 'Matches only' and 'Clear marks' actions.
+- Fully guard against network failures and type errors; no blank screens.
+- Include a preset to scan for 'apply_patch'.
+
