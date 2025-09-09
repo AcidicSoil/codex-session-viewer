@@ -1,0 +1,11 @@
+# Task ID: 35
+# Title: Build Virtualized Timeline for Events
+# Status: done
+# Dependencies: 31
+# Priority: high
+# Description: Implement the main chronological event stream using a virtualized list to ensure performance with a large number of events.
+# Details:
+Use a library like `react-window` to render only the visible event items. The list will be fed the `events` array from the `ParsedSession` object.
+
+# Test Strategy:
+Test with a session containing thousands of events to confirm smooth scrolling and low memory usage. Interaction latency should be < 100ms.

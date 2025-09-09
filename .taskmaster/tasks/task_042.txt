@@ -1,0 +1,11 @@
+# Task ID: 42
+# Title: Create Command History Timeline
+# Status: done
+# Dependencies: 40
+# Priority: medium
+# Description: Implement a dedicated view or filter that isolates `LocalShellCall` events to show a clear history of commands and their outputs.
+# Details:
+This could be a special filter on the main timeline or a separate panel. It should clearly pair each command with its corresponding standard output and error streams.
+
+# Test Strategy:
+Manual test: Load a session with shell commands and activate the command view. Verify that all commands and their outputs are displayed chronologically and are easy to read.

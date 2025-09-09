@@ -1,0 +1,11 @@
+# Task ID: 49
+# Title: Optimize Large-File Parsing with a Web Worker
+# Status: deferred
+# Dependencies: 31
+# Priority: low
+# Description: Move the JSONL parsing logic into a Web Worker to prevent it from blocking the main UI thread when opening very large files.
+# Details:
+Refactor the parser to run in a separate worker script. Use `postMessage` to communicate parsing progress, final results, or errors back to the main thread, which then updates the UI.
+
+# Test Strategy:
+Test loading a very large file (e.g., 100MB+) and verify that the UI remains responsive (e.g., spinners animate smoothly) during the parsing process.

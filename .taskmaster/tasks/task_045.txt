@@ -1,0 +1,11 @@
+# Task ID: 45
+# Title: Implement Export to Markdown
+# Status: done
+# Dependencies: 40, 43
+# Priority: medium
+# Description: Create a function to export a summary of the session, or a selection of events, into a Markdown file.
+# Details:
+Transform the selected `ResponseItem` objects into a human-readable Markdown format. For example, format `Message` events as blockquotes and `LocalShellCall` events as code blocks. Trigger a client-side download.
+
+# Test Strategy:
+Manual test: Bookmark a few key events, export as Markdown, and open the file to verify its formatting and content.

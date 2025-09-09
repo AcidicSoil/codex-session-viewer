@@ -1,0 +1,11 @@
+# Task ID: 50
+# Title: Implement Artifact Extraction and Download
+# Status: pending
+# Dependencies: 31
+# Priority: low
+# Description: Provide a mechanism to locate and download artifacts generated during the session as a bundled zip file.
+# Details:
+Parse the session for `Artifact` events. Create a UI to list these artifacts. Use a library like `jszip` to bundle the files client-side and trigger a download.
+
+# Test Strategy:
+Manual test: Load a session containing artifact data. Verify the artifacts are listed and can be downloaded as a single zip archive.

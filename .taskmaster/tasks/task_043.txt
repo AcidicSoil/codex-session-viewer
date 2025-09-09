@@ -1,0 +1,11 @@
+# Task ID: 43
+# Title: Implement Event Bookmarking
+# Status: done
+# Dependencies: 35
+# Priority: medium
+# Description: Allow users to bookmark or 'star' important events in the timeline for quick reference and for use in exports.
+# Details:
+Add a bookmark icon to each event card. Manage a list of bookmarked event IDs in the application state. Provide a way to view only bookmarked events.
+
+# Test Strategy:
+Manual test: Bookmark several events, apply a 'show bookmarked only' filter, and verify the correct events are shown. Ensure bookmarks persist during the session.

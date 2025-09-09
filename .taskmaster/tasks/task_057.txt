@@ -1,0 +1,65 @@
+# Task ID: 57
+# Title: Complete Diff Viewer Functionality
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Make the Diff Viewer robust for real-world diffs and add essential controls.
+# Details:
+- Parser resilience: handle diffs without @@ hunks; tolerate missing ---/+++ headers; keep context lines; ignore 'No newline at end of file'.
+- Viewer controls: toggles for side-by-side vs inline, word wrap, ignore whitespace; copy and download raw diff; surface language.
+- Large/binary guards: show clear notices and allow opening raw.
+- Tests: unit tests for the diff parser and a couple of snapshot tests for the viewer config.
+- Docs: expand README Diff Viewer section and note supported formats/limits.
+
+# Test Strategy:
+Unit tests for parser branches; manual test with diverse diffs (single-hunk, multi-hunk, headerless, only +/- lines, and binary-looking).
+
+# Subtasks:
+## 1. Enhance Diff Parser for Headerless and Hunkless Diffs [pending]
+### Dependencies: None
+### Description: Modify the diff parsing logic to robustly handle diffs that lack standard '---'/'+++' headers or '@@' hunk specifiers. The parser should correctly process context, added, and removed lines based on their prefixes (' ', '+', '-') and ignore '\ No newline at end of file' lines.
+### Details:
+Locate the primary diff parsing function, likely `parseUnifiedDiffToSides` in a file such as `src/utils/diffParser.ts`. Update its logic to check for the presence of `---`/`+++` headers. If they are absent, treat the entire input as a single file change. Iterate through each line, assigning it to the 'left' (for '-' and ' ' prefixes) or 'right' (for '+' and ' ' prefixes) side of the diff. Ensure lines starting with '\' are skipped.
+
+## 2. Implement Viewer Controls for Display Modes [pending]
+### Dependencies: None
+### Description: Add UI controls to the Diff Viewer for toggling between side-by-side and inline views, enabling/disabling word wrap, and ignoring whitespace changes. These settings should be managed by local component state.
+### Details:
+In the `DiffViewer.tsx` component, introduce `useState` hooks to manage `renderSideBySide` (boolean), `wordWrap` ('on'/'off'), and `ignoreTrimWhitespace` (boolean). Add UI elements (e.g., buttons or switches from the project's component library) to the viewer's header area to modify these state variables. Pass these values to the `options` prop of the Monaco `DiffEditor` component to control its behavior.
+
+## 3. Add 'Copy Raw' and 'Download Raw' Actions [pending]
+### Dependencies: None
+### Description: Implement two new actions in the Diff Viewer's header: a 'Copy raw' button to copy the original diff text to the clipboard, and a 'Download raw' button to save the diff text as a file.
+### Details:
+In `DiffViewer.tsx`, add two new buttons. For 'Copy raw', use the `navigator.clipboard.writeText()` API with the raw `diff` string prop. For 'Download raw', reuse the file download utility function from existing export features (see Task 44). Create a `Blob` from the raw `diff` string with MIME type `text/plain` and trigger a download. The filename should be derived from the file path, e.g., `path-to-file.diff`.
+
+## 4. Implement Guards for Large and Binary Diffs [pending]
+### Dependencies: 57.3
+### Description: Add detection for large or binary diffs. Instead of attempting to render them, display a clear notification message and provide an option to view or download the raw content.
+### Details:
+In `DiffViewer.tsx`, before rendering the editor, add a pre-processing step. Check the raw `diff` string for binary content (e.g., presence of null bytes `\0`) or excessive length (e.g., > 1MB or > 10,000 lines). If a guard is triggered, render a message like 'Binary file diff cannot be displayed.' or 'Diff is too large to display.' and show a 'Download Raw Diff' button that reuses the logic from subtask 3.
+
+## 5. Refine Language Detection for Syntax Highlighting [pending]
+### Dependencies: None
+### Description: Improve the language detection logic to correctly map common file extensions to their corresponding Monaco Editor language identifiers, such as mapping 'tsx' to 'typescript' and 'yml' to 'yaml'.
+### Details:
+In `DiffViewer.tsx` or a new utility file (`src/utils/languageDetection.ts`), create or update the function that determines the language for Monaco. This function will take the file path (e.g., `newPath` prop) as input. Implement a mapping object or a switch statement to handle aliases: `tsx` -> `typescript`, `jsx` -> `javascript`, `yml` -> `yaml`, `py` -> `python`, etc. The result should be passed to the `language` prop of the `DiffEditor`.
+
+## 6. Add Unit Tests for Diff Parser Resilience [pending]
+### Dependencies: 57.1
+### Description: Create a suite of unit tests for the diff parsing function to ensure it correctly handles the newly supported formats and does not regress on standard formats.
+### Details:
+Create a new test file, `src/utils/diffParser.test.ts`, using the project's testing framework (e.g., Jest/Vitest). Write specific test cases for the `parseUnifiedDiffToSides` function, covering: a diff with only `+` and `-` lines, a diff without `---`/`+++` headers, a diff with context lines but no hunk `@@` header, and a diff containing the 'No newline at end of file' string. Also include a test for a standard, well-formed diff.
+
+## 7. Create Snapshot Test for Diff Viewer Options [pending]
+### Dependencies: 57.2
+### Description: Add a component-level snapshot test for the Diff Viewer to capture its rendering with different view options, ensuring UI consistency and preventing regressions.
+### Details:
+In the Storybook file for the diff viewer, likely `src/components/DiffViewer/DiffViewer.stories.tsx`, create several stories. One story should render the viewer in its default state. Add other stories that pass props to enable different options, such as `{ renderSideBySide: false }` for inline view and `{ options: { wordWrap: 'on' } }` for word wrap. If snapshot testing is configured (e.g., via `@storybook/addon-storyshots`), these stories will generate snapshots.
+
+## 8. Update README with Diff Viewer Capabilities [pending]
+### Dependencies: None
+### Description: Expand the 'Diff Viewer' section in the project's README.md to document the new features, supported formats, UI controls, and known limitations.
+### Details:
+Edit the `README.md` file. Locate the section on the Diff Viewer. Add details about the enhanced parser's resilience (e.g., 'Handles headerless diffs'). List the new viewer controls (Side-by-side/inline toggle, Word Wrap, etc.). Mention the handling of large and binary files. Include a simple code block example of a diff that is now supported.
+

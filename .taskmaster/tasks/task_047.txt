@@ -1,0 +1,11 @@
+# Task ID: 47
+# Title: Implement Deep Linking and URL State
+# Status: done
+# Dependencies: 40
+# Priority: medium
+# Description: Preserve the application state (like selected event, filter settings) in the URL hash to allow for sharing specific views.
+# Details:
+Use a library or custom hook to serialize the relevant state to the URL hash. On page load, parse the hash to restore the application state. This enables permalinks.
+
+# Test Strategy:
+Manual test: Apply a filter, select an event, copy the URL. Open the URL in a new tab and verify the application loads in the exact same state.

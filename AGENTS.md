@@ -4,10 +4,12 @@
 
 * **Baseline:** This file (AGENTS.md) is the canonical baseline.
 * **Two extension types:**
-  1) **Behavior extensions**. Plain instruction files.
+
+  1. **Behavior extensions**. Plain instruction files.
+
      * Locations: `instructions/**/*.md`, `instructions/**/*.txt`
      * Ignored: paths starting with `_`, or names containing `.archive.`
-  2) **Rule-packs**. Files with YAML front matter:
+  2. **Rule-packs**. Files with YAML front matter:
 
      ```markdown
      ---
@@ -20,12 +22,12 @@
 
      * Locations: `instructions/**/*.md`, `instructions/**/*.mdc`, `.cursor/rules/**/*.mdc`
      * Detection: file starts with `---` and declares `description`, `globs`, `alwaysApply`
-
 * **Scope semantics:**
+
   * `globs` limits where the pack claims relevance. If empty or missing, scope is repo-wide.
   * A pack can be listed even if no current files match, but it is marked “out of scope”.
-
 * **Order and precedence:**
+
   * Default load order: lexicographic by path.
   * User can reorder before apply. Later wins on conflict.
   * If `alwaysApply: true`, default selection is **on** and pinned to the **end** of the order unless the user moves it.
@@ -35,15 +37,19 @@
 ## Startup confirmation flow
 
 1. **Discover**
+
    * Collect behavior extensions and rule-packs from the locations above.
    * Exclude `_` prefixed paths and `.archive.` files.
 2. **Summarize**
+
    * Title = first `# H1` if present, else filename.
    * For rule-packs show `alwaysApply` and `globs`.
 3. **Confirm**
+
    * Options: **Apply all**, **Apply none**, **Select subset and order**.
    * Default = **Apply none** for behavior extensions. **Apply** for rule-packs with `alwaysApply: true`.
 4. **Record**
+
    * Write final order to `DocFetchReport.approved_instructions[]`.
    * Write approved rule-packs to `DocFetchReport.approved_rule_packs[]` with `{path, alwaysApply, globs}`.
 
@@ -88,13 +94,15 @@
 ## Execution flow (docs integration)
 
 * **Preflight must list:**
+
   * `DocFetchReport.context_files[]` from `@{...}`
   * `DocFetchReport.approved_instructions[]`
   * `DocFetchReport.approved_rule_packs[]`
 * Compose in this order:
-  1) Baseline
-  2) Behavior extensions
-  3) Rule-packs
+
+  1. Baseline
+  2. Behavior extensions
+  3. Rule-packs
 * Proceed only when `DocFetchReport.status == "OK"`.
 
 ---
@@ -102,8 +110,10 @@
 ## Failure handling
 
 * If any approved item cannot be loaded:
+
   * Do not finalize. Return a “Docs Missing” plan with missing paths and a fix.
 * If any context file fails:
+
   * Continue. Add to `DocFetchReport.gaps.context_missing[]`. Suggest a fix in the plan.
 
 ---
@@ -113,36 +123,7 @@
 When discovery/confirmation is used, add:
 
 ```json
-{
-  "DocFetchReport": {
-    "approved_instructions": [
-      {"path": "instructions/prd_generator.md", "loaded": true, "order": 1},
-      {"path": "instructions/security/guardrails.md", "loaded": true, "order": 2}
-    ],
-    "context_files": [
-      {"path": "docs/changelog.md", "loaded": true}
-    ],
-    "memory_ops": [
-      {"tool": "memory", "op": "create_entities|create_relations|add_observations|read_graph|search_nodes", "time_utc": "<ISO8601>", "scope": "project:${PROJECT_TAG}"}
-    ],
-    "proposed_mcp_servers": [
-      {"name": "<lib> Docs", "url": "https://gitmcp.io/{OWNER}/{REPO}", "source": "techstack-bootstrap", "status": "proposed"}
-    ],
-    "owner_repo_resolution": [
-      {"library": "<lib>", "candidates": ["owner1/repo1", "owner2/repo2"], "selected": "owner/repo", "confidence": 0.92, "method": "registry|package_index|docs_link|search"}
-    ],
-    "server_inventory": [
-      {"name": "fastapi_docs", "url": "https://gitmcp.io/tiangolo/fastapi", "source": "project-local|user|generated", "writable": true}
-    ],
-    "server_diff": {
-      "missing": ["fastapi_docs", "httpx_docs"],
-      "extra": ["legacy_docs_server"]
-    },
-    "server_actions": [
-      {"action": "add", "name": "httpx_docs", "target": "project-local", "accepted": true}
-    ]
-  }
-}
+{  "DocFetchReport": {    "approved_instructions": [      {"path": "instructions/prd_generator.md", "loaded": true, "order": 1},      {"path": "instructions/security/guardrails.md", "loaded": true, "order": 2}    ],    "context_files": [      {"path": "docs/changelog.md", "loaded": true}    ],    "memory_ops": [      {"tool": "memory", "op": "create_entities|create_relations|add_observations|read_graph|search_nodes", "time_utc": "<ISO8601>", "scope": "project:${PROJECT_TAG}"}    ],    "proposed_mcp_servers": [      {"name": "<lib> Docs", "url": "https://gitmcp.io/{OWNER}/{REPO}", "source": "techstack-bootstrap", "status": "proposed"}    ],    "owner_repo_resolution": [      {"library": "<lib>", "candidates": ["owner1/repo1", "owner2/repo2"], "selected": "owner/repo", "confidence": 0.92, "method": "registry|package_index|docs_link|search"}    ],    "server_inventory": [      {"name": "fastapi_docs", "url": "https://gitmcp.io/tiangolo/fastapi", "source": "project-local|user|generated", "writable": true}    ],    "server_diff": {      "missing": ["fastapi_docs", "httpx_docs"],      "extra": ["legacy_docs_server"]    },    "server_actions": [      {"action": "add", "name": "httpx_docs", "target": "project-local", "accepted": true}    ]  }}
 ```
 
 > Note: Omit any fields related to generating or writing `config/mcp_servers.generated.toml`. Use a separate instruction file such as `instructions/mcp_servers_generated_concise.md` if present.
@@ -186,18 +167,10 @@ When discovery/confirmation is used, add:
 * Produce and attach a `DocFetchReport` (JSON) with `status`, `tools_called[]`, `sources[]`, `coverage`, `key_guidance[]`, `gaps`, and `informed_changes[]`.
 
 **Override Path (explicit, logged):**
-
-* Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
+Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 ```json
-{
-  "Override": {
-    "reason": "server_down|ambiguous_scope|timeboxed_spike",
-    "risk_mitigation": ["read-only analysis", "scoped PoC", "user confirmation required"],
-    "expires_after": "1 action or 30m",
-    "requested_by": "system|user"
-  }
-}
+{  "Override": {    "reason": "server_down|ambiguous_scope|timeboxed_spike",    "risk_mitigation": ["read-only analysis", "scoped PoC", "user confirmation required"],    "expires_after": "1 action or 30m",    "requested_by": "system|user"  }}
 ```
 
 ---
@@ -208,14 +181,12 @@ When discovery/confirmation is used, add:
 
   1. The **primary language(s)** used in the project (e.g., TypeScript, Python, Go, Rust, Java, Bash).
   2. The **current project’s tech stack** (frameworks, libraries, infra, tools).
-
 * Sources to infer language/stack:
 
   * Project tags (`${PROJECT_TAG}`), memory checkpoints, prior completion records.
   * Files present in repo (e.g., manifests like `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, CI configs).
   * File extensions in repo (`.ts`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.sh`, `.sql`, etc.).
   * User/task context (explicit mentions of frameworks, CLIs, infra).
-
 * **Repo mapping requirement:** Resolve the **canonical GitHub OWNER/REPO** for each detected library/tool whenever feasible.
 
   * **Resolution order:**
@@ -226,9 +197,7 @@ When discovery/confirmation is used, add:
     4. **Targeted search** (as a last resort) with guardrails below.
   * **Guardrails:** Prefer official orgs; require name similarity and recent activity; avoid forks and mirrors unless explicitly chosen.
   * Record outcomes in `DocFetchReport.owner_repo_resolution[]` with candidates, selected repo, method, and confidence score.
-
 * Doc retrieval (§A) **must cover each identified language and stack element** that will be touched by the task.
-
 * Record both in the `DocFetchReport`:
 
 ```json
@@ -275,6 +244,18 @@ When discovery/confirmation is used, add:
   * Prefer **memory** for **structured** facts/relations (entities, edges, observations).
   * If memory is unavailable, record `memory_unavailable: true` in the session preamble.
 
+### 1.1) Subtask plan and finish-in-one-go contract (**NEW**)
+
+* **Before starting execution**, derive a **subtask plan** with clear **Definition of Done (DoD)** per subtask.
+* **Finish-in-one-go policy:** Once execution starts, work the subtask list to completion within the session unless a blocking gate occurs (§A, §B, or external dependency). If blocked, record the block and propose an unblock plan; do not leave partial work without a recorded reason.
+* **Recording:** Persist the subtask plan to **memory** under `task:${task_id}` as `observations.plan` with timestamps.
+
+### 1.2) Execution logging to memory (**NEW**)
+
+* For each subtask: on **start** and **finish**, append an observation to `task:${task_id}` including `subtask_id`, `action`, `files_touched[]`, and short result.
+* Keep a running `percent_complete` on the task node. Update after each subtask.
+* Mirror links: `task:${task_id}` —\[touches]→ `file:<path>` as work proceeds, not only at the end.
+
 ## 2) On task completion (status → done)
 
 * Write a concise completion to memory including:
@@ -283,6 +264,11 @@ When discovery/confirmation is used, add:
   * Files touched
   * Commit/PR link (if applicable)
   * Test results (if applicable)
+* **Completion criteria (explicit):**
+
+  * All subtasks from §1.1 are marked **done** and their DoD satisfied.
+  * Required gates passed (§A, §B).
+  * Post-completion checks executed or proposed (§2.1).
 * **Update the Knowledge Graph (memory)**:
 
   * Ensure base entity `project:${PROJECT_TAG}` exists.
@@ -306,9 +292,19 @@ When discovery/confirmation is used, add:
 * Seed/Update the knowledge graph **before** exiting the task so subsequent sessions can leverage it.
 * Do **NOT** write to `AGENTS.md` beyond these standing instructions.
 
+### 2.1) Post-completion checks and tests (**NEW**)
+
+* **Default:** Propose a **Post-Completion Checks** block containing **static** commands (typecheck, lint, format-check, build dry-run) that validate no errors. Label the block **“Proposed, not executed”**.
+* **If the user has granted session approval** per §8 Rules → execute the approved static commands and attach results to memory under `task:${task_id}.observations.test_results` with log path.
+* **If no approval**, leave commands proposed-only and record `tests_skipped_reason: "no_approval"` in the completion note.
+
 ## 3) Status management
 
-* Use Task Master MCP to set task status (e.g., set to "in-progress" when starting).
+* Use Task Master MCP to set task status:
+
+  * `in-progress` on start of execution after §A and §1.1 planning.
+  * **Auto-set `done`** when **all subtasks are done** and §2 completion criteria hold.
+  * If any subtask fails a DoD or a gate, set `blocked` and record the block reason and unblock plan in memory.
 
 ## 4) Tagging for retrieval
 
@@ -331,7 +327,7 @@ When discovery/confirmation is used, add:
 ## 7) Library docs retrieval (topic-focused)
 
 * Use **sourcebot** first to fetch current docs before code changes. If configured and suitable for your workflow, **docfork** may be used to assemble or snapshot the retrieved docs.
-* UI components: call shadcn-ui-mcp-server to retrieve component recipes and scaffolds before writing code; then generate. Log under DocFetchReport.tools_called[].
+* UI components: call shadcn-ui-mcp-server to retrieve component recipes and scaffolds before writing code; then generate. Log under DocFetchReport.tools\_called\[].
 * If the primary retrieval tool fails, use **contex7-mcp**.
 * If **contex7-mcp** also fails, use **gitmcp** (repo docs/source) to retrieve equivalents.
 * Summarize key guidance inline in `DocFetchReport.key_guidance` and map each planned change to a guidance line.
@@ -346,26 +342,30 @@ When discovery/confirmation is used, add:
 **Rules:**
 
 1. **No automatic test execution by default.**
-
 2. **Opt-in safe execution** is allowed only when **all** safeguards hold:
+
    * **Explicit user approval in this session** containing the line: `RUN TESTS: APPROVED`.
    * **Scope limited** to read-only or hermetic runs that cannot mutate the repo, local caches, or global toolchains.
    * **Isolated context** only (ephemeral environment or equivalent). Do **not** activate or modify existing environments.
    * **No network access** unless the user explicitly approves it.
    * **Disallowed:** installers, package/version changes, migrations/seeders, database writes, external service calls, or filesystem writes outside a temp **artifacts** directory.
    * **Allowed:** static checks (lint, typecheck, format-check), unit tests restricted to specified files/markers, and commands supporting `--dry-run` or equivalents.
-
 3. **Pre-run Test Plan (required):**
+
    * Exact commands, working directory, environment variables, expected exit codes.
    * A short **Risk table** explaining why each command is safe.
-
 4. **Execution protocol:**
+
    * Run **exactly** the approved commands.
    * Capture stdout/stderr to `artifacts/test/<UTC-timestamp>.log`. Do not modify other files.
    * Return a summary and the log path. Re-runs require a new approval line.
-
 5. **Post-run recording:**
+
    * Add outcomes to the completion note and `DocFetchReport`. Do not change `AGENTS.md`.
+
+**Post-completion integration with §2.1:**
+
+* After all subtasks are complete, either execute the pre-approved static checks or present the proposed commands for approval. Only then mark the task fully verified.
 
 **Proposed Test Commands block:**
 
@@ -382,11 +382,14 @@ SYSTEM: You operate under a blocking docs-first policy.
    - Build DocFetchReport (status must be OK).
 2) Planning:
    - Map each planned change to key_guidance items in DocFetchReport.
+   - Build a subtask plan with DoD (§1.1) and record to memory.
 3) Decision Gate (§B):
    - If DocFetchReport.status != OK → STOP and return "Docs Missing" with exact MCP calls.
 4) Execution:
    - Proceed only if ctx.docs_ready == true.
+   - Log subtask progress to memory (§1.2). Finish-in-one-go unless blocked.
 5) Completion:
+   - Verify all subtasks done, run or propose post-completion checks (§2.1, §8), then set status done.
    - Attach DocFetchReport and write completion memory (§2).
 ```
 

@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export interface DiscoveredSessionAsset {
   path: string
   url: string
+  sortKey?: number
 }
 
 /**
@@ -15,56 +16,79 @@ export interface DiscoveredSessionAsset {
  * - Everything is optional: if no matches exist, arrays are empty.
  */
 export function useAutoDiscovery() {
-  // Project files: gather a broad but safe subset of source-like files.
-  const projectFiles = useMemo(() => {
-    // We only need the keys (paths). Use asset URLs for non-code like *.md
-    // to avoid Vite trying to parse them as JS during import analysis.
-    const codeGlobs = import.meta.glob([
-      '/src/**/*',
-      '/scripts/**/*',
-      '/public/**/*',
-      '/package.json',
-      '/tsconfig.json',
-    ]) as Record<string, () => Promise<unknown>>
+  const [projectFiles, setProjectFiles] = useState<string[]>([])
+  const [sessionAssets, setSessionAssets] = useState<DiscoveredSessionAsset[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const debounceRef = useRef<number | null>(null)
 
-    const docAssets = import.meta.glob([
-      '/README*',
-      '/AGENTS.md',
-    ], { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+  const scan = useCallback(() => {
+    setIsLoading(true)
+    try {
+      const codeGlobs = import.meta.glob([
+        '/src/**/*',
+        '/scripts/**/*',
+        '/public/**/*',
+        '/package.json',
+        '/tsconfig.json',
+      ]) as Record<string, () => Promise<unknown>>
 
-    const raw = [
-      ...Object.keys(codeGlobs),
-      ...Object.keys(docAssets),
-    ]
-    // Filter out directories and non-file endings (heuristic) and exclude maps/types.
-    const filtered = raw
-      .filter((p) => /\.[a-z0-9]+$/i.test(p))
-      .filter((p) => !p.endsWith('.map'))
-      .filter((p) => !p.endsWith('.d.ts'))
-      .map((p) => p.replace(/^\//, ''))
+      const docAssets = import.meta.glob([
+        '/README*',
+        '/AGENTS.md',
+      ], { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 
-    return Array.from(new Set(filtered)).sort()
+      const raw = [
+        ...Object.keys(codeGlobs),
+        ...Object.keys(docAssets),
+      ]
+      const files = Array.from(new Set(
+        raw
+          .filter((p) => /\.[a-z0-9]+$/i.test(p))
+          .filter((p) => !p.endsWith('.map'))
+          .filter((p) => !p.endsWith('.d.ts'))
+          .map((p) => p.replace(/^\//, ''))
+      )).sort()
+      setProjectFiles(files)
+
+      const matches = import.meta.glob(
+        [
+          '/.codex/sessions/**/*.{jsonl,ndjson,json}',
+          '/sessions/**/*.{jsonl,ndjson,json}',
+          '/artifacts/sessions/**/*.{jsonl,ndjson,json}',
+        ],
+        { eager: true, query: '?url', import: 'default' }
+      ) as Record<string, string>
+
+      const tsInPath = (p: string) => {
+        const m = p.match(/(20\d{2})[-_]?(\d{2})[-_]?(\d{2})/)
+        if (m) {
+          const y = Number(m[1]); const mo = Number(m[2]); const d = Number(m[3])
+          if (mo>=1&&mo<=12&&d>=1&&d<=31) return Date.UTC(y, mo-1, d)
+        }
+        const epoch = p.match(/(1\d{9}|2\d{9})/)
+        if (epoch) return Number(epoch[1]) * 1000
+        return 0
+      }
+
+      const sessions = Object.entries(matches)
+        .map(([path, url]) => ({ path: path.replace(/^\//, ''), url, sortKey: tsInPath(path) }))
+        .sort((a, b) => b.sortKey! - a.sortKey! || a.path.localeCompare(b.path))
+      setSessionAssets(sessions)
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
 
-  // Session assets: attempt to find logs under conventional locations.
-  const sessionAssets = useMemo<DiscoveredSessionAsset[]>(() => {
-    // Return file URLs so we can fetch them at runtime.
-    // NOTE: Vite 5 deprecates `as: 'url'` in favor of `query: '?url', import: 'default'`.
-    const matches = import.meta.glob(
-      [
-        '/.codex/sessions/**/*.{jsonl,ndjson,json}',
-        '/sessions/**/*.{jsonl,ndjson,json}',
-        '/artifacts/sessions/**/*.{jsonl,ndjson,json}',
-      ],
-      { eager: true, query: '?url', import: 'default' }
-    ) as Record<string, string>
+  const reload = useCallback(() => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current)
+    debounceRef.current = window.setTimeout(() => {
+      scan()
+    }, 350)
+  }, [scan])
 
-    return Object.entries(matches)
-      .map(([path, url]) => ({ path: path.replace(/^\//, ''), url }))
-      .sort((a, b) => a.path.localeCompare(b.path))
-  }, [])
+  useEffect(() => { scan() }, [scan])
 
-  return { projectFiles, sessionAssets }
+  return { projectFiles, sessionAssets, isLoading, reload }
 }
 
 export default useAutoDiscovery

@@ -1,0 +1,11 @@
+# Task ID: 31
+# Title: Implement Streaming JSONL Parser
+# Status: done
+# Dependencies: 30
+# Priority: high
+# Description: Develop a robust parser for `.jsonl` session files that can handle large files by streaming and processing them line by line.
+# Details:
+The parser should read a File object, process it incrementally, and parse each line as a JSON object. The first line is `SessionMeta`, and subsequent lines are `ResponseItem` events. Implement basic error recovery for malformed JSON lines.
+
+# Test Strategy:
+Unit test the parser with valid, large, and malformed `.jsonl` files. Test performance to meet the '< 2s for 10MB file' metric.

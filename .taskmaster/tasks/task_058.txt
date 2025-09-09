@@ -1,0 +1,85 @@
+# Task ID: 58
+# Title: Filter‑Aware Granular Export
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Implement export functionality that respects the currently selected filters and allows granular field/column and scope selection, with CSV and JSON formats.
+# Details:
+Goal: Enable users to export exactly what they’re viewing based on active filters, with fine-grained selection of fields and row scope.
+
+Requirements:
+- Respect current filter state (via Zustand selectors) so exported rows match the filtered dataset (and current sort if feasible).
+- Provide export formats: CSV and JSON (extensible to Parquet in future; design for pluggable exporters).
+- Granular field selection: allow users to pick columns/attributes to include.
+- Row scope options: current page vs. all filtered results vs. selected rows.
+- UI: Export button opens a modal/dialog with format, fields, and scope controls. Show row count estimate.
+- Performance: Handle large exports without freezing the UI (use Web Worker and streaming/chunking for CSV where possible).
+- Accessibility: Keyboard navigable modal and focus management.
+- Telemetry: basic timing metrics around export generation (optional).
+
+Acceptance Criteria:
+- Exported file row count equals filtered dataset for chosen scope.
+- Included columns match selections; CSV headers match field labels.
+- CSV opens correctly in common spreadsheet apps; JSON validates.
+- Operation completes for 50k+ rows without locking the main thread.
+- Unit tests cover field mapping and CSV generation; smoke/E2E verifies end-to-end export respects filters.
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Confirm export scope, formats, and field mapping [pending]
+### Dependencies: None
+### Description: Finalize exportable entities/fields, default columns, and CSV/JSON specs. Decide how nested fields are flattened, how dates are formatted, and column labels vs. keys. Deliver a short spec and example files.
+### Details:
+Deliverables: 1) concise spec in docs/export.md with field list and mapping rules; 2) example CSV/JSON for a small sample; 3) alignment with current table columns and filters.
+
+## 2. Add column metadata and field selection utilities [pending]
+### Dependencies: 58.1
+### Description: Create a central metadata map of exportable fields (key, label, type, extractor, formatter). Provide utilities to resolve selected fields into extraction/formatting pipelines.
+### Details:
+Proposed files: src/export/columns.ts (metadata), src/export/fieldSelection.ts (helpers). Ensure parity with table columns and filter keys.
+
+## 3. Implement filter-aware dataset selector from Zustand [pending]
+### Dependencies: 58.1
+### Description: Expose a selector that returns rows for export based on the current filters (and sort if feasible). Support row scope: all filtered results, current page, or explicitly selected rows.
+### Details:
+Add a pure selector in state layer that the export service can call. Include unit tests around filter combinations to ensure correct row counts.
+
+## 4. Implement CSV/JSON exporters with unit tests [pending]
+### Dependencies: 58.2
+### Description: Build `toCSV` and `toJSON` utilities that take rows + selected field metadata and produce downloadable data. Handle quoting, delimiters, nulls, and unicode.
+### Details:
+Proposed files: src/export/csv.ts, src/export/json.ts, with tests under src/export/__tests__/. Aim for chunked/streamed CSV generation to avoid large memory spikes.
+
+## 5. Add Web Worker pipeline for large exports [pending]
+### Dependencies: 58.4
+### Description: Generate CSV/JSON in a Web Worker to keep UI responsive on large datasets; provide progress updates and cancelation.
+### Details:
+Create src/export/worker/exportWorker.ts. Use postMessage for progress and result blobs. Fallback to main-thread when dataset is small (<5k rows).
+
+## 6. Create Export modal (format, fields, scope) [pending]
+### Dependencies: 58.2, 58.3, 58.4
+### Description: Add an Export modal using Headless UI + Tailwind. Controls: format (CSV/JSON), field checklist, row scope (all filtered / current page / selected), and a row count estimate.
+### Details:
+Wire to Zustand selectors and exporter service. Disable action while processing, show progress and completion states.
+
+## 7. Download handling and filenames [pending]
+### Dependencies: 58.6
+### Description: Generate a Blob and trigger file download. Compose filenames that include timestamp and key filter context. Ensure cross-browser compatibility.
+### Details:
+Implement `downloadBlob(blob, filename)` util. Derive filename like `sessions_2025-09-09_filtered-by-model.csv`. Add success/error toasts.
+
+## 8. Tests: verify exports respect filters and fields [pending]
+### Dependencies: 58.3, 58.4, 58.6, 58.7
+### Description: Add unit tests for field mapping and CSV generation; add an E2E smoke test that applies filters, runs export, and validates row/column counts.
+### Details:
+Use sample dataset with known counts. Ensure test dataset covers edge cases (quotes, commas, unicode, nulls).
+
+## 9. Docs: README usage and known limits [pending]
+### Dependencies: 58.7
+### Description: Document the Export feature: how to start, field selection, scopes, and any performance limits. Include troubleshooting tips for very large exports.
+### Details:
+Update README and add docs/export.md with screenshots/GIFs where useful.
+

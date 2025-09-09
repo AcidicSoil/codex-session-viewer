@@ -1,0 +1,11 @@
+# Task ID: 44
+# Title: Implement Export to JSON
+# Status: done
+# Dependencies: 40, 43
+# Priority: medium
+# Description: Create a function to export the current view of events (all, filtered, or bookmarked) as a JSON file.
+# Details:
+The function will collect the relevant `ResponseItem` objects, serialize them to a JSON string, create a Blob, and trigger a client-side download.
+
+# Test Strategy:
+Manual test: Filter the timeline, click 'Export to JSON', and verify the downloaded file contains only the filtered events.

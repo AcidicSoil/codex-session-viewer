@@ -1,0 +1,11 @@
+# Task ID: 37
+# Title: Implement Basic Full-Text Search
+# Status: done
+# Dependencies: 35
+# Priority: high
+# Description: Add a search input that allows users to perform a case-insensitive text search across all events in the timeline.
+# Details:
+Create an in-memory search index or filter the `events` array based on the search query. Highlight matching text in the event cards and provide a way to navigate between results.
+
+# Test Strategy:
+Manual test: Load a session, type a query, and verify that the timeline filters to show only matching events and that text is highlighted.

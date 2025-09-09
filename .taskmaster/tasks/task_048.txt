@@ -1,0 +1,55 @@
+# Task ID: 48
+# Title: Implement Session Library with IndexedDB
+# Status: pending
+# Dependencies: 32, 33
+# Priority: medium
+# Description: Maintain a library of previously opened sessions for quick access, storing metadata in the browser's IndexedDB.
+# Details:
+When a session is opened, store its `SessionMeta` and a reference to its location (if possible, or just its name) in an IndexedDB table. Create a UI to list and reopen these sessions.
+
+# Test Strategy:
+Manual test: Open several sessions. Close and reopen the app. Verify the sessions are listed in the library and can be re-accessed.
+
+# Subtasks:
+## 1. Define IndexedDB Schema and Create DB Service [pending]
+### Dependencies: None
+### Description: Create a dedicated service for IndexedDB operations. Define the database schema, including the object store, keys, and indexes for storing session metadata.
+### Details:
+Create a new file `src/lib/session-db.ts`. Use the `idb` library (if available, otherwise plain IndexedDB) to set up a database named `codex-session-viewer`. Create an object store named `sessions`. The key path should be the session ID from `SessionMeta`. Define an index on `lastOpened` for sorting. The stored object type, `SessionLibraryEntry`, should be defined in `src/types/session.ts` and include the session `id`, `fileName`, `lastOpened` (timestamp), the full `SessionMeta` object, and an optional `fileHandle` for re-opening.
+
+## 2. Implement Data Access Layer for Session Library [pending]
+### Dependencies: 48.1
+### Description: In the new DB service, implement the core CRUD functions for managing session library entries.
+### Details:
+In `src/lib/session-db.ts`, export asynchronous functions: `addSession(entry: SessionLibraryEntry)`, `getAllSessions(): Promise<SessionLibraryEntry[]>`, and `deleteSession(sessionId: string)`. The `addSession` function should perform an 'upsert' (add or update). `getAllSessions` should retrieve all entries, sorted by `lastOpened` in descending order. `deleteSession` will remove an entry by its ID.
+
+## 3. Integrate Session Saving into File Loader Hook [pending]
+### Dependencies: 48.2
+### Description: Modify the existing file loading logic to save session metadata to the IndexedDB library upon a successful load.
+### Details:
+Locate the `useFileLoader` hook in `src/hooks/useFileLoader.ts`. In the function that processes a file (e.g., `loadFile` or a similar function), after the `SessionMeta` is successfully parsed, call the `addSession` function from `src/lib/session-db.ts`. Construct the `SessionLibraryEntry` object using the `sessionMeta`, the `file.name`, a `new Date().getTime()` for `lastOpened`, and the `fileHandle` if available (from File System Access API).
+
+## 4. Create Session Library UI Component [pending]
+### Dependencies: 48.2
+### Description: Develop a new React component to display the list of saved sessions from IndexedDB.
+### Details:
+Create a new component `src/components/SessionLibrary.tsx`. This component will use a `useEffect` hook to call `getAllSessions()` on mount and store the results in its state. It will render a list of sessions, displaying key information for each entry like `fileName`, `meta.application`, and a human-readable `lastOpened` time. Include a placeholder for 'Open' and 'Remove' buttons for each item.
+
+## 5. Integrate Session Library into Welcome Screen [pending]
+### Dependencies: 48.4
+### Description: Embed the new Session Library component into the main welcome screen so it's visible on application startup.
+### Details:
+Modify `src/components/WelcomeScreen.tsx`. Import and render the `SessionLibrary` component. It should be displayed prominently, likely below the existing 'Open File' and drag-and-drop instructions, to provide users with immediate access to their recent sessions.
+
+## 6. Implement Re-open and Remove Functionality [pending]
+### Dependencies: 48.3, 48.4
+### Description: Wire up the 'Open' and 'Remove' buttons in the Session Library UI to manage and reload sessions.
+### Details:
+In `SessionLibrary.tsx`, implement the button logic. The 'Remove' button should call the `deleteSession` DB function and update the component's state to remove the item from the list. The 'Open' button should use the `fileHandle` (if it exists on the entry) to call the appropriate loading function from the `useFileLoader` hook. If no `fileHandle` exists, the 'Open' button should be disabled, with a tooltip explaining that the file must be re-opened manually (e.g., via drag-and-drop).
+
+## 7. Implement Error Handling and Update Documentation [pending]
+### Dependencies: 48.1, 48.6
+### Description: Add robust error handling for all database operations and document the new feature in the project's README.
+### Details:
+In `src/lib/session-db.ts`, wrap all IndexedDB API calls in `try...catch` blocks. Handle potential errors, such as `QuotaExceededError` or DB initialization failures. If the database cannot be used, the Session Library feature should fail gracefully (e.g., the UI component shows an informative message or does not render). Update `README.md` to describe the Session Library feature, its benefits, and any limitations (e.g., the re-open mechanism).
+

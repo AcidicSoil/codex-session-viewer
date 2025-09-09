@@ -1,0 +1,75 @@
+# Task ID: 59
+# Title: Theme Color Picker + Light/Dark Mode
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Let users select custom theme colors and choose Light, Dark, or System mode. Persist preferences and apply across the UI using Tailwind + CSS variables.
+# Details:
+Objective: Provide user-controlled theming with custom colors and light/dark (including system) mode. Keep accessibility and persistence in mind.
+
+Acceptance Criteria:
+- User can toggle Light/Dark/System; System tracks OS changes via `prefers-color-scheme`.
+- User can pick primary/accent colors; UI updates live via CSS variables; changes persist across reloads.
+- Default theme remains unchanged when no customizations are set.
+- Contrast guidance shown when selected colors risk AA violations (informational warning is sufficient).
+- Works with existing Tailwind setup; no major layout regressions.
+
+Implementation Notes:
+- Tailwind: use CSS variables for color tokens (e.g., `--color-primary`, `--color-accent`) and map them in `tailwind.config.*` so utilities (bg/text/border) reflect user choices.
+- State: store in Zustand (mode: "light" | "dark" | "system"; colors: HEX/HSL); persist to `localStorage` with a small versioned schema and migration.
+- UI: Headless UI modal/drawer with live preview, reset-to-default, and apply actions.
+- Accessibility: basic contrast check and warning.
+- Testing: unit tests for state persistence and theme resolution; smoke test that toggling mode flips root class/attributes and updates CSS variables.
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Specify theme tokens and mode behavior [pending]
+### Dependencies: None
+### Description: Define theme tokens (primary, accent, surface, text), CSS variable names, and how Light/Dark/System modes resolve. Decide default palette and mapping to Tailwind utilities.
+### Details:
+Deliver docs/theme.md with tokens, variable names, and example mappings. Include decision on using HSL vs HEX and shade derivation (e.g., HSL adjustments).
+
+## 2. Wire Tailwind + CSS variables [pending]
+### Dependencies: 59.1
+### Description: Introduce CSS variables for theme tokens and map them to Tailwind theme via `tailwind.config.*` extensions. Support `[data-theme="dark"]` or `class="dark"` toggling and live updates.
+### Details:
+Files: `src/styles/theme.css` (variables), `tailwind.config.ts` (extend colors using CSS vars), ensure dark mode strategy aligns with existing config. Provide a safe default palette.
+
+## 3. Add Zustand theme store + persistence [pending]
+### Dependencies: 59.1
+### Description: Create a theme slice with mode (light/dark/system) and color tokens. Add localStorage persistence and hydration (with schema version). Expose selectors for resolved mode and computed variables.
+### Details:
+Files: `src/state/theme.ts`. Include migration from older schema if present. Provide helper to apply root attributes/classes on change.
+
+## 4. Build Theme Picker UI (modal) [pending]
+### Dependencies: 59.2
+### Description: Create a Headless UI modal for theme settings: System/Light/Dark toggle; color pickers for primary/accent; live preview; Reset to default.
+### Details:
+Files: `src/components/ThemePicker.tsx` and integration in a settings menu. Use `<input type="color">` initially; structure to allow future advanced picker.
+
+## 5. Apply theme to app and root toggling [pending]
+### Dependencies: 59.2, 59.3
+### Description: Ensure mode toggling sets the correct root attribute/class and CSS variables update across the app. Provide a small hook to subscribe and apply changes.
+### Details:
+Files: `src/appTheme.ts` or `src/hooks/useApplyTheme.ts`. Verify no FOUC and initial mode resolves before first paint where possible.
+
+## 6. Accessibility: contrast checks and warnings [pending]
+### Dependencies: None
+### Description: Add a simple contrast checker for chosen primary/accent against surfaces. Show non-blocking warnings when selections risk failing WCAG AA.
+### Details:
+Utility function + inline warning in the Theme Picker. Provide links to documentation for guidance.
+
+## 7. Tests: theme store, persistence, and UI smoke [pending]
+### Dependencies: 59.3
+### Description: Unit tests for theme store (mode resolution, persistence, migrations). UI smoke test to ensure toggling mode flips root class and variables update.
+### Details:
+Files: `src/state/theme.test.ts`, `src/components/ThemePicker.test.tsx` (lightweight).
+
+## 8. Docs: Theme settings and tips [pending]
+### Dependencies: 59.5
+### Description: Document theme settings in README and docs/theme.md: how to open picker, modes, persistence, and troubleshooting (e.g., contrast warnings).
+### Details:
+Include screenshots/GIFs where useful. Mention System mode behavior and how it responds to OS changes.
+

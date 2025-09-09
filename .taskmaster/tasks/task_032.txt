@@ -1,0 +1,11 @@
+# Task ID: 32
+# Title: Implement Session Loading via File Picker
+# Status: done
+# Dependencies: 31
+# Priority: high
+# Description: Create a UI component that allows users to open a `.jsonl` file using the browser's native file picker.
+# Details:
+Use the Browser File API (`<input type='file'>`) to let users select a file. On selection, pass the file to the JSONL parser and update the application state with the parsed session data.
+
+# Test Strategy:
+Manual test: Click a button, select a valid `.jsonl` file, and verify that the session data is loaded into the application's state.

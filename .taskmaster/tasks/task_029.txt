@@ -1,0 +1,11 @@
+# Task ID: 29
+# Title: Initialize Project Foundation
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Set up the initial project structure using the specified frontend stack: React 18, TypeScript, Vite, Zustand, and Tailwind CSS with Headless UI.
+# Details:
+Create a new Vite project with the React+TS template. Install and configure Tailwind CSS, Headless UI, and Zustand for state management. Establish a basic file structure for components, services, and data models.
+
+# Test Strategy:
+Verify that the development server runs successfully and that a basic 'Hello World' component renders with Tailwind styles applied.

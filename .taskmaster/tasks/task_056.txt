@@ -1,0 +1,74 @@
+# Task ID: 56
+# Title: Newest-First Sorting for Detected Sessions
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Add robust newest-first sorting for auto-detected sessions and All Sessions list by parsing timestamps from filenames/directories, with fallback to lexicographic order.
+# Details:
+- Parse timestamps from common patterns like `rollout-YYYY-MM-DDTHH-mm-ss`, `YYYY/MM/DD/...`, and ISO-like tokens in the path.
+- Compute and cache a `sortKey` (epoch ms) per asset.
+- Provide a UI toggle between `Newest` and `Name` sort, defaulting to `Newest`.
+- Ensure sorting is stable and resilient when timestamps are missing.
+
+# Test Strategy:
+Manual: seed mixed session filenames; verify order matches expected timestamps. Unit test the parser against representative names and directory patterns.
+
+# Subtasks:
+## 1. Create Timestamp Parsing Utility [pending]
+### Dependencies: None
+### Description: Implement a utility function to extract a timestamp from a file path string. This function will be the core of the sorting logic.
+### Details:
+Create a new file `src/utils/timestamp.ts`. Inside, export a function `parseTimestampFromPath(path: string): number | null`. This function should use regular expressions to find and parse timestamps from the following patterns in order of priority:
+1. `rollout-YYYY-MM-DDTHH-mm-ss` in the filename.
+2. ISO 8601-like date strings (e.g., `YYYY-MM-DDTHH-mm-ss.sssZ`) anywhere in the path.
+3. Directory structures like `YYYY/MM/DD/`.
+Return the parsed timestamp as epoch milliseconds, or `null` if no recognizable timestamp is found.
+
+## 2. Integrate Timestamp Parsing into `useAutoDiscovery` Hook [pending]
+### Dependencies: 56.1
+### Description: Modify the auto-discovery hook to compute and attach a `sortKey` to each discovered session object.
+### Details:
+In `src/hooks/useAutoDiscovery.ts`:
+1. Update the `DiscoveredSession` interface to include `sortKey: number | null`.
+2. Import `parseTimestampFromPath` from `src/utils/timestamp.ts`.
+3. Within the `useEffect` that processes the `glob` results, call `parseTimestampFromPath` for each file's path.
+4. Attach the returned epoch milliseconds (or `null`) to the new `sortKey` property of the `DiscoveredSession` object being created.
+
+## 3. Add Sort Toggle UI to All Sessions Modal [pending]
+### Dependencies: None
+### Description: Implement the UI controls for switching between 'Newest' and 'Name' sorting within the 'All Sessions' list.
+### Details:
+In `src/components/AllSessionsModal.tsx`:
+1. Add a new state variable: `const [sortOrder, setSortOrder] = useState<'newest' | 'name'>('newest');`.
+2. In the modal's header area, add a simple button group or segmented control that allows the user to select between 'Newest' and 'Name'.
+3. The onClick handler for these controls should update the `sortOrder` state.
+4. Ensure the default selection is 'Newest'.
+
+## 4. Implement Stable Sorting Logic [pending]
+### Dependencies: 56.2, 56.3
+### Description: Apply the sorting logic based on the selected sort order, ensuring a stable sort and proper fallback for items without a timestamp.
+### Details:
+In `src/components/AllSessionsModal.tsx`, replace the existing `a.name.localeCompare(b.name)` sort.
+1. Create a new sorted list based on the `sortOrder` state.
+2. If `sortOrder` is `'newest'`, sort by `b.sortKey - a.sortKey`. For items where `sortKey` is `null` or equal, use `a.name.localeCompare(b.name)` as a secondary, stable sort criterion.
+3. If `sortOrder` is `'name'`, sort by `a.name.localeCompare(b.name)`.
+4. In `src/components/WelcomeScreen.tsx`, apply the default 'newest' sorting logic to the session chips it displays from `useAutoDiscovery`. No UI toggle is needed here, just the default sort behavior.
+
+## 5. Write Unit Tests for Timestamp Parser [pending]
+### Dependencies: 56.1
+### Description: Create a suite of unit tests to ensure the `parseTimestampFromPath` utility is robust and handles various path formats correctly.
+### Details:
+Create a new test file `src/utils/timestamp.test.ts`.
+Using Vitest (or the project's testing framework), write tests for `parseTimestampFromPath` that cover:
+- Each of the specified patterns (`rollout-`, ISO-like, `YYYY/MM/DD`).
+- Paths containing no timestamp (should return `null`).
+- Paths with malformed or invalid dates.
+- Edge cases like paths with multiple potential timestamps (ensure priority is handled correctly).
+
+## 6. Update README with Sorting Behavior Documentation [pending]
+### Dependencies: None
+### Description: Document the new sorting feature, its default behavior, and the filename patterns it recognizes.
+### Details:
+In `README.md`, add a new section under 'Features' titled 'Session Sorting'.
+Explain that sessions are sorted by newest first by default. Detail the specific filename and directory patterns that the application recognizes for timestamp extraction, listing them in order of priority. Mention that it falls back to alphabetical sorting by name if no timestamp is found.
+

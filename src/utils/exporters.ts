@@ -1,6 +1,7 @@
 import type { ParsedSession } from '../types/session'
 import type { ResponseItem } from '../types'
 import { downloadText } from './download'
+import { toCSV } from '../export/csv'
 
 export function toJson(meta: ParsedSession['meta'] | undefined, events: readonly ResponseItem[]) {
   return JSON.stringify({ meta, events }, null, 2)
@@ -188,8 +189,24 @@ export function exportHtml(meta: ParsedSession['meta'] | undefined, events: read
   downloadText(name, toHtml(meta, events), 'text/html;charset=utf-8')
 }
 
-function buildFilename(meta: ParsedSession['meta'] | undefined, bookmarksOnly: boolean, ext: string) {
+function summarizeFilters(filters?: { type?: string; role?: string; q?: string; pf?: string; other?: boolean }) {
+  if (!filters) return ''
+  const parts: string[] = []
+  if (filters.type && filters.type !== 'All') parts.push(`type_${filters.type}`)
+  if (filters.role && filters.role !== 'All') parts.push(`role_${filters.role}`)
+  if (filters.q) parts.push(`q_${filters.q.slice(0, 12).replace(/[^a-z0-9-_]/gi, '_')}`)
+  if (filters.pf) parts.push(`pf_${filters.pf.slice(0, 12).replace(/[^a-z0-9-_]/gi, '_')}`)
+  if (filters.other) parts.push('other')
+  return parts.length ? '-' + parts.join('-') : ''
+}
+
+export function buildFilename(meta: ParsedSession['meta'] | undefined, bookmarksOnly: boolean, ext: string, filters?: { type?: string; role?: string; q?: string; pf?: string; other?: boolean }) {
   const base = meta?.id ? String(meta.id).replace(/[^a-z0-9-_]/gi, '_').slice(0, 64) : 'session'
-  const suffix = bookmarksOnly ? '-bookmarks' : ''
+  const suffix = (bookmarksOnly ? '-bookmarks' : '') + summarizeFilters(filters)
   return `${base}${suffix}.${ext}`
+}
+
+export function exportCsv(meta: ParsedSession['meta'] | undefined, rows: readonly ResponseItem[], bookmarksOnly: boolean, filters?: { type?: string; role?: string; q?: string; pf?: string; other?: boolean }) {
+  const name = buildFilename(meta, bookmarksOnly, 'csv', filters)
+  downloadText(name, toCSV(rows), 'text/csv;charset=utf-8')
 }

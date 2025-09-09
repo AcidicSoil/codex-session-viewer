@@ -1,0 +1,11 @@
+# Task ID: 39
+# Title: Integrate Basic Diff Viewer
+# Status: done
+# Dependencies: 38
+# Priority: high
+# Description: Integrate the Monaco Editor to display diffs for file changes. Initially, support a unified diff view.
+# Details:
+Use the `monaco-diff-editor` component. When a user selects a file from the file tree, feed the corresponding `diff` string from the `FileChange` object to the editor.
+
+# Test Strategy:
+Manual test: Click a file in the file tree and verify that the correct diff is displayed in the Monaco editor instance.

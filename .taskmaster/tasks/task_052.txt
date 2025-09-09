@@ -1,0 +1,11 @@
+# Task ID: 52
+# Title: Enhance Accessibility (a11y)
+# Status: pending
+# Dependencies: 46
+# Priority: low
+# Description: Perform an accessibility audit and implement improvements, including full keyboard navigation, semantic regions, and color-blind safe markers.
+# Details:
+Ensure all interactive elements are focusable and have clear focus states. Use ARIA attributes where necessary. Add distinct visual markers (e.g., patterns, icons) to diffs in addition to color.
+
+# Test Strategy:
+Manual audit using keyboard-only navigation. Run automated accessibility checkers like Axe. Test color-blind safe markers with a simulator.

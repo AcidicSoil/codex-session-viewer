@@ -1,0 +1,11 @@
+# Task ID: 30
+# Title: Define Core Data Models in TypeScript
+# Status: done
+# Dependencies: 29
+# Priority: high
+# Description: Implement the TypeScript interfaces for the application's data layer, including SessionMeta, ResponseItem, FileChange, and ParsedSession.
+# Details:
+Create a `types.ts` or similar file to define the interfaces as specified in the PRD's 'Data Layer' section. Ensure types are exported for use across the application.
+
+# Test Strategy:
+Code review to ensure type definitions match the PRD. TypeScript compiler should pass without errors when these types are imported and used.

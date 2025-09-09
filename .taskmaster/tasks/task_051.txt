@@ -1,0 +1,11 @@
+# Task ID: 51
+# Title: Implement Export to HTML
+# Status: done
+# Dependencies: 44, 45
+# Priority: low
+# Description: Add an option to export a session report as a self-contained HTML file.
+# Details:
+Generate an HTML document string that includes the selected events and necessary CSS for styling. Create a Blob and trigger a client-side download.
+
+# Test Strategy:
+Manual test: Export a session as HTML. Open the downloaded file in a browser and verify it renders correctly without needing external resources.

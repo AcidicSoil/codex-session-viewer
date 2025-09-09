@@ -1,0 +1,54 @@
+# Task ID: 54
+# Title: All Sessions View (auto-discovery + selector)
+# Status: done
+# Dependencies: None
+# Priority: medium
+# Description: Add a UI to list and search all auto-detected session files (from .codex/sessions, sessions, artifacts/sessions) and allow loading any of them. Keep it lightweight, client-only. Integrate with current loader.
+# Details:
+- Build a reusable component `SessionsList` that accepts discovered assets and exposes an `onSelect` callback. 
+- Add search, count badge, and sort by filename (desc) with quick actions (copy path, open). 
+- Wire into App: show "View all (N)" near the session chips and open the list in a modal/card. 
+- Reuse existing `handleFile` to load a selected asset (fetch -> blob -> File). 
+- Keep discovery in `useAutoDiscovery()`; no runtime fs access. 
+- Add docs to README under Usage.
+
+# Test Strategy:
+Manual: add multiple sample .jsonl files under ./.codex/sessions and ./sessions, run dev, click "View all (N)", filter, and load a file. Verify Timeline renders and Diff Viewer opens for FileChange events.
+
+# Subtasks:
+## 1. Create `SessionsList` Component Scaffold [done]
+### Dependencies: None
+### Description: Create the basic structure for the `SessionsList` component. It will be a reusable component responsible for displaying a list of discovered session files.
+### Details:
+Create a new file `src/components/SessionsList.tsx`. Define the component to accept `sessions: DiscoveredSession[]` as a prop and an `onSelect: (session: DiscoveredSession) => void` callback. Use Chakra UI components (`List`, `ListItem`, `Flex`, `Box`, `Text`) to render a basic, unstyled list of session paths. For now, the `onSelect` can be triggered via a simple `onClick` on each list item. Include placeholder buttons for 'Copy Path' and 'Open' for each item.
+
+## 2. Implement Search, Sorting, and Count Badge in `SessionsList` [done]
+### Dependencies: 54.1
+### Description: Add stateful filtering and sorting capabilities to the `SessionsList` component to allow users to easily find specific sessions.
+### Details:
+In `SessionsList.tsx`, add a state for the search query using a Chakra `Input` component. Implement filtering logic to show only sessions whose paths match the query (case-insensitive). Add a `Heading` that includes a count badge, e.g., `All Sessions ({filteredSessions.length})`. Implement sorting logic to display sessions in descending order by filename by default. Use `useMemo` to optimize the filtering and sorting operations.
+
+## 3. Integrate `SessionsList` into `App.tsx` via a Modal [done]
+### Dependencies: 54.1
+### Description: Wire the `SessionsList` component into the main application, making it accessible from a trigger near the existing session chips.
+### Details:
+In `src/App.tsx`, use the `useDisclosure` hook from Chakra UI to manage the modal's state. Add a `Button` or `Chip` next to the quick-access session chips with the text `View all ({discoveredSessions.length})`. The `onClick` of this button should call the `onOpen` function from `useDisclosure`. Render a Chakra `Modal` (`Modal`, `ModalOverlay`, `ModalContent`, `ModalHeader`, `ModalBody`, `ModalCloseButton`) which contains the `SessionsList` component. Pass the `discoveredSessions` from the `useAutoDiscovery` hook to the component.
+
+## 4. Implement Session Loading Logic on Selection [done]
+### Dependencies: 54.3
+### Description: Connect the `onSelect` action in the `SessionsList` to the application's existing file handling logic to load the chosen session.
+### Details:
+In `App.tsx`, define the function that will be passed as the `onSelect` prop to `SessionsList`. This function will receive the selected `DiscoveredSession`. Inside this function, perform the following: 1. Use the `fetch` API to get the session file content from its public path (`session.path`). 2. Convert the response to a `Blob`. 3. Create a `new File(...)` object from the blob and filename. 4. Call the existing `handleFile` function (from the `useSession` hook) with the new `File` object. 5. Close the modal using the `onClose` function from `useDisclosure`.
+
+## 5. Implement Empty/Loading States and Quick Actions [done]
+### Dependencies: 54.2
+### Description: Enhance the `SessionsList` component with better user experience by handling edge cases and implementing the placeholder quick actions.
+### Details:
+In `SessionsList.tsx`: 1. If the `sessions` prop is empty, display a message like 'No discovered sessions found.'. 2. If the search filter yields no results, display 'No sessions match your search.'. 3. Implement the 'Copy Path' button using `navigator.clipboard.writeText(session.path)`. Provide user feedback with a Chakra `useToast`. 4. Implement the 'Open' button as an `<a>` tag that opens the raw session file (`.jsonl`) in a new tab.
+
+## 6. Update README.md with Usage Documentation [done]
+### Dependencies: 54.3
+### Description: Document the new 'All Sessions' view feature for users.
+### Details:
+Edit the `README.md` file. Add a section under 'Usage' or 'Features' that describes the session auto-discovery and the 'All Sessions' modal. Explain how to access it (by clicking the 'View all' button) and its functionalities, including search and loading a session.
+

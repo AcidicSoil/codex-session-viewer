@@ -1,0 +1,11 @@
+# Task ID: 38
+# Title: Create File Tree Component
+# Status: done
+# Dependencies: 31
+# Priority: high
+# Description: Build a component that displays a tree view of all files that were modified during the session.
+# Details:
+Derive the file structure from the `fileChanges` array in the `ParsedSession` object. Clicking a file should trigger an action to show its diff.
+
+# Test Strategy:
+Component test with a mock `fileChanges` array. Manual test: Load a session with file changes and verify the tree is accurate.

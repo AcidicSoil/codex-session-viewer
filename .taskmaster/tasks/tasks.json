@@ -22,7 +22,7 @@
         "dependencies": [
           29
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -35,7 +35,7 @@
         "dependencies": [
           30
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -48,7 +48,7 @@
         "dependencies": [
           31
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -61,7 +61,7 @@
         "dependencies": [
           31
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -74,7 +74,7 @@
         "dependencies": [
           32
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -87,7 +87,7 @@
         "dependencies": [
           31
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -100,7 +100,7 @@
         "dependencies": [
           30
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -113,7 +113,7 @@
         "dependencies": [
           35
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -126,7 +126,7 @@
         "dependencies": [
           31
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -139,7 +139,7 @@
         "dependencies": [
           38
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -153,7 +153,7 @@
           35,
           37
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -166,7 +166,7 @@
         "dependencies": [
           39
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -179,7 +179,7 @@
         "dependencies": [
           40
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -192,7 +192,7 @@
         "dependencies": [
           35
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -206,7 +206,7 @@
           40,
           43
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -220,7 +220,7 @@
           40,
           43
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -235,7 +235,7 @@
           35,
           38
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -248,7 +248,7 @@
         "dependencies": [
           40
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -380,7 +380,7 @@
           44,
           45
         ],
-        "status": "done",
+        "status": "pending",
         "subtasks": []
       },
       {
@@ -398,17 +398,92 @@
       },
       {
         "id": 53,
-        "title": "Package as a Desktop App with Electron",
-        "description": "Create an Electron wrapper for the web application to provide a native desktop experience and richer file system access.",
-        "details": "Set up an Electron project that loads the Vite application. Configure build scripts for packaging the app for major operating systems (Windows, macOS, Linux).",
-        "testStrategy": "Build and run the desktop app on a target OS. Verify all functionality works as it does in the browser, and that file system interactions are seamless.",
-        "priority": "low",
+        "title": "Package as Web App or NPM Package (replace Electron)",
+        "description": "Provide distribution paths as a static web app and/or an installable npm package so users can either host the viewer or embed it in their apps.",
+        "status": "pending",
         "dependencies": [
           29,
           46
         ],
-        "status": "pending",
-        "subtasks": []
+        "priority": "low",
+        "details": "### Objective\nReplace the Electron desktop app focus with two distribution paths: (A) a static web app build suitable for deployment on services like GitHub Pages, Netlify, or Vercel, and (B) an npm package that exports reusable React components and utilities for embedding in other applications.\n\n### Path A: Static Web App\n1.  **Build Configuration**: Update `vite.config.ts` to correctly handle the `base` path for deployment to a subdirectory (e.g., for GitHub Pages). The existing `\"build\": \"tsc && vite build\"` script in `package.json` should produce a deployable SPA in the `dist/` directory.\n2.  **Deployment Docs**: Add a new section to `README.md` with clear, step-by-step deployment instructions for GitHub Pages and at least one other static hosting provider (e.g., Vercel or Netlify), including how to configure 404 fallbacks for the SPA.\n\n### Path B: NPM Package\n1.  **Vite Library Mode**: Configure `vite.config.ts` to support library mode, creating a build that outputs ESM and type definitions. This may require a separate build script (e.g., `build:lib`).\n2.  **Library Entry Point**: Create a new library entry point (e.g., `src/index.ts`) that exports the primary `SessionView` component from `src/components/SessionView.tsx`, the `ParsedSession` type from `src/lib/parser.ts`, and any other relevant hooks or utilities.\n3.  **Package Metadata**: Update `package.json` to prepare it for publishing:\n    *   Add `main`, `module`, and `types` fields.\n    *   Define an `exports` map for proper module resolution.\n    *   Move `react` and `react-dom` to `peerDependencies`.\n    *   Ensure the `files` array includes the `dist` directory and necessary type definitions.\n4.  **Usage Documentation**: Add a usage example to `README.md` showing how to install the package and embed the `SessionView` component in a React application.",
+        "testStrategy": "### Web App Build Verification\n1.  Run `npm run build` and use `npm run preview` to serve the `dist` folder locally. Verify the app runs correctly.\n2.  Deploy the `dist` folder to a static host (e.g., Vercel or a `gh-pages` branch).\n3.  Confirm the deployed application loads and that any client-side routing handles deep links and 404 fallbacks correctly.\n\n### NPM Package Verification\n1.  Run the library build script and then `npm pack` to generate a local `.tgz` package file.\n2.  In a separate test React project (e.g., created with `npx vite-create-app --template react-ts`), install the package from the local file (`npm install ../path/to/codex-session-viewer-vX.Y.Z.tgz`).\n3.  Import and render the `SessionView` component with a sample session object to verify it works as expected.\n4.  Run `npm publish --dry-run` in the main project to ensure all `package.json` metadata is correct and there are no publishing errors.\n\n### Documentation Review\nReview `README.md` and other documentation to ensure all Electron-related information is removed or marked as superseded, and that the new deployment/usage instructions are clear and accurate.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Decide distribution targets and package naming",
+            "description": "Confirm whether we’ll ship both paths (static web app + npm package) or just one first. Finalize npm package name/scope and public README positioning.",
+            "details": "Output: docs/distribution.md summarizing targets, naming (e.g., `@your-scope/codex-session-viewer`), and rollout order.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 53
+          },
+          {
+            "id": 2,
+            "title": "Configure SPA build for static hosting",
+            "description": "Ensure Vite build works for subpath deployments and SPA fallback.",
+            "details": "Tasks: set `base` in `vite.config.ts` if needed; document SPA 404 fallback for GH Pages (e.g., 404.html copy) and Netlify/Vercel config; verify `npm run build && npm run preview`.",
+            "status": "pending",
+            "dependencies": [
+              "53.1"
+            ],
+            "parentTaskId": 53
+          },
+          {
+            "id": 3,
+            "title": "Add deployment docs and GitHub Pages workflow",
+            "description": "Write step-by-step docs for deploying the static site to GH Pages and one managed host (Vercel/Netlify).",
+            "details": "Create docs/deploy.md and an optional `.github/workflows/deploy.yml` for GH Pages CI. Include base path config notes.",
+            "status": "pending",
+            "dependencies": [
+              "53.2"
+            ],
+            "parentTaskId": 53
+          },
+          {
+            "id": 4,
+            "title": "Set up library build (Vite library mode)",
+            "description": "Configure a library build that emits ESM and `.d.ts` types for the React viewer component(s) and utilities.",
+            "details": "Add `build:lib` script; configure `vite.config.ts` (or Rollup/tsup) for library mode; ensure tree-shakeable exports; generate type declarations.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 53
+          },
+          {
+            "id": 5,
+            "title": "Define library entry points and exports map",
+            "description": "Create `src/index.ts` that re-exports primary components/types; configure `package.json` `exports`, `main`, `module`, and `types` fields; move React deps to `peerDependencies`.",
+            "details": "Ensure `files` whitelist includes `dist` and type files. Add README usage snippet for embedding.",
+            "status": "pending",
+            "dependencies": [
+              "53.4"
+            ],
+            "parentTaskId": 53
+          },
+          {
+            "id": 6,
+            "title": "Local pack and embed test",
+            "description": "Run `npm pack` and consume the tarball in a fresh React TS app to verify component import, types, and rendering.",
+            "details": "Create a small example app (or codesandbox) that imports the viewer, passes a sample session, and renders successfully.",
+            "status": "pending",
+            "dependencies": [
+              "53.5"
+            ],
+            "parentTaskId": 53
+          },
+          {
+            "id": 7,
+            "title": "Publish dry-run and docs cleanup",
+            "description": "Run `npm publish --dry-run`, ensure metadata is correct, and update README/docs to remove or deprecate Electron references in favor of web/npm paths.",
+            "details": "Add a Publishing section with versioning and release steps; keep Electron as historical note only.",
+            "status": "pending",
+            "dependencies": [
+              "53.3",
+              "53.6"
+            ],
+            "parentTaskId": 53
+          }
+        ]
       },
       {
         "id": 54,
@@ -416,7 +491,7 @@
         "description": "Add a UI to list and search all auto-detected session files (from .codex/sessions, sessions, artifacts/sessions) and allow loading any of them. Keep it lightweight, client-only. Integrate with current loader.",
         "details": "- Build a reusable component `SessionsList` that accepts discovered assets and exposes an `onSelect` callback. \n- Add search, count badge, and sort by filename (desc) with quick actions (copy path, open). \n- Wire into App: show \"View all (N)\" near the session chips and open the list in a modal/card. \n- Reuse existing `handleFile` to load a selected asset (fetch -> blob -> File). \n- Keep discovery in `useAutoDiscovery()`; no runtime fs access. \n- Add docs to README under Usage.",
         "testStrategy": "Manual: add multiple sample .jsonl files under ./.codex/sessions and ./sessions, run dev, click \"View all (N)\", filter, and load a file. Verify Timeline renders and Diff Viewer opens for FileChange events.",
-        "status": "done",
+        "status": "pending",
         "dependencies": [],
         "priority": "medium",
         "subtasks": [
@@ -426,7 +501,7 @@
             "description": "Create the basic structure for the `SessionsList` component. It will be a reusable component responsible for displaying a list of discovered session files.",
             "dependencies": [],
             "details": "Create a new file `src/components/SessionsList.tsx`. Define the component to accept `sessions: DiscoveredSession[]` as a prop and an `onSelect: (session: DiscoveredSession) => void` callback. Use Chakra UI components (`List`, `ListItem`, `Flex`, `Box`, `Text`) to render a basic, unstyled list of session paths. For now, the `onSelect` can be triggered via a simple `onClick` on each list item. Include placeholder buttons for 'Copy Path' and 'Open' for each item.",
-            "status": "done",
+            "status": "pending",
             "testStrategy": "Use Storybook or a temporary mount in `App.tsx` to render the component with mock `DiscoveredSession` data and verify the list appears."
           },
           {
@@ -437,7 +512,7 @@
               "54.1"
             ],
             "details": "In `SessionsList.tsx`, add a state for the search query using a Chakra `Input` component. Implement filtering logic to show only sessions whose paths match the query (case-insensitive). Add a `Heading` that includes a count badge, e.g., `All Sessions ({filteredSessions.length})`. Implement sorting logic to display sessions in descending order by filename by default. Use `useMemo` to optimize the filtering and sorting operations.",
-            "status": "done",
+            "status": "pending",
             "testStrategy": "In the component's test environment, verify that typing in the search input filters the list correctly. Verify the count badge updates. Verify the list is sorted by filename descending by default."
           },
           {
@@ -448,7 +523,7 @@
               "54.1"
             ],
             "details": "In `src/App.tsx`, use the `useDisclosure` hook from Chakra UI to manage the modal's state. Add a `Button` or `Chip` next to the quick-access session chips with the text `View all ({discoveredSessions.length})`. The `onClick` of this button should call the `onOpen` function from `useDisclosure`. Render a Chakra `Modal` (`Modal`, `ModalOverlay`, `ModalContent`, `ModalHeader`, `ModalBody`, `ModalCloseButton`) which contains the `SessionsList` component. Pass the `discoveredSessions` from the `useAutoDiscovery` hook to the component.",
-            "status": "done",
+            "status": "pending",
             "testStrategy": "Run the app. Verify the 'View all (N)' button appears with the correct count. Clicking it should open a modal displaying the full list of sessions from `useAutoDiscovery`."
           },
           {
@@ -459,7 +534,7 @@
               "54.3"
             ],
             "details": "In `App.tsx`, define the function that will be passed as the `onSelect` prop to `SessionsList`. This function will receive the selected `DiscoveredSession`. Inside this function, perform the following: 1. Use the `fetch` API to get the session file content from its public path (`session.path`). 2. Convert the response to a `Blob`. 3. Create a `new File(...)` object from the blob and filename. 4. Call the existing `handleFile` function (from the `useSession` hook) with the new `File` object. 5. Close the modal using the `onClose` function from `useDisclosure`.",
-            "status": "done",
+            "status": "pending",
             "testStrategy": "Open the 'All Sessions' modal, click on a session. Verify the modal closes and the application loads the selected session, displaying its timeline and metadata."
           },
           {
@@ -470,7 +545,7 @@
               "54.2"
             ],
             "details": "In `SessionsList.tsx`: 1. If the `sessions` prop is empty, display a message like 'No discovered sessions found.'. 2. If the search filter yields no results, display 'No sessions match your search.'. 3. Implement the 'Copy Path' button using `navigator.clipboard.writeText(session.path)`. Provide user feedback with a Chakra `useToast`. 4. Implement the 'Open' button as an `<a>` tag that opens the raw session file (`.jsonl`) in a new tab.",
-            "status": "done",
+            "status": "pending",
             "testStrategy": "Manually test the empty state by providing an empty array. Test the 'no results' state by searching for gibberish. Test the 'Copy Path' and 'Open' buttons for a few sessions to ensure they work as expected."
           },
           {
@@ -481,7 +556,7 @@
               "54.3"
             ],
             "details": "Edit the `README.md` file. Add a section under 'Usage' or 'Features' that describes the session auto-discovery and the 'All Sessions' modal. Explain how to access it (by clicking the 'View all' button) and its functionalities, including search and loading a session.",
-            "status": "done",
+            "status": "pending",
             "testStrategy": "Review the `README.md` file to ensure the new documentation is clear, concise, and accurately reflects the feature's functionality."
           }
         ]
@@ -502,7 +577,7 @@
             "description": "Modify the `useAutoDiscovery` hook in `src/hooks/useAutoDiscovery.ts` to support manual re-triggering. This involves changing the core logic from a one-time `useEffect` to an on-demand function and adding a loading state.",
             "dependencies": [],
             "details": "In `src/hooks/useAutoDiscovery.ts`, refactor the existing `useEffect` logic into a `useCallback` function, let's call it `scan`. This function will contain the logic for processing the `import.meta.glob` results. Introduce a `useState` boolean for `isLoading`. The hook should call `scan` once on mount. It should return the existing `discoveredSessions` and `sessionCount`, plus the new `isLoading` state and the `scan` function (exposed as `reload`).",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify in the browser that sessions still load on the initial page load. Manually call the new `reload` function from the browser console to ensure it can be triggered."
           },
           {
@@ -513,7 +588,7 @@
               "55.1"
             ],
             "details": "In `src/App.tsx`, update the call to `useAutoDiscovery` to receive the `reload` function and `isLoading` state. Add a new button, preferably an icon button with a 'refresh' icon, next to the session chips container. The button's `onClick` handler should call the `reload` function. The button should be disabled when `isLoading` is true.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually test by clicking the new reload button. Verify the button becomes disabled during the (brief) reload period."
           },
           {
@@ -524,7 +599,7 @@
               "55.1"
             ],
             "details": "In `src/App.tsx`, pass the `reload` function and `isLoading` state as props to the `AllSessionsView` component. Modify `src/components/AllSessionsView.tsx` to accept these new props. Add a reload button to the component's header, similar to the one in the main view. This button should also call `reload` and be disabled when `isLoading` is true.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Open the 'All Sessions' view. Click the reload button in its header and verify it triggers the reload and enters a disabled state."
           },
           {
@@ -536,7 +611,7 @@
               "55.3"
             ],
             "details": "Identify an existing spinner component in the project or create a simple CSS-based one. In both `src/App.tsx` and `src/components/AllSessionsView.tsx`, conditionally render this spinner next to the reload button when the `isLoading` state is true. The refresh icon can be hidden and replaced by the spinner during the loading state.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Click either reload button and visually confirm that a spinner appears and the button's icon is hidden. The spinner should disappear once the reload is complete."
           },
           {
@@ -547,7 +622,7 @@
               "55.1"
             ],
             "details": "In `src/hooks/useAutoDiscovery.ts`, modify the exposed `reload` function. Use a combination of `useRef` to hold a timeout ID and `setTimeout`/`clearTimeout` to create a debounce effect. A debounce delay of 300-500ms is appropriate. This ensures that even if the button is clicked multiple times in quick succession, the expensive `scan` logic only runs once after the user stops clicking.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Add a `console.log` inside the core scan logic. Click the reload button rapidly multiple times and verify from the console that the log message appears only once after the clicks have stopped."
           },
           {
@@ -559,7 +634,7 @@
               "55.5"
             ],
             "details": "Create a new test file `src/hooks/useAutoDiscovery.test.ts`. Use a testing library (e.g., Vitest, Jest) to mock Vite's `import.meta.glob`. Write test cases to: 1) Verify sessions are loaded on initial render. 2) Verify `isLoading` is `true` while `reload` is executing and `false` otherwise. 3) Verify calling `reload` updates the session list. 4) Use fake timers to test that the debounce logic correctly limits the execution of the scan function.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run the test suite and ensure all assertions pass."
           }
         ]
@@ -580,7 +655,7 @@
             "description": "Implement a utility function to extract a timestamp from a file path string. This function will be the core of the sorting logic.",
             "dependencies": [],
             "details": "Create a new file `src/utils/timestamp.ts`. Inside, export a function `parseTimestampFromPath(path: string): number | null`. This function should use regular expressions to find and parse timestamps from the following patterns in order of priority:\n1. `rollout-YYYY-MM-DDTHH-mm-ss` in the filename.\n2. ISO 8601-like date strings (e.g., `YYYY-MM-DDTHH-mm-ss.sssZ`) anywhere in the path.\n3. Directory structures like `YYYY/MM/DD/`.\nReturn the parsed timestamp as epoch milliseconds, or `null` if no recognizable timestamp is found.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "This will be tested directly in subtask 56.5."
           },
           {
@@ -591,7 +666,7 @@
               "56.1"
             ],
             "details": "In `src/hooks/useAutoDiscovery.ts`:\n1. Update the `DiscoveredSession` interface to include `sortKey: number | null`.\n2. Import `parseTimestampFromPath` from `src/utils/timestamp.ts`.\n3. Within the `useEffect` that processes the `glob` results, call `parseTimestampFromPath` for each file's path.\n4. Attach the returned epoch milliseconds (or `null`) to the new `sortKey` property of the `DiscoveredSession` object being created.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manual verification by inspecting the hook's output with a debugger or console log."
           },
           {
@@ -600,7 +675,7 @@
             "description": "Implement the UI controls for switching between 'Newest' and 'Name' sorting within the 'All Sessions' list.",
             "dependencies": [],
             "details": "In `src/components/AllSessionsModal.tsx`:\n1. Add a new state variable: `const [sortOrder, setSortOrder] = useState<'newest' | 'name'>('newest');`.\n2. In the modal's header area, add a simple button group or segmented control that allows the user to select between 'Newest' and 'Name'.\n3. The onClick handler for these controls should update the `sortOrder` state.\n4. Ensure the default selection is 'Newest'.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually open the 'All Sessions' modal and verify the toggle UI is present, defaults to 'Newest', and can be changed."
           },
           {
@@ -612,7 +687,7 @@
               "56.3"
             ],
             "details": "In `src/components/AllSessionsModal.tsx`, replace the existing `a.name.localeCompare(b.name)` sort.\n1. Create a new sorted list based on the `sortOrder` state.\n2. If `sortOrder` is `'newest'`, sort by `b.sortKey - a.sortKey`. For items where `sortKey` is `null` or equal, use `a.name.localeCompare(b.name)` as a secondary, stable sort criterion.\n3. If `sortOrder` is `'name'`, sort by `a.name.localeCompare(b.name)`.\n4. In `src/components/WelcomeScreen.tsx`, apply the default 'newest' sorting logic to the session chips it displays from `useAutoDiscovery`. No UI toggle is needed here, just the default sort behavior.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually test with a mix of session files (some with timestamps in the name, some without) and verify that the list order in the modal and on the welcome screen is correct. Check that toggling the sort order works as expected."
           },
           {
@@ -632,7 +707,7 @@
             "description": "Document the new sorting feature, its default behavior, and the filename patterns it recognizes.",
             "dependencies": [],
             "details": "In `README.md`, add a new section under 'Features' titled 'Session Sorting'.\nExplain that sessions are sorted by newest first by default. Detail the specific filename and directory patterns that the application recognizes for timestamp extraction, listing them in order of priority. Mention that it falls back to alphabetical sorting by name if no timestamp is found.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Review the `README.md` file to confirm the new section is clear and accurate."
           }
         ]
@@ -726,11 +801,335 @@
             "testStrategy": "Review the rendered `README.md` on the Git hosting platform to ensure the formatting is correct and the information is clear."
           }
         ]
+      },
+      {
+        "id": 58,
+        "title": "Filter‑Aware Granular Export",
+        "description": "Implement export functionality that respects the currently selected filters and allows granular field/column and scope selection, with CSV and JSON formats.",
+        "details": "Goal: Enable users to export exactly what they’re viewing based on active filters, with fine-grained selection of fields and row scope.\n\nRequirements:\n- Respect current filter state (via Zustand selectors) so exported rows match the filtered dataset (and current sort if feasible).\n- Provide export formats: CSV and JSON (extensible to Parquet in future; design for pluggable exporters).\n- Granular field selection: allow users to pick columns/attributes to include.\n- Row scope options: current page vs. all filtered results vs. selected rows.\n- UI: Export button opens a modal/dialog with format, fields, and scope controls. Show row count estimate.\n- Performance: Handle large exports without freezing the UI (use Web Worker and streaming/chunking for CSV where possible).\n- Accessibility: Keyboard navigable modal and focus management.\n- Telemetry: basic timing metrics around export generation (optional).\n\nAcceptance Criteria:\n- Exported file row count equals filtered dataset for chosen scope.\n- Included columns match selections; CSV headers match field labels.\n- CSV opens correctly in common spreadsheet apps; JSON validates.\n- Operation completes for 50k+ rows without locking the main thread.\n- Unit tests cover field mapping and CSV generation; smoke/E2E verifies end-to-end export respects filters.\n",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Confirm export scope, formats, and field mapping",
+            "description": "Finalize exportable entities/fields, default columns, and CSV/JSON specs. Decide how nested fields are flattened, how dates are formatted, and column labels vs. keys. Deliver a short spec and example files.",
+            "details": "Deliverables: 1) concise spec in docs/export.md with field list and mapping rules; 2) example CSV/JSON for a small sample; 3) alignment with current table columns and filters.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 58
+          },
+          {
+            "id": 2,
+            "title": "Add column metadata and field selection utilities",
+            "description": "Create a central metadata map of exportable fields (key, label, type, extractor, formatter). Provide utilities to resolve selected fields into extraction/formatting pipelines.",
+            "details": "Proposed files: src/export/columns.ts (metadata), src/export/fieldSelection.ts (helpers). Ensure parity with table columns and filter keys.",
+            "status": "done",
+            "dependencies": [
+              "58.1"
+            ],
+            "parentTaskId": 58
+          },
+          {
+            "id": 3,
+            "title": "Implement filter-aware dataset selector from Zustand",
+            "description": "Expose a selector that returns rows for export based on the current filters (and sort if feasible). Support row scope: all filtered results, current page, or explicitly selected rows.",
+            "details": "Add a pure selector in state layer that the export service can call. Include unit tests around filter combinations to ensure correct row counts.",
+            "status": "done",
+            "dependencies": [
+              "58.1"
+            ],
+            "parentTaskId": 58
+          },
+          {
+            "id": 4,
+            "title": "Implement CSV/JSON exporters with unit tests",
+            "description": "Build `toCSV` and `toJSON` utilities that take rows + selected field metadata and produce downloadable data. Handle quoting, delimiters, nulls, and unicode.",
+            "details": "Proposed files: src/export/csv.ts, src/export/json.ts, with tests under src/export/__tests__/. Aim for chunked/streamed CSV generation to avoid large memory spikes.",
+            "status": "done",
+            "dependencies": [
+              "58.2"
+            ],
+            "parentTaskId": 58
+          },
+          {
+            "id": 5,
+            "title": "Add Web Worker pipeline for large exports",
+            "description": "Generate CSV/JSON in a Web Worker to keep UI responsive on large datasets; provide progress updates and cancelation.",
+            "details": "Create src/export/worker/exportWorker.ts. Use postMessage for progress and result blobs. Fallback to main-thread when dataset is small (<5k rows).",
+            "status": "done",
+            "dependencies": [
+              "58.4"
+            ],
+            "parentTaskId": 58
+          },
+          {
+            "id": 6,
+            "title": "Create Export modal (format, fields, scope)",
+            "description": "Add an Export modal using Headless UI + Tailwind. Controls: format (CSV/JSON), field checklist, row scope (all filtered / current page / selected), and a row count estimate.",
+            "details": "Wire to Zustand selectors and exporter service. Disable action while processing, show progress and completion states.",
+            "status": "done",
+            "dependencies": [
+              "58.2",
+              "58.3",
+              "58.4"
+            ],
+            "parentTaskId": 58
+          },
+          {
+            "id": 7,
+            "title": "Download handling and filenames",
+            "description": "Generate a Blob and trigger file download. Compose filenames that include timestamp and key filter context. Ensure cross-browser compatibility.",
+            "details": "Implement `downloadBlob(blob, filename)` util. Derive filename like `sessions_2025-09-09_filtered-by-model.csv`. Add success/error toasts.",
+            "status": "done",
+            "dependencies": [
+              "58.6"
+            ],
+            "parentTaskId": 58
+          },
+          {
+            "id": 8,
+            "title": "Tests: verify exports respect filters and fields",
+            "description": "Add unit tests for field mapping and CSV generation; add an E2E smoke test that applies filters, runs export, and validates row/column counts.",
+            "details": "Use sample dataset with known counts. Ensure test dataset covers edge cases (quotes, commas, unicode, nulls).",
+            "status": "done",
+            "dependencies": [
+              "58.3",
+              "58.4",
+              "58.6",
+              "58.7"
+            ],
+            "parentTaskId": 58
+          },
+          {
+            "id": 9,
+            "title": "Docs: README usage and known limits",
+            "description": "Document the Export feature: how to start, field selection, scopes, and any performance limits. Include troubleshooting tips for very large exports.",
+            "details": "Update README and add docs/export.md with screenshots/GIFs where useful.",
+            "status": "done",
+            "dependencies": [
+              "58.7"
+            ],
+            "parentTaskId": 58
+          }
+        ]
+      },
+      {
+        "id": 59,
+        "title": "Theme Color Picker + Light/Dark Mode",
+        "description": "Let users select custom theme colors and choose Light, Dark, or System mode. Persist preferences and apply across the UI using Tailwind + CSS variables.",
+        "details": "Objective: Provide user-controlled theming with custom colors and light/dark (including system) mode. Keep accessibility and persistence in mind.\n\nAcceptance Criteria:\n- User can toggle Light/Dark/System; System tracks OS changes via `prefers-color-scheme`.\n- User can pick primary/accent colors; UI updates live via CSS variables; changes persist across reloads.\n- Default theme remains unchanged when no customizations are set.\n- Contrast guidance shown when selected colors risk AA violations (informational warning is sufficient).\n- Works with existing Tailwind setup; no major layout regressions.\n\nImplementation Notes:\n- Tailwind: use CSS variables for color tokens (e.g., `--color-primary`, `--color-accent`) and map them in `tailwind.config.*` so utilities (bg/text/border) reflect user choices.\n- State: store in Zustand (mode: \"light\" | \"dark\" | \"system\"; colors: HEX/HSL); persist to `localStorage` with a small versioned schema and migration.\n- UI: Headless UI modal/drawer with live preview, reset-to-default, and apply actions.\n- Accessibility: basic contrast check and warning.\n- Testing: unit tests for state persistence and theme resolution; smoke test that toggling mode flips root class/attributes and updates CSS variables.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Specify theme tokens and mode behavior",
+            "description": "Define theme tokens (primary, accent, surface, text), CSS variable names, and how Light/Dark/System modes resolve. Decide default palette and mapping to Tailwind utilities.",
+            "details": "Deliver docs/theme.md with tokens, variable names, and example mappings. Include decision on using HSL vs HEX and shade derivation (e.g., HSL adjustments).",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 59
+          },
+          {
+            "id": 2,
+            "title": "Wire Tailwind + CSS variables",
+            "description": "Introduce CSS variables for theme tokens and map them to Tailwind theme via `tailwind.config.*` extensions. Support `[data-theme=\"dark\"]` or `class=\"dark\"` toggling and live updates.",
+            "details": "Files: `src/styles/theme.css` (variables), `tailwind.config.ts` (extend colors using CSS vars), ensure dark mode strategy aligns with existing config. Provide a safe default palette.",
+            "status": "pending",
+            "dependencies": [
+              "59.1"
+            ],
+            "parentTaskId": 59
+          },
+          {
+            "id": 3,
+            "title": "Add Zustand theme store + persistence",
+            "description": "Create a theme slice with mode (light/dark/system) and color tokens. Add localStorage persistence and hydration (with schema version). Expose selectors for resolved mode and computed variables.",
+            "details": "Files: `src/state/theme.ts`. Include migration from older schema if present. Provide helper to apply root attributes/classes on change.",
+            "status": "pending",
+            "dependencies": [
+              "59.1"
+            ],
+            "parentTaskId": 59
+          },
+          {
+            "id": 4,
+            "title": "Build Theme Picker UI (modal)",
+            "description": "Create a Headless UI modal for theme settings: System/Light/Dark toggle; color pickers for primary/accent; live preview; Reset to default.",
+            "details": "Files: `src/components/ThemePicker.tsx` and integration in a settings menu. Use `<input type=\"color\">` initially; structure to allow future advanced picker.",
+            "status": "pending",
+            "dependencies": [
+              "59.2"
+            ],
+            "parentTaskId": 59
+          },
+          {
+            "id": 5,
+            "title": "Apply theme to app and root toggling",
+            "description": "Ensure mode toggling sets the correct root attribute/class and CSS variables update across the app. Provide a small hook to subscribe and apply changes.",
+            "details": "Files: `src/appTheme.ts` or `src/hooks/useApplyTheme.ts`. Verify no FOUC and initial mode resolves before first paint where possible.",
+            "status": "pending",
+            "dependencies": [
+              "59.2",
+              "59.3"
+            ],
+            "parentTaskId": 59
+          },
+          {
+            "id": 6,
+            "title": "Accessibility: contrast checks and warnings",
+            "description": "Add a simple contrast checker for chosen primary/accent against surfaces. Show non-blocking warnings when selections risk failing WCAG AA.",
+            "details": "Utility function + inline warning in the Theme Picker. Provide links to documentation for guidance.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 59
+          },
+          {
+            "id": 7,
+            "title": "Tests: theme store, persistence, and UI smoke",
+            "description": "Unit tests for theme store (mode resolution, persistence, migrations). UI smoke test to ensure toggling mode flips root class and variables update.",
+            "details": "Files: `src/state/theme.test.ts`, `src/components/ThemePicker.test.tsx` (lightweight).",
+            "status": "pending",
+            "dependencies": [
+              "59.3"
+            ],
+            "parentTaskId": 59
+          },
+          {
+            "id": 8,
+            "title": "Docs: Theme settings and tips",
+            "description": "Document theme settings in README and docs/theme.md: how to open picker, modes, persistence, and troubleshooting (e.g., contrast warnings).",
+            "details": "Include screenshots/GIFs where useful. Mention System mode behavior and how it responds to OS changes.",
+            "status": "pending",
+            "dependencies": [
+              "59.5"
+            ],
+            "parentTaskId": 59
+          }
+        ]
+      },
+      {
+        "id": 60,
+        "title": "Workspace Scanner for CWD + .codex/sessions (diff tracking)",
+        "description": "Scan the launch directory (cwd) and its .codex/sessions folder to detect file changes and feed the Diff Viewer with a timeline of modifications since the session started.",
+        "details": "Objective: Allow the viewer to connect to a workspace folder (the cwd it was started from) and scan both the root and .codex/sessions to detect changes to files, so the Diff Viewer can show diffs between original and current states and keep a running history.\n\nKey Behaviors:\n- User chooses a workspace folder via the File System Access API (DirectoryPicker) or drags a folder onto the app; we persist a handle (with permission) for subsequent scans.\n- Initial snapshot: recursively index files (configurable globs), compute lightweight hashes (Web Crypto) and sizes; store path->hash/size/handle.\n- Rescan on demand: compare snapshots to detect adds/mods/deletes; produce a change set for the Diff Viewer.\n- .codex/sessions integration: specifically scan .codex/sessions for JSONL session files and map events to workspace paths to correlate code changes with file diffs.\n- Performance: chunked traversal, progress reporting, and ability to cancel scans.\n- Persistence: store snapshot metadata and handles in IndexedDB (with user consent) so rescans persist across reloads.\n\nAcceptance Criteria:\n- Selecting a folder indexes files and identifies .codex/sessions automatically.\n- A Rescan action updates a “Changed files” list and the Diff Viewer can open a before/after for any changed file.\n- Change types (added/modified/deleted) and counts are displayed; large trees (50k+ files) do not freeze the UI (workers/yielding loops).\n- Permissions and errors are handled gracefully with clear user messaging.\n- Docs describe limitations (browser FS APIs) and fallback flows.\n",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Decide directory access + security approach",
+            "description": "Choose File System Access API as primary (DirectoryPicker + persisted handles) and define fallback (manual zip upload). Document permission prompts and limitations.",
+            "details": "Deliver docs/scanner.md section outlining browser support, permission flows, and why live watchers aren’t available; rescans are manual or scheduled.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 60
+          },
+          {
+            "id": 2,
+            "title": "Implement recursive scanner + hashing",
+            "description": "Build utilities to traverse selected directory, filter by globs, and compute content hashes (Web Crypto) + sizes. Yield progress incrementally.",
+            "details": "Files: src/scanner/scan.ts, src/scanner/hash.ts. Use async generators and chunked reads; support cancel via AbortSignal.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 60
+          },
+          {
+            "id": 3,
+            "title": "Create initial snapshot index + persistence",
+            "description": "Store path→{hash,size} plus handle references in IndexedDB. Support loading/saving named snapshots per workspace.",
+            "details": "Files: src/scanner/indexStore.ts using existing IndexedDB service (if available).",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 60
+          },
+          {
+            "id": 4,
+            "title": "Rescan + change detection",
+            "description": "Compute deltas (added/modified/deleted) by comparing current scan vs snapshot; produce a consumable ChangeSet for the Diff Viewer.",
+            "details": "Files: src/scanner/diffIndex.ts. Include mtime if available; detect text/binary via simple sniff; expose summary counts.",
+            "status": "pending",
+            "dependencies": [
+              "60.2"
+            ],
+            "parentTaskId": 60
+          },
+          {
+            "id": 5,
+            "title": ".codex/sessions integration",
+            "description": "Scan `.codex/sessions` under the chosen root; parse session JSONL and correlate events with file paths to annotate changes with session context.",
+            "details": "Files: src/scanner/sessionsLink.ts. Reuse existing JSONL parser; produce mapping for Diff Viewer to jump from event → file and vice versa.",
+            "status": "pending",
+            "dependencies": [
+              "60.2"
+            ],
+            "parentTaskId": 60
+          },
+          {
+            "id": 6,
+            "title": "Diff Viewer integration",
+            "description": "Expose a provider that supplies before/after content for changed files and session-linked diffs so the Diff Viewer can render unified/side-by-side views.",
+            "details": "Wire a new diff data source into existing viewer controls; add a Changed Files panel with counts and quick open.",
+            "status": "pending",
+            "dependencies": [
+              "39",
+              "60.4"
+            ],
+            "parentTaskId": 60
+          },
+          {
+            "id": 7,
+            "title": "UI: Connect Workspace + Rescan + Progress",
+            "description": "Add a UI flow to connect a folder, show the selected root, display changed files list, progress/estimates, and a Rescan button (with debounce).",
+            "details": "Use Headless UI modal or settings panel; surface permission errors and tips; integrate with existing reload button if present.",
+            "status": "pending",
+            "dependencies": [
+              "60.2"
+            ],
+            "parentTaskId": 60
+          },
+          {
+            "id": 8,
+            "title": "Persistence via IndexedDB (workspaces + snapshots)",
+            "description": "Persist workspace handles (where supported) and snapshot metadata to IndexedDB with versioned schema; allow switching workspaces and restoring previous snapshot.",
+            "details": "Extend existing DB service from Task 48 or add a new store. Handle permission revocation gracefully.",
+            "status": "pending",
+            "dependencies": [
+              "48"
+            ],
+            "parentTaskId": 60
+          },
+          {
+            "id": 9,
+            "title": "Tests: scanner correctness and diff integration",
+            "description": "Unit tests for hashing and change detection; integration test that selecting a folder, scanning, editing a file, and rescanning shows expected changes and renders diffs.",
+            "details": "Mock FS handles where possible; include text/binary edge cases and large directory simulation.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 60
+          },
+          {
+            "id": 10,
+            "title": "Docs: workspace scanning and limitations",
+            "description": "Document how to connect a folder, how rescans work, and limitations (browser support, permissions, no live watchers). Include troubleshooting for common errors.",
+            "details": "Add docs/scanner.md and update README with a new section.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 60
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-09-08T17:44:30.733Z",
-      "updated": "2025-09-09T02:03:50.018Z",
+      "updated": "2025-09-09T14:10:15.540Z",
       "description": "Tasks for master context"
     }
   }

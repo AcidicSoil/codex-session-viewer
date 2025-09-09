@@ -17,7 +17,7 @@ import { useBookmarks } from './state/bookmarks'
 import { Button } from './components/ui/button'
 import { eventKey } from './utils/eventKey'
 import { parseHash, updateHash } from './utils/hashState'
-import { exportJson, exportMarkdown, exportHtml } from './utils/exporters'
+import { exportJson, exportMarkdown, exportHtml, exportCsv, buildFilename } from './utils/exporters'
 import type { ResponseItem } from './types'
 import FileTree from './components/FileTree'
 import FilePreview from './components/FilePreview'
@@ -26,6 +26,7 @@ import { parseUnifiedDiffToSides, languageFromPath } from './utils/diff'
 import useAutoDiscovery from './hooks/useAutoDiscovery'
 import SessionsList from './components/SessionsList'
 import { matchesEvent } from './utils/search'
+import ExportModal from './components/ExportModal'
 
 function DevButtons({ onGenerate }: { onGenerate: () => void }) {
   return (
@@ -74,8 +75,40 @@ function AppInner() {
   const [roleFilter, setRoleFilter] = useState<'All' | 'user' | 'assistant' | 'system'>('All')
   const [scrollToIndex, setScrollToIndex] = useState<number | null>(null)
   const [showOther, setShowOther] = useState(false)
-  const { projectFiles, sessionAssets } = useAutoDiscovery()
+  const { projectFiles, sessionAssets, isLoading, reload } = useAutoDiscovery()
   const [showAllSessions, setShowAllSessions] = useState(false)
+  const [showExport, setShowExport] = useState(false)
+
+  function getFilteredItems(input?: { ev: any; key: string; absIndex: number }[]) {
+    const full = input ?? loader.state.events.map((ev, i) => ({ ev, key: eventKey(ev as any, i), absIndex: i }))
+    return full
+      .filter(({ key }) => (showBookmarksOnly ? has(key) : true))
+      .filter(({ ev }) => {
+        if (typeFilter === 'All') return true
+        const t = (ev as any).type
+        if (typeFilter === 'ToolCalls') {
+          return t === 'FunctionCall' || t === 'LocalShellCall' || t === 'WebSearchCall' || t === 'CustomToolCall'
+        }
+        if (typeFilter === 'Message') {
+          if (t !== 'Message') return false
+          if (roleFilter === 'All') return true
+          const role = (ev as any).role
+          return role === roleFilter
+        }
+        return t === typeFilter
+      })
+      .filter(({ ev }) => (typeFilter === 'All' && !showOther ? (ev as any).type !== 'Other' : true))
+      .filter(({ ev }) => (search ? matchesEvent(ev as any, search) : true))
+      .filter(({ ev }) => {
+        const q = pathFilter.trim()
+        if (!q) return true
+        const anyEv: any = ev
+        const p = (anyEv.path ? String(anyEv.path) : '').toLowerCase()
+        const qq = q.toLowerCase()
+        if (p.includes(qq)) return true
+        return matchesEvent(anyEv, qq)
+      })
+  }
 
   async function handleFile(file: File) {
     setSampleLines([])
@@ -202,6 +235,10 @@ function AppInner() {
               <Button variant="outline" size="sm" onClick={() => setShowAllSessions((v) => !v)}>
                 {showAllSessions ? 'Hide all' : `View all (${sessionAssets.length})`}
               </Button>
+              <Button variant="outline" size="sm" onClick={() => reload()} disabled={isLoading}>
+                {isLoading ? 'Reloading…' : 'Reload'}
+              </Button>
+              {isLoading && <span className="ml-2"><svg className="animate-spin h-4 w-4 text-gray-500" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg></span>}
             </div>
             {showAllSessions && (
               <div className="mt-2">
@@ -215,6 +252,8 @@ function AppInner() {
                     setShowAllSessions(false)
                   }}
                   onClose={() => setShowAllSessions(false)}
+                  onReload={() => reload()}
+                  loading={isLoading}
                 />
               </div>
             )}
@@ -458,53 +497,24 @@ function AppInner() {
                       }`
                     }
                     aria-disabled={!loader.state.events.length}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      if (loader.state.events.length) setShowExport(true)
+                    }}
                   >
-                    Export ▾
+                    Export…
                   </summary>
-                  <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border bg-white shadow">
-                    <button
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                      disabled={!loader.state.events.length}
-                      onClick={() => {
-                        const items = loader.state.events
-                          .map((ev, i) => ({ ev, k: eventKey(ev as any, i) }))
-                          .filter(({ k }) => (showBookmarksOnly ? has(k) : true))
-                          .map(({ ev }) => ev as ResponseItem)
-                        exportJson(loader.state.meta as any, items, showBookmarksOnly)
-                      }}
-                    >
-                      JSON
-                    </button>
-                    <button
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                      disabled={!loader.state.events.length}
-                      onClick={() => {
-                        const items = loader.state.events
-                          .map((ev, i) => ({ ev, k: eventKey(ev as any, i) }))
-                          .filter(({ k }) => (showBookmarksOnly ? has(k) : true))
-                          .map(({ ev }) => ev as ResponseItem)
-                        exportMarkdown(loader.state.meta as any, items, showBookmarksOnly)
-                      }}
-                    >
-                      Markdown
-                    </button>
-                    <button
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                      disabled={!loader.state.events.length}
-                      onClick={() => {
-                        const items = loader.state.events
-                          .map((ev, i) => ({ ev, k: eventKey(ev as any, i) }))
-                          .filter(({ k }) => (showBookmarksOnly ? has(k) : true))
-                          .map(({ ev }) => ev as ResponseItem)
-                        exportHtml(loader.state.meta as any, items, showBookmarksOnly)
-                      }}
-                    >
-                      HTML
-                    </button>
-                  </div>
                 </details>
               </div>
             </div>
+
+            <ExportModal
+              open={showExport}
+              onClose={() => setShowExport(false)}
+              meta={loader.state.meta as any}
+              items={getFilteredItems().map(({ ev }) => ev as ResponseItem)}
+              filters={{ type: typeFilter, role: roleFilter, q: search.trim() || undefined, pf: pathFilter.trim() || undefined, other: showOther || undefined }}
+            />
 
             {(() => {
               const chips: Array<{ key: string; label: string; onClear: () => void }> = []
@@ -544,36 +554,8 @@ function AppInner() {
             <ScrollArea className="h-[60vh] md:h-[70vh]" viewportClassName="overflow-visible">
               {(() => {
                 const full = loader.state.events.map((ev, i) => ({ ev, key: eventKey(ev as any, i), absIndex: i }))
-                const filtered = full
-                  .filter(({ key }) => (showBookmarksOnly ? has(key) : true))
-                  .filter(({ ev }) => {
-                    if (typeFilter === 'All') return true
-                    const t = (ev as any).type
-                    if (typeFilter === 'ToolCalls') {
-                      return t === 'FunctionCall' || t === 'LocalShellCall' || t === 'WebSearchCall' || t === 'CustomToolCall'
-                    }
-                    if (typeFilter === 'Message') {
-                      if (t !== 'Message') return false
-                      if (roleFilter === 'All') return true
-                      const role = (ev as any).role
-                      return role === roleFilter
-                    }
-                    return t === typeFilter
-                  })
-                  .filter(({ ev }) => (typeFilter === 'All' && !showOther ? (ev as any).type !== 'Other' : true))
-                  .filter(({ ev }) => (search ? matchesEvent(ev as any, search) : true))
-                  .filter(({ ev }) => {
-                    const q = pathFilter.trim()
-                    if (!q) return true
-                    const anyEv: any = ev
-                    const p = (anyEv.path ? String(anyEv.path) : '').toLowerCase()
-                    const qq = q.toLowerCase()
-                    // Match if event has a path and it contains the query,
-                    // otherwise fall back to a broad text match so commands/diffs referencing
-                    // the path are also included.
-                    if (p.includes(qq)) return true
-                    return matchesEvent(anyEv, qq)
-                  })
+
+                const filtered = getFilteredItems()
                 return (
                   <TimelineView
                     items={filtered}

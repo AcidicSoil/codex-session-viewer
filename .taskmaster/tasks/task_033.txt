@@ -1,0 +1,11 @@
+# Task ID: 33
+# Title: Implement Session Loading via Drag-and-Drop
+# Status: done
+# Dependencies: 31
+# Priority: high
+# Description: Add a drag-and-drop zone to the main application window for opening `.jsonl` files.
+# Details:
+Implement event listeners for `dragover`, `dragleave`, and `drop` events. On drop, access the file from the `DataTransfer` object and process it with the JSONL parser.
+
+# Test Strategy:
+Manual test: Drag a `.jsonl` file from the desktop onto the application window and verify the session loads correctly.

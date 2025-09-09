@@ -1,0 +1,11 @@
+# Task ID: 34
+# Title: Create Session Metadata Display Panel
+# Status: done
+# Dependencies: 32
+# Priority: high
+# Description: Build a React component to display the parsed session metadata, such as timestamp, instructions, and git info.
+# Details:
+The component will receive the `SessionMeta` object as a prop and render its contents in a clear, readable format. This will be part of the main session view.
+
+# Test Strategy:
+Component test: Pass a mock `SessionMeta` object and verify all fields are displayed correctly. Manual test: Load a session and check the panel.

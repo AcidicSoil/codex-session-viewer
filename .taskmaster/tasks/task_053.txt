@@ -1,0 +1,82 @@
+# Task ID: 53
+# Title: Package as Web App or NPM Package (replace Electron)
+# Status: pending
+# Dependencies: 29, 46
+# Priority: low
+# Description: Provide distribution paths as a static web app and/or an installable npm package so users can either host the viewer or embed it in their apps.
+# Details:
+### Objective
+Replace the Electron desktop app focus with two distribution paths: (A) a static web app build suitable for deployment on services like GitHub Pages, Netlify, or Vercel, and (B) an npm package that exports reusable React components and utilities for embedding in other applications.
+
+### Path A: Static Web App
+1.  **Build Configuration**: Update `vite.config.ts` to correctly handle the `base` path for deployment to a subdirectory (e.g., for GitHub Pages). The existing `"build": "tsc && vite build"` script in `package.json` should produce a deployable SPA in the `dist/` directory.
+2.  **Deployment Docs**: Add a new section to `README.md` with clear, step-by-step deployment instructions for GitHub Pages and at least one other static hosting provider (e.g., Vercel or Netlify), including how to configure 404 fallbacks for the SPA.
+
+### Path B: NPM Package
+1.  **Vite Library Mode**: Configure `vite.config.ts` to support library mode, creating a build that outputs ESM and type definitions. This may require a separate build script (e.g., `build:lib`).
+2.  **Library Entry Point**: Create a new library entry point (e.g., `src/index.ts`) that exports the primary `SessionView` component from `src/components/SessionView.tsx`, the `ParsedSession` type from `src/lib/parser.ts`, and any other relevant hooks or utilities.
+3.  **Package Metadata**: Update `package.json` to prepare it for publishing:
+    *   Add `main`, `module`, and `types` fields.
+    *   Define an `exports` map for proper module resolution.
+    *   Move `react` and `react-dom` to `peerDependencies`.
+    *   Ensure the `files` array includes the `dist` directory and necessary type definitions.
+4.  **Usage Documentation**: Add a usage example to `README.md` showing how to install the package and embed the `SessionView` component in a React application.
+
+# Test Strategy:
+### Web App Build Verification
+1.  Run `npm run build` and use `npm run preview` to serve the `dist` folder locally. Verify the app runs correctly.
+2.  Deploy the `dist` folder to a static host (e.g., Vercel or a `gh-pages` branch).
+3.  Confirm the deployed application loads and that any client-side routing handles deep links and 404 fallbacks correctly.
+
+### NPM Package Verification
+1.  Run the library build script and then `npm pack` to generate a local `.tgz` package file.
+2.  In a separate test React project (e.g., created with `npx vite-create-app --template react-ts`), install the package from the local file (`npm install ../path/to/codex-session-viewer-vX.Y.Z.tgz`).
+3.  Import and render the `SessionView` component with a sample session object to verify it works as expected.
+4.  Run `npm publish --dry-run` in the main project to ensure all `package.json` metadata is correct and there are no publishing errors.
+
+### Documentation Review
+Review `README.md` and other documentation to ensure all Electron-related information is removed or marked as superseded, and that the new deployment/usage instructions are clear and accurate.
+
+# Subtasks:
+## 1. Decide distribution targets and package naming [pending]
+### Dependencies: None
+### Description: Confirm whether we’ll ship both paths (static web app + npm package) or just one first. Finalize npm package name/scope and public README positioning.
+### Details:
+Output: docs/distribution.md summarizing targets, naming (e.g., `@your-scope/codex-session-viewer`), and rollout order.
+
+## 2. Configure SPA build for static hosting [pending]
+### Dependencies: 53.1
+### Description: Ensure Vite build works for subpath deployments and SPA fallback.
+### Details:
+Tasks: set `base` in `vite.config.ts` if needed; document SPA 404 fallback for GH Pages (e.g., 404.html copy) and Netlify/Vercel config; verify `npm run build && npm run preview`.
+
+## 3. Add deployment docs and GitHub Pages workflow [pending]
+### Dependencies: 53.2
+### Description: Write step-by-step docs for deploying the static site to GH Pages and one managed host (Vercel/Netlify).
+### Details:
+Create docs/deploy.md and an optional `.github/workflows/deploy.yml` for GH Pages CI. Include base path config notes.
+
+## 4. Set up library build (Vite library mode) [pending]
+### Dependencies: None
+### Description: Configure a library build that emits ESM and `.d.ts` types for the React viewer component(s) and utilities.
+### Details:
+Add `build:lib` script; configure `vite.config.ts` (or Rollup/tsup) for library mode; ensure tree-shakeable exports; generate type declarations.
+
+## 5. Define library entry points and exports map [pending]
+### Dependencies: 53.4
+### Description: Create `src/index.ts` that re-exports primary components/types; configure `package.json` `exports`, `main`, `module`, and `types` fields; move React deps to `peerDependencies`.
+### Details:
+Ensure `files` whitelist includes `dist` and type files. Add README usage snippet for embedding.
+
+## 6. Local pack and embed test [pending]
+### Dependencies: 53.5
+### Description: Run `npm pack` and consume the tarball in a fresh React TS app to verify component import, types, and rendering.
+### Details:
+Create a small example app (or codesandbox) that imports the viewer, passes a sample session, and renders successfully.
+
+## 7. Publish dry-run and docs cleanup [pending]
+### Dependencies: 53.3, 53.6
+### Description: Run `npm publish --dry-run`, ensure metadata is correct, and update README/docs to remove or deprecate Electron references in favor of web/npm paths.
+### Details:
+Add a Publishing section with versioning and release steps; keep Electron as historical note only.
+

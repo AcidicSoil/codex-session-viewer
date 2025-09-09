@@ -1,0 +1,11 @@
+# Task ID: 40
+# Title: Implement Advanced Timeline Filters
+# Status: done
+# Dependencies: 35, 37
+# Priority: medium
+# Description: Enhance the timeline with controls to filter events by type (Message, FunctionCall, etc.), text content, and associated file paths.
+# Details:
+Build a filter pipeline that can be controlled by a set of UI components (checkboxes, text inputs). The virtualized list should update instantly as filters are applied.
+
+# Test Strategy:
+Manual test: Apply various filter combinations and verify the timeline updates correctly and performs well.
