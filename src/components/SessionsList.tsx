@@ -2,6 +2,7 @@ import * as React from 'react'
 import type { DiscoveredSessionAsset } from '../hooks/useAutoDiscovery'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
+import { parseTimestampFromPath } from '../utils/timestamp'
 
 export interface SessionsListProps {
   sessions: ReadonlyArray<DiscoveredSessionAsset>
@@ -15,20 +16,6 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
   const [q, setQ] = React.useState('')
   const [busy, setBusy] = React.useState<string | null>(null)
   const [sort, setSort] = React.useState<'Newest' | 'Name'>('Newest')
-
-  function parseTimestampFromPath(p: string): number | null {
-    // try YYYY-MM-DD, YYYYMMDD, or epoch in path segments
-    const m1 = p.match(/(20\d{2})[-_]?(\d{2})[-_]?(\d{2})/)
-    if (m1) {
-      const y = Number(m1[1]); const mo = Number(m1[2]); const d = Number(m1[3])
-      if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) {
-        return new Date(Date.UTC(y, mo - 1, d)).getTime()
-      }
-    }
-    const epoch = p.match(/(1\d{9}|2\d{9})/) // seconds epoch
-    if (epoch) return Number(epoch[1]) * 1000
-    return null
-  }
 
   const filtered = React.useMemo(() => {
     const t = q.trim().toLowerCase()
