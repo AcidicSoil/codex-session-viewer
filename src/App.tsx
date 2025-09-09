@@ -22,7 +22,8 @@ import type { ResponseItem } from './types'
 import FileTree from './components/FileTree'
 import FilePreview from './components/FilePreview'
 import DiffViewer from './components/DiffViewer'
-import { parseUnifiedDiffToSides, languageFromPath } from './utils/diff'
+import { parseUnifiedDiffToSides } from './utils/diff'
+import { getLanguageForPath } from './utils/language'
 import useAutoDiscovery from './hooks/useAutoDiscovery'
 import SessionsList from './components/SessionsList'
 import { matchesEvent } from './utils/search'
@@ -162,6 +163,38 @@ function AppInner() {
       return next
     })
   }, [showBookmarksOnly, selectedFile, typeFilter, roleFilter, search, pathFilter, showOther])
+
+  // Auto-open diff when a file is selected
+  useEffect(() => {
+    if (!selectedFile) {
+      setActiveDiff(undefined)
+      return
+    }
+    const events = loader.state.events ?? []
+    for (let i = events.length - 1; i >= 0; i--) {
+      const ev: any = events[i]
+      if (ev.type === 'FileChange' && ev.path === selectedFile) {
+        if (ev.diff) {
+          try {
+            const { original, modified } = parseUnifiedDiffToSides(ev.diff)
+            setActiveDiff({
+              path: selectedFile,
+              original,
+              modified,
+              language: getLanguageForPath(selectedFile),
+            })
+          } catch {
+            setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile) })
+          }
+        } else {
+          setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile) })
+        }
+        return
+      }
+    }
+    // No matching event; clear diff
+    setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile) })
+  }, [selectedFile, loader.state.events])
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -319,11 +352,11 @@ function AppInner() {
                       events={loader.state.events as any}
                       onOpenDiff={({ path, diff }) => {
                         if (!diff) {
-                          setActiveDiff({ path, original: '', modified: '', language: languageFromPath(path) })
+                          setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
                           return
                         }
                         const { original, modified } = parseUnifiedDiffToSides(diff)
-                        setActiveDiff({ path, original, modified, language: languageFromPath(path) })
+                        setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
                       }}
                     />
                   </div>
@@ -573,11 +606,11 @@ function AppInner() {
                           highlight={search}
                           onOpenDiff={({ path, diff }) => {
                             if (!diff) {
-                              setActiveDiff({ path, original: '', modified: '', language: languageFromPath(path) })
+                              setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
                               return
                             }
                             const { original, modified } = parseUnifiedDiffToSides(diff)
-                            setActiveDiff({ path, original, modified, language: languageFromPath(path) })
+                            setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
                           }}
                         />
                       </div>
