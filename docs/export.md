@@ -9,7 +9,7 @@ Scope options
 
 Default fields (CSV)
 - index (absolute index in input stream)
-- at (timestamp if present)
+- at (timestamp if present, derived with `parseTimestampFromPath` when exported from paths)
 - type (Message | Reasoning | FileChange | FunctionCall | LocalShellCall | WebSearchCall | CustomToolCall | Other)
 - role (Message only)
 - model (Message only)
