@@ -1,0 +1,21 @@
+export function getLanguageForPath(path?: string): string {
+  if (!path) return 'plaintext'
+  const lower = path.toLowerCase()
+  if (lower.endsWith('.ts') || lower.endsWith('.tsx')) return 'typescript'
+  if (lower.endsWith('.js') || lower.endsWith('.jsx')) return 'javascript'
+  if (lower.endsWith('.json')) return 'json'
+  if (lower.endsWith('.md')) return 'markdown'
+  if (lower.endsWith('.css')) return 'css'
+  if (lower.endsWith('.scss') || lower.endsWith('.sass')) return 'scss'
+  if (lower.endsWith('.html') || lower.endsWith('.htm')) return 'html'
+  if (lower.endsWith('.yml') || lower.endsWith('.yaml')) return 'yaml'
+  if (lower.endsWith('.sh') || lower.endsWith('.bash')) return 'shell'
+  if (lower.endsWith('.py')) return 'python'
+  if (lower.endsWith('.rb')) return 'ruby'
+  if (lower.endsWith('.go')) return 'go'
+  if (lower.endsWith('.rs')) return 'rust'
+  if (lower.endsWith('.java')) return 'java'
+  if (lower.endsWith('.kt') || lower.endsWith('.kts')) return 'kotlin'
+  if (lower.endsWith('.sql')) return 'sql'
+  return 'plaintext'
+}

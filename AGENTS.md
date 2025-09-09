@@ -3,6 +3,7 @@
 ## Instruction Loading Model (Extended)
 
 * **Baseline:** This file (AGENTS.md) is the canonical baseline.
+
 * **Two extension types:**
 
   1. **Behavior extensions**. Plain instruction files.
@@ -22,10 +23,12 @@
 
      * Locations: `instructions/**/*.md`, `instructions/**/*.mdc`, `.cursor/rules/**/*.mdc`
      * Detection: file starts with `---` and declares `description`, `globs`, `alwaysApply`
+
 * **Scope semantics:**
 
   * `globs` limits where the pack claims relevance. If empty or missing, scope is repo-wide.
   * A pack can be listed even if no current files match, but it is marked “out of scope”.
+
 * **Order and precedence:**
 
   * Default load order: lexicographic by path.
@@ -123,7 +126,36 @@
 When discovery/confirmation is used, add:
 
 ```json
-{  "DocFetchReport": {    "approved_instructions": [      {"path": "instructions/prd_generator.md", "loaded": true, "order": 1},      {"path": "instructions/security/guardrails.md", "loaded": true, "order": 2}    ],    "context_files": [      {"path": "docs/changelog.md", "loaded": true}    ],    "memory_ops": [      {"tool": "memory", "op": "create_entities|create_relations|add_observations|read_graph|search_nodes", "time_utc": "<ISO8601>", "scope": "project:${PROJECT_TAG}"}    ],    "proposed_mcp_servers": [      {"name": "<lib> Docs", "url": "https://gitmcp.io/{OWNER}/{REPO}", "source": "techstack-bootstrap", "status": "proposed"}    ],    "owner_repo_resolution": [      {"library": "<lib>", "candidates": ["owner1/repo1", "owner2/repo2"], "selected": "owner/repo", "confidence": 0.92, "method": "registry|package_index|docs_link|search"}    ],    "server_inventory": [      {"name": "fastapi_docs", "url": "https://gitmcp.io/tiangolo/fastapi", "source": "project-local|user|generated", "writable": true}    ],    "server_diff": {      "missing": ["fastapi_docs", "httpx_docs"],      "extra": ["legacy_docs_server"]    },    "server_actions": [      {"action": "add", "name": "httpx_docs", "target": "project-local", "accepted": true}    ]  }}
+{
+  "DocFetchReport": {
+    "approved_instructions": [
+      {"path": "instructions/prd_generator.md", "loaded": true, "order": 1},
+      {"path": "instructions/security/guardrails.md", "loaded": true, "order": 2}
+    ],
+    "context_files": [
+      {"path": "docs/changelog.md", "loaded": true}
+    ],
+    "memory_ops": [
+      {"tool": "memory", "op": "create_entities|create_relations|add_observations|read_graph|search_nodes", "time_utc": "<ISO8601>", "scope": "project:${PROJECT_TAG}"}
+    ],
+    "proposed_mcp_servers": [
+      {"name": "<lib> Docs", "url": "https://gitmcp.io/{OWNER}/{REPO}", "source": "techstack-bootstrap", "status": "proposed"}
+    ],
+    "owner_repo_resolution": [
+      {"library": "<lib>", "candidates": ["owner1/repo1", "owner2/repo2"], "selected": "owner/repo", "confidence": 0.92, "method": "registry|package_index|docs_link|search"}
+    ],
+    "server_inventory": [
+      {"name": "fastapi_docs", "url": "https://gitmcp.io/tiangolo/fastapi", "source": "project-local|user|generated", "writable": true}
+    ],
+    "server_diff": {
+      "missing": ["fastapi_docs", "httpx_docs"],
+      "extra": ["legacy_docs_server"]
+    },
+    "server_actions": [
+      {"action": "add", "name": "httpx_docs", "target": "project-local", "accepted": true}
+    ]
+  }
+}
 ```
 
 > Note: Omit any fields related to generating or writing `config/mcp_servers.generated.toml`. Use a separate instruction file such as `instructions/mcp_servers_generated_concise.md` if present.
@@ -167,10 +199,18 @@ When discovery/confirmation is used, add:
 * Produce and attach a `DocFetchReport` (JSON) with `status`, `tools_called[]`, `sources[]`, `coverage`, `key_guidance[]`, `gaps`, and `informed_changes[]`.
 
 **Override Path (explicit, logged):**
+
 Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 ```json
-{  "Override": {    "reason": "server_down|ambiguous_scope|timeboxed_spike",    "risk_mitigation": ["read-only analysis", "scoped PoC", "user confirmation required"],    "expires_after": "1 action or 30m",    "requested_by": "system|user"  }}
+{
+  "Override": {
+    "reason": "server_down|ambiguous_scope|timeboxed_spike",
+    "risk_mitigation": ["read-only analysis", "scoped PoC", "user confirmation required"],
+    "expires_after": "1 action or 30m",
+    "requested_by": "system|user"
+  }
+}
 ```
 
 ---
@@ -181,12 +221,14 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
   1. The **primary language(s)** used in the project (e.g., TypeScript, Python, Go, Rust, Java, Bash).
   2. The **current project’s tech stack** (frameworks, libraries, infra, tools).
+
 * Sources to infer language/stack:
 
   * Project tags (`${PROJECT_TAG}`), memory checkpoints, prior completion records.
   * Files present in repo (e.g., manifests like `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, CI configs).
   * File extensions in repo (`.ts`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.sh`, `.sql`, etc.).
   * User/task context (explicit mentions of frameworks, CLIs, infra).
+
 * **Repo mapping requirement:** Resolve the **canonical GitHub OWNER/REPO** for each detected library/tool whenever feasible.
 
   * **Resolution order:**
@@ -197,7 +239,9 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
     4. **Targeted search** (as a last resort) with guardrails below.
   * **Guardrails:** Prefer official orgs; require name similarity and recent activity; avoid forks and mirrors unless explicitly chosen.
   * Record outcomes in `DocFetchReport.owner_repo_resolution[]` with candidates, selected repo, method, and confidence score.
+
 * Doc retrieval (§A) **must cover each identified language and stack element** that will be touched by the task.
+
 * Record both in the `DocFetchReport`:
 
 ```json
@@ -227,6 +271,7 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 ## 1) Startup memory bootstrap (memory)
 
 * On chat/session start: initialize **memory**.
+
 * Retrieve (project-scoped):
 
   * **memory** → latest `memory_checkpoints` and recent task completions.
@@ -238,6 +283,7 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
       * `create_entities` (or `upsert_entities`) for: `project:${PROJECT_TAG}`.
       * `create_relations` to link existing tasks/files if present.
       * `read_graph` / `search_nodes` to hydrate working context.
+
 * Read/write rules:
 
   * Prefer **memory** for free-form notes and checkpoints.
@@ -264,11 +310,13 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
   * Files touched
   * Commit/PR link (if applicable)
   * Test results (if applicable)
+
 * **Completion criteria (explicit):**
 
   * All subtasks from §1.1 are marked **done** and their DoD satisfied.
   * Required gates passed (§A, §B).
   * Post-completion checks executed or proposed (§2.1).
+
 * **Update the Knowledge Graph (memory)**:
 
   * Ensure base entity `project:${PROJECT_TAG}` exists.
@@ -280,6 +328,7 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
     * `task:${task_id}` —\[status]→ `<status>`
     * Optional: `task:${task_id}` —\[depends\_on]→ `<entity>`
   * Attach `observations` capturing key outcomes (e.g., perf metrics, regressions, decisions).
+
 * **Documentation maintenance (auto)** — when a task **changes user-facing behavior**, **APIs**, **setup**, **CLI**, or **examples**:
 
   * **README.md** — keep **Install**, **Quickstart**, and **Usage/CLI** sections current. Add/adjust new flags, env vars, endpoints, and examples introduced by the task.
@@ -289,27 +338,78 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
   * **Sync scripts** — run `docs:sync`/`docs-sync` if defined; otherwise propose a TODO in the completion note.
   * **Commit style** — use commit prefix `[docs] <scope>: <summary>` and link PR/issue.
   * **Scope guard** — never edit `AGENTS.md` as part of docs maintenance.
+
 * Seed/Update the knowledge graph **before** exiting the task so subsequent sessions can leverage it.
+
 * Do **NOT** write to `AGENTS.md` beyond these standing instructions.
 
-### 2.1) Post-completion checks and tests (**NEW**)
+### 2.1) Post-completion checks and tests (**REVISED — Run-then-verify**)
 
-* **Default:** Propose a **Post-Completion Checks** block containing **static** commands (typecheck, lint, format-check, build dry-run) that validate no errors. Label the block **“Proposed, not executed”**.
-* **If the user has granted session approval** per §8 Rules → execute the approved static commands and attach results to memory under `task:${task_id}.observations.test_results` with log path.
-* **If no approval**, leave commands proposed-only and record `tests_skipped_reason: "no_approval"` in the completion note.
+* **Order of operations:**
+  a) Append subtask completion logs to **memory** (§1.2).
+  b) Set task status to **`verify`** (new intermediate state).
+  c) Evaluate the **Safety Gate** per **§8 Environment & Testing Policy**.
+  d) If **safe**, run **stateless checks automatically** (see §8 Allowed Automatic Checks).
+  e) If **unsafe**, **defer** execution and emit a **Local Test Instructions** block for the user.
 
-## 3) Status management
+* **Recording:** Write outcomes to `task:${task_id}.observations.test_results` and also set:
+
+  * `tests_deferred: true|false`
+  * `tests_deferred_reason: <string|null>`
+  * `test_log_path: artifacts/test/<UTC-timestamp>.log` when any checks are executed.
+
+* **Status transitions:**
+
+  * On all checks passing → set status **`done`**.
+  * On failures → set status **`blocked`** and record an unblock plan.
+  * On deferral → set status **`needs-local-tests`** and include the instructions block.
+
+* **Local Test Instructions (example, Proposed — not executed):**
+
+```bash
+# Proposed Local Test Instructions — copy/paste locally
+# Reason: Safety Gate triggered deferral (e.g., venv detected, risk of global mutation, or OS mismatch)
+
+# TypeScript/Node (stateless checks)
+npm run typecheck --silent || exit 1
+npm run lint --silent || exit 1
+npm run -s build --dry-run || exit 1
+
+# Python (use uv; do NOT activate any existing venv)
+# Pure unit tests only; no network, no DB, no writes outside ./artifacts
+uv run -q python -c "import sys; sys.exit(0)" || exit 1  # sanity check
+uv run -q ruff check . || exit 1
+uv run -q pyright || exit 1
+uv run -q pytest -q tests/unit -k "not integration" || exit 1
+
+# Expected: exit code 0 on success; non-zero indicates failures to review.
+```
+
+---
+
+## 3) Status management (**REVISED**)
 
 * Use Task Master MCP to set task status:
 
-  * `in-progress` on start of execution after §A and §1.1 planning.
-  * **Auto-set `done`** when **all subtasks are done** and §2 completion criteria hold.
-  * If any subtask fails a DoD or a gate, set `blocked` and record the block reason and unblock plan in memory.
+  * **`in-progress`** on start of execution after §A and §1.1 planning.
+  * **`verify`** automatically after memory updates and before tests (§2.1).
+  * **Auto-set `done`** when all subtasks are done, gates passed, and §2.1 checks succeed.
+  * **`needs-local-tests`** when §2.1 defers execution via the Safety Gate.
+  * **`blocked`** when a check fails or a gate prevents progress; include block reason and an unblock plan in memory.
+
+* **Transition rules:**
+  `in-progress → verify → done` on success.
+  `verify → blocked` on check failure.
+  `verify → needs-local-tests` on deferral.
+
+---
 
 ## 4) Tagging for retrieval
 
 * Use tags: `${PROJECT_TAG}`, `project:${PROJECT_TAG}`, `memory_checkpoint`, `completion`, `agents`, `routine`, `instructions`, plus task-specific tags.
 * For memory entities/relations, mirror tags on observations (e.g., `graph`, `entity:task:${task_id}`, `file:<path>`), to ease cross-referencing with memory.
+
+---
 
 ## 5) Handling user requests for code or docs
 
@@ -318,11 +418,15 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
   * **MUST** run the **Preflight** (§A) using the consolidated order (**sourcebot | docfork → contex7-mcp → gitmcp**).
   * Only proceed to produce diffs or create files after `DocFetchReport.status == "OK"`.
 
+---
+
 ## 6) Project tech stack specifics (generic)
 
 * Apply §A Preflight for the **current** stack and language(s).
 * Prefer official documentation and repositories resolved in §A.1.
 * If coverage is weak after **sourcebot → docfork → contex7-mcp → gitmcp**, fall back to targeted web search and record gaps.
+
+---
 
 ## 7) Library docs retrieval (topic-focused)
 
@@ -335,41 +439,54 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 ---
 
-## 8) Environment & Testing Policy (default no-auto-test; opt-in safe runs)
+## 8) Environment & Testing Policy (**REVISED: Safety Gate for automatic stateless checks**)
 
-**Objective:** Prevent environment drift across platforms and tools. The user runs tests unless they explicitly opt in to a limited, sandboxed execution.
+**Objective:** Allow **automatic stateless checks** post-completion when safe, while preventing environment drift or global mutations. Keep heavier or stateful tests **opt-in**.
 
-**Rules:**
+**Safety Gate checklist (used by §2.1 step c):**
 
-1. **No automatic test execution by default.**
-2. **Opt-in safe execution** is allowed only when **all** safeguards hold:
+1. **Execution scope** is read-only or hermetic.
+2. **No environment activation** of existing shells or venvs.
+3. **No network** access unless explicitly approved.
+4. **No global writes** or package installs; all outputs limited to `./artifacts/`.
+5. **Command review** shows only stateless operations.
 
-   * **Explicit user approval in this session** containing the line: `RUN TESTS: APPROVED`.
-   * **Scope limited** to read-only or hermetic runs that cannot mutate the repo, local caches, or global toolchains.
-   * **Isolated context** only (ephemeral environment or equivalent). Do **not** activate or modify existing environments.
-   * **No network access** unless the user explicitly approves it.
-   * **Disallowed:** installers, package/version changes, migrations/seeders, database writes, external service calls, or filesystem writes outside a temp **artifacts** directory.
-   * **Allowed:** static checks (lint, typecheck, format-check), unit tests restricted to specified files/markers, and commands supporting `--dry-run` or equivalents.
-3. **Pre-run Test Plan (required):**
+**Allowed Automatic Checks (when Safety Gate passes):**
 
-   * Exact commands, working directory, environment variables, expected exit codes.
-   * A short **Risk table** explaining why each command is safe.
-4. **Execution protocol:**
+* Typecheck, lint, and format-check.
+* Build **dry-run** only.
+* Docs build if it does not write outside `./artifacts`.
+* Unit tests limited to **pure** functions with no I/O, no network, and no writes beyond `./artifacts`.
 
-   * Run **exactly** the approved commands.
-   * Capture stdout/stderr to `artifacts/test/<UTC-timestamp>.log`. Do not modify other files.
-   * Return a summary and the log path. Re-runs require a new approval line.
-5. **Post-run recording:**
+**Deferral conditions** (any true ⇒ **defer** and emit Local Test Instructions):
 
-   * Add outcomes to the completion note and `DocFetchReport`. Do not change `AGENTS.md`.
+* Active Python venv detected (`VIRTUAL_ENV` set) or `.venv/` present in repo.
+* Managed envs or shims detected (e.g., `conda`, `poetry env`, Nix shells).
+* Commands imply global mutations, installs, migrations, DB writes, or network calls without explicit approval.
+* OS or shell mismatch risk in user context.
 
-**Post-completion integration with §2.1:**
+**Python rule:** If Python commands are needed and considered safe, use **`uv`** exclusively (`uv run`, `uvx`). **Do not** activate existing venvs.
 
-* After all subtasks are complete, either execute the pre-approved static checks or present the proposed commands for approval. Only then mark the task fully verified.
+**Pre-run Test Plan (required for any automatic run):**
 
-**Proposed Test Commands block:**
+* Exact commands, working directory, environment variables, and expected exit codes.
+* A short **Risk table** explaining why each command is safe under the Safety Gate.
 
-* Provide commands in a fenced block labeled **“Proposed, not executed”** until approval is granted.
+**Execution protocol (automatic checks):**
+
+* Run the approved commands exactly.
+* Capture stdout/stderr to `artifacts/test/<UTC-timestamp>.log`.
+* Do not modify other files.
+
+**Post-run recording:**
+
+* Add outcomes to the completion note and `DocFetchReport`.
+* Update `task:${task_id}.observations.test_results` and `test_log_path`.
+
+**Deferral protocol:**
+
+* Emit a **Local Test Instructions** block (see §2.1 example) with copy-paste commands, rationale, and expected exit codes.
+* Record `tests_deferred_reason` and set status to **`needs-local-tests`**.
 
 ---
 
@@ -389,7 +506,9 @@ SYSTEM: You operate under a blocking docs-first policy.
    - Proceed only if ctx.docs_ready == true.
    - Log subtask progress to memory (§1.2). Finish-in-one-go unless blocked.
 5) Completion:
-   - Verify all subtasks done, run or propose post-completion checks (§2.1, §8), then set status done.
+   - After memory updates, set status to **verify** and evaluate §8 Safety Gate.
+   - Run allowed automatic checks or defer with Local Test Instructions (§2.1, §8).
+   - Verify all subtasks done, then set status **done** on success; otherwise **blocked** or **needs-local-tests**.
    - Attach DocFetchReport and write completion memory (§2).
 ```
 

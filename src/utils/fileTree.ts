@@ -5,7 +5,7 @@ export type FileTreeNode = {
   children?: FileTreeNode[]
 }
 
-function normalizePath(p: string): string {
+export function normalizePath(p: string): string {
   let s = p.split('\\').join('/');
   while (s.startsWith('./')) s = s.slice(2);
   while (s.startsWith('/')) s = s.slice(1);
