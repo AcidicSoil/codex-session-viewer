@@ -1,5 +1,17 @@
 export function startFileSystemScan() {
-  const worker = new Worker(new URL('../workers/fs-scanner.ts', import.meta.url), { type: 'module' })
+  const worker = new Worker(new URL('../workers/fs-scanner.ts', import.meta.url), {
+    type: 'module',
+  })
+
+  const progressHandlers = new Set<(path: string) => void>()
+
+  worker.addEventListener('message', (e) => {
+    const msg = e.data
+    if (msg && msg.type === 'progress') {
+      for (const handler of progressHandlers) handler(msg.path)
+    }
+  })
+
   ;(async () => {
     try {
       const roots: FileSystemDirectoryHandle[] = []
@@ -10,10 +22,18 @@ export function startFileSystemScan() {
         const sessions = await codex.getDirectoryHandle('sessions')
         roots.push(sessions)
       } catch {}
-      worker.postMessage(roots)
+      worker.postMessage({ type: 'start', roots })
     } catch {
       // ignore
     }
   })()
-  return worker
+
+  return {
+    worker,
+    abort: () => worker.postMessage({ type: 'abort' }),
+    onProgress: (cb: (path: string) => void) => {
+      progressHandlers.add(cb)
+      return () => progressHandlers.delete(cb)
+    },
+  }
 }
