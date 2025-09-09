@@ -1,0 +1,49 @@
+# Task ID: 3
+# Title: Implement Streaming JSONL Parser
+# Status: done
+# Dependencies: 2
+# Priority: high
+# Description: Develop a robust parser to process `.jsonl` session files efficiently, handling large files and potential errors.
+# Details:
+The parser must read files line-by-line. The first line is parsed as `SessionMeta`. Subsequent lines are `ResponseItem` events. Implement schema validation, error recovery for malformed lines, and graceful fallback to raw JSON display. Mitigate schema drift with versioned parsers.
+
+# Test Strategy:
+Unit test with valid, malformed, and large `.jsonl` files. Verify parse success rate (≥ 99%) and performance (10MB file < 2s). Test error handling for invalid JSON lines.
+
+# Subtasks:
+## 1. Implement line-by-line file reading [done]
+### Dependencies: None
+### Description: Read JSONL session files incrementally using the File API/streaming to avoid loading the whole file into memory.
+### Details:
+
+
+## 2. Integrate Zod schema validation [done]
+### Dependencies: 3.1
+### Description: Validate `SessionMeta` (first line) and subsequent `ResponseItem` events with Zod schemas and surface typed results.
+### Details:
+
+
+## 3. Robust error handling + fallback [done]
+### Dependencies: 3.1, 3.2
+### Description: Handle malformed JSON lines gracefully, capture errors, and provide a raw JSON fallback display for unreadable items.
+### Details:
+
+
+## 4. Versioning for schema drift [done]
+### Dependencies: 3.2
+### Description: Introduce a version field and dispatch to versioned parsers to tolerate schema evolution over time.
+### Details:
+
+
+## 5. Unit tests: valid/malformed/large files [done]
+### Dependencies: 3.1, 3.2, 3.3, 3.4
+### Description: Author comprehensive tests covering happy path, malformed lines, and performance on large inputs.
+### Details:
+
+
+## 6. Expose parser API for UI [done]
+### Dependencies: 3.1, 3.2, 3.3, 3.4
+### Description: Provide a simple async API that emits parsed items and errors for the UI to consume.
+### Details:
+
+

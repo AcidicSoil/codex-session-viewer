@@ -1,0 +1,37 @@
+# Task ID: 24
+# Title: Implement Analytics and Success Metrics
+# Status: pending
+# Dependencies: 10, 12, 15, 16
+# Priority: low
+# Description: Integrate lightweight, privacy-preserving analytics to track success metrics.
+# Details:
+Measure key metrics locally: parse success rate, parse time, interaction latency, memory footprint. Track feature usage (search, diff, export, bookmarks). No external requests should be made.
+
+# Test Strategy:
+Perform actions in the app and verify that the corresponding metrics are being tracked and aggregated correctly in local storage or memory.
+
+# Subtasks:
+## 1. Finalize metrics list [pending]
+### Dependencies: None
+### Description: Select key success metrics (parse success/time, usage, latency, memory).
+### Details:
+
+
+## 2. Implement MetricsService [pending]
+### Dependencies: 24.1
+### Description: Add a lightweight service to record and aggregate metrics locally.
+### Details:
+
+
+## 3. Instrument features [pending]
+### Dependencies: 24.2
+### Description: Emit metrics at key points (search, diff, export, bookmarks).
+### Details:
+
+
+## 4. Developer metrics panel [pending]
+### Dependencies: 24.2
+### Description: Add hidden dev view or console command to inspect metrics.
+### Details:
+
+

@@ -1,0 +1,43 @@
+# Task ID: 6
+# Title: Develop Virtualized Timeline View for Events
+# Status: done
+# Dependencies: 4
+# Priority: high
+# Description: Build the main chronological event stream using a virtualized list for performance.
+# Details:
+Use a library like `react-window` to efficiently render a potentially large number of events. The view should display a list of event cards in chronological order.
+
+# Test Strategy:
+Load a session with thousands of events and verify smooth scrolling performance. Check that interaction latency is < 100ms and memory usage is reasonable.
+
+# Subtasks:
+## 1. Research/select virtualization library [done]
+### Dependencies: None
+### Description: Evaluate react-window and tanstack-virtual for large lists; choose one based on API and perf.
+### Details:
+
+
+## 2. Create TimelineView wrapper [done]
+### Dependencies: 6.1
+### Description: Build a TimelineView component that encapsulates the virtualizer and exposes a simple props API.
+### Details:
+
+
+## 3. Wire events into virtualized list [done]
+### Dependencies: 6.2
+### Description: Pass the event array to the virtualizer with stable keys and render row components.
+### Details:
+
+
+## 4. Handle dynamic item heights [done]
+### Dependencies: 6.3
+### Description: Implement measurement/estimation for varying card heights to keep scroll positions accurate.
+### Details:
+
+
+## 5. Perf test at scale [done]
+### Dependencies: 6.3, 6.4
+### Description: Benchmark smoothness and memory usage with ≥5,000 events and interactions.
+### Details:
+
+

@@ -1,0 +1,37 @@
+# Task ID: 4
+# Title: Implement Session File Loading UI
+# Status: done
+# Dependencies: 3
+# Priority: high
+# Description: Create the user interface for opening `.jsonl` files via a file picker or drag-and-drop.
+# Details:
+Use the browser's File API. Create a drop zone and a file input button. On file load, pass the file to the JSONL parser. Manage loading states (e.g., parsing, error).
+
+# Test Strategy:
+Manual test: successfully load a file via both drag-and-drop and the file picker. Test edge cases like loading non-`.jsonl` files or multiple files.
+
+# Subtasks:
+## 1. Build File Input Button component [done]
+### Dependencies: None
+### Description: Create a React button/input that accepts `.jsonl` files and forwards the File object to the loader.
+### Details:
+
+
+## 2. Build Drag-and-Drop Zone component [done]
+### Dependencies: None
+### Description: Implement a drop zone with visual feedback that accepts file drops and extracts the File handle.
+### Details:
+
+
+## 3. Implement File Loading State Management [done]
+### Dependencies: 4.1, 4.2
+### Description: Add idle/parsing/error/success states and transitions for the file loading lifecycle.
+### Details:
+
+
+## 4. Integrate UI with JSONL parser [done]
+### Dependencies: 4.3
+### Description: Wire input and drop zone to invoke the streaming parser and surface progress/errors in the UI.
+### Details:
+
+

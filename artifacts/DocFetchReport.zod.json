@@ -1,0 +1,33 @@
+{
+  "DocFetchReport": {
+    "status": "OK",
+    "created_utc": "2025-09-08T00:05:00Z",
+    "languages": ["TypeScript"],
+    "tech_stack": ["Zod"],
+    "tools_called": [
+      {"tool": "context7.resolve-library-id", "topic": "zod", "selected": "/colinhacks/zod", "retrieved_utc": "2025-09-08T00:04:30Z"},
+      {"tool": "context7.get-library-docs", "topic": "parse,safeParse,discriminated union,refine,transform,strict,passthrough,unknownKeys", "library": "/colinhacks/zod", "retrieved_utc": "2025-09-08T00:04:40Z"}
+    ],
+    "sources": [
+      {"title": "Zod docs snippets (official repo)", "url": "https://github.com/colinhacks/zod", "notes": "safeParse, discriminatedUnion, transforms"}
+    ],
+    "coverage": {
+      "safeParse": true,
+      "discriminatedUnion": true,
+      "refine": true,
+      "coerce": true,
+      "object.strict_passthrough": true
+    },
+    "key_guidance": [
+      "Use discriminated unions when a key (e.g., 'type') selects the schema branch.",
+      "Prefer safeParse to avoid throw; surface result as discriminated union.",
+      "Model unknown keys strategy: strict() vs passthrough() for forward compatibility.",
+      "Chain transform/refine for normalization + validation where needed."
+    ],
+    "gaps": [],
+    "informed_changes": [
+      {"change": "Add Zod schemas for SessionMeta and ResponseItem union", "based_on": ["safeParse", "discriminatedUnion"]},
+      {"change": "Provide parse helpers that return typed results", "based_on": ["safeParse"]}
+    ]
+  }
+}

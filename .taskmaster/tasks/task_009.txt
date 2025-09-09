@@ -1,0 +1,49 @@
+# Task ID: 9
+# Title: Implement Basic Diff Viewer with Monaco Editor
+# Status: pending
+# Dependencies: 8
+# Priority: high
+# Description: Integrate the Monaco Editor to display code changes for a selected file.
+# Details:
+Set up Monaco Editor to work within the React application. Implement a diff view (unified or split) that takes `FileChange` data as input. When a user selects a file from the file tree, display its diff.
+
+# Test Strategy:
+Select a file with changes from the file tree and verify the diff is displayed correctly in the Monaco Editor component.
+
+# Subtasks:
+## 1. Install @monaco-editor/react [pending]
+### Dependencies: None
+### Description: Add Monaco editor wrapper and configure loader for the app.
+### Details:
+
+
+## 2. Build DiffViewer component [pending]
+### Dependencies: 9.1
+### Description: Listen to selected file and mount Monaco diff editor accordingly.
+### Details:
+
+
+## 3. Initialize original/modified models [pending]
+### Dependencies: 9.2
+### Description: Create models from FileChange data and set them on the diff editor.
+### Details:
+
+
+## 4. Configure editor options [pending]
+### Dependencies: 9.2, 9.3
+### Description: Set readOnly, theme, word wrap, and other essentials.
+### Details:
+
+
+## 5. Cleanup and disposal [pending]
+### Dependencies: 9.2, 9.3
+### Description: Dispose models/editors on unmount to prevent leaks.
+### Details:
+
+
+## 6. Open FileChange from EventCard in DiffViewer [pending]
+### Dependencies: None
+### Description: Add button on FileChange cards to open the file in the Monaco DiffViewer and focus it.
+### Details:
+
+

@@ -1,0 +1,49 @@
+# Task ID: 11
+# Title: Implement Advanced Timeline Filtering
+# Status: pending
+# Dependencies: 7
+# Priority: medium
+# Description: Add controls to filter the event timeline by various criteria.
+# Details:
+Create a filter pipeline that allows users to filter events by type (e.g., 'Message', 'LocalShellCall'), file path, or other relevant attributes. The UI should make it easy to apply and clear filters.
+
+# Test Strategy:
+Apply various filter combinations and verify the timeline updates correctly. Test that clearing filters restores the full timeline.
+
+# Subtasks:
+## 1. Filter state management [pending]
+### Dependencies: None
+### Description: Model active filters via reducer/store with clear actions.
+### Details:
+
+
+## 2. FilterPanel UI controls [pending]
+### Dependencies: 11.1
+### Description: Build UI to set filters by type and attributes.
+### Details:
+
+
+## 3. Memoized filtering function [pending]
+### Dependencies: 11.1
+### Description: Filter the full event list based on active filters with memoization.
+### Details:
+
+
+## 4. Connect to TimelineView [pending]
+### Dependencies: 11.2, 11.3
+### Description: Feed filtered list to the virtualized timeline component.
+### Details:
+
+
+## 5. Clear-all control [pending]
+### Dependencies: 11.1, 11.2
+### Description: Add a single action to reset all filters.
+### Details:
+
+
+## 6. Bookmarks-only preset in FilterPanel [pending]
+### Dependencies: None
+### Description: Expose a one-click preset inside FilterPanel to filter to bookmarked events (mirrors header toggle).
+### Details:
+
+

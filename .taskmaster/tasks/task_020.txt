@@ -1,0 +1,37 @@
+# Task ID: 20
+# Title: Implement Artifact Extraction and Download
+# Status: pending
+# Dependencies: 4
+# Priority: medium
+# Description: Allow users to download artifacts generated during the session.
+# Details:
+Process the `artifacts` array from the `ParsedSession`. Provide a UI to list available artifacts and a button to download them, either individually or as a bundled zip.
+
+# Test Strategy:
+Load a session containing artifacts. Verify they are listed correctly. Test the download functionality for a single artifact.
+
+# Subtasks:
+## 1. Artifacts list UI [pending]
+### Dependencies: None
+### Description: Render a panel/table that lists artifacts from the parsed session with name, size, and type.
+### Details:
+
+
+## 2. Per-artifact download [pending]
+### Dependencies: 20.1
+### Description: Add download buttons that stream an individual artifact to the browser using Blob/ObjectURL.
+### Details:
+
+
+## 3. Integrate jszip for bundling [pending]
+### Dependencies: 20.1
+### Description: Add jszip and build an in-memory zip of selected artifacts.
+### Details:
+
+
+## 4. Download All as .zip [pending]
+### Dependencies: 20.3
+### Description: Provide a single action to add all artifacts to a zip and download.
+### Details:
+
+

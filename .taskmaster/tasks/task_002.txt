@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Define Core Data Models in TypeScript
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Create TypeScript interfaces for all data structures as defined in the PRD's Technical Architecture section.
+# Details:
+Implement `SessionMeta`, `ResponseItem` (with its variants), `FileChange`, `Artifact`, and `ParsedSession` interfaces. Ensure types are strict and well-documented to match the PRD.
+
+# Test Strategy:
+Code review to ensure interfaces match the PRD. The TypeScript compiler should pass without errors when using the defined types.

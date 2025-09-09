@@ -1,0 +1,49 @@
+# Task ID: 25
+# Title: Architect Plugin System for Custom Events
+# Status: pending
+# Dependencies: 7
+# Priority: low
+# Description: Design a system that allows for the registration of custom event types and their corresponding renderers.
+# Details:
+Define a plugin API where a developer can provide a schema for a new event type and a React component to render it. This will allow the application to be extended without modifying the core codebase.
+
+# Test Strategy:
+Create a proof-of-concept plugin for a new 'CustomToolCall' event type. Verify that the application can load and render it correctly.
+
+# Subtasks:
+## 1. Research plugin architectures [pending]
+### Dependencies: None
+### Description: Study proven plugin systems and capture lessons for design.
+### Details:
+
+
+## 2. Define Plugin API [pending]
+### Dependencies: 25.1
+### Description: Specify how plugins register event types, schemas, and renderers.
+### Details:
+
+
+## 3. Discovery/loading mechanism [pending]
+### Dependencies: 25.2
+### Description: Design how the app discovers, loads, and integrates plugins at runtime.
+### Details:
+
+
+## 4. Custom event data flow [pending]
+### Dependencies: 25.2, 25.3
+### Description: Define how custom events flow through parsing, state, and rendering.
+### Details:
+
+
+## 5. Hello-world plugin PoC [pending]
+### Dependencies: 25.2, 25.3
+### Description: Implement a minimal plugin to validate the architecture.
+### Details:
+
+
+## 6. Technical design doc [pending]
+### Dependencies: 25.2, 25.3, 25.4, 25.5
+### Description: Write a comprehensive design document with APIs and risks.
+### Details:
+
+

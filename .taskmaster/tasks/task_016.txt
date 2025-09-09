@@ -1,0 +1,49 @@
+# Task ID: 16
+# Title: Implement Export to Markdown Feature
+# Status: pending
+# Dependencies: 12
+# Priority: medium
+# Description: Allow users to generate and export a Markdown summary of the session.
+# Details:
+Create a function to transform events (especially bookmarked ones) into a structured Markdown document. Include session metadata, key events, and code diffs. Trigger a client-side download.
+
+# Test Strategy:
+Bookmark several events, including messages and code changes. Export to Markdown and verify the resulting file is well-formatted and contains the correct information.
+
+# Subtasks:
+## 1. Design Markdown template [pending]
+### Dependencies: None
+### Description: Define sections for metadata, bookmarks, and diffs with clear headings.
+### Details:
+
+
+## 2. Implement generator function [pending]
+### Dependencies: 16.1
+### Description: Transform parsed session data into a Markdown string per template.
+### Details:
+
+
+## 3. Format code blocks and diffs [pending]
+### Dependencies: 16.2
+### Description: Use fenced code blocks and diff formatting where applicable.
+### Details:
+
+
+## 4. Export to Markdown action [pending]
+### Dependencies: 16.2, 16.3
+### Description: Add UI button to generate and download Markdown file.
+### Details:
+
+
+## 5. Polish Markdown formatting + TOC [pending]
+### Dependencies: None
+### Description: Refine Markdown export: consistent headings per type, fenced code blocks per language, optional truncation with disclosure, and a mini table of contents.
+### Details:
+
+
+## 6. Annotate bookmarks in export [pending]
+### Dependencies: None
+### Description: Include a section summarizing bookmarked items and annotate bookmarked events inline in the Markdown export.
+### Details:
+
+

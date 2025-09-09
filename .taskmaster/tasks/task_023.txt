@@ -1,0 +1,43 @@
+# Task ID: 23
+# Title: Design Multi-Session Comparison Feature
+# Status: pending
+# Dependencies: 17
+# Priority: low
+# Description: Design the data models and user interface for comparing two or more sessions.
+# Details:
+Create UI/UX mockups for selecting multiple sessions and viewing them side-by-side or in an aggregated view. Define how events, file changes, and metadata would be compared and visualized.
+
+# Test Strategy:
+Review design documents and mockups with target users (developers, team leads) for feedback.
+
+# Subtasks:
+## 1. Define comparison metrics [pending]
+### Dependencies: None
+### Description: List measurable aspects (counts, durations, changes) to compare across sessions.
+### Details:
+
+
+## 2. User flows for selection [pending]
+### Dependencies: None
+### Description: Diagram flows to pick sessions and navigate comparison views.
+### Details:
+
+
+## 3. Comparison dashboard mockups [pending]
+### Dependencies: 23.1, 23.2
+### Description: Design aggregated stats dashboard for multi-session view.
+### Details:
+
+
+## 4. Side-by-side view mockups [pending]
+### Dependencies: 23.1, 23.2
+### Description: Design side-by-side timeline/diff for two sessions.
+### Details:
+
+
+## 5. Data model + FE architecture outline [pending]
+### Dependencies: 23.1, 23.3, 23.4
+### Description: Outline models/state shape and rendering architecture to support comparison.
+### Details:
+
+

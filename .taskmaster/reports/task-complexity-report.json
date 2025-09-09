@@ -1,0 +1,229 @@
+{
+	"meta": {
+		"generatedAt": "2025-09-08T18:20:57.774Z",
+		"tasksAnalyzed": 27,
+		"totalTasks": 27,
+		"analysisCount": 27,
+		"thresholdScore": 5,
+		"projectName": "codex-session-viewer",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Initialize Project with Frontend Stack",
+			"complexityScore": 3,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task 'Initialize Project with Frontend Stack'. The goal is to create a new project using Vite with React and TypeScript. Subtasks should cover installing and configuring Vite, setting up TypeScript with strict mode, integrating and configuring Tailwind CSS with Headless UI, and creating a basic 'src' directory structure with a sample 'App' component.",
+			"reasoning": "Low complexity. This is a standard boilerplate setup task that involves following well-documented procedures for each technology. No novel logic is required, and the steps are well-defined in the industry."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Define Core Data Models in TypeScript",
+			"complexityScore": 2,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Define Core Data Models in TypeScript'. Create subtasks for defining the main data structures in separate, well-organized files. One subtask should cover the session-level interfaces (`SessionMeta`, `ParsedSession`), another for the various event types (`ResponseItem` and its variants), and a final one for auxiliary types like `FileChange` and `Artifact`.",
+			"reasoning": "Low complexity. This is a straightforward task of translating a specification (PRD) into TypeScript interfaces. It doesn't involve logic, UI, or side effects. The main effort is ensuring accuracy and completeness based on the PRD."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Implement Streaming JSONL Parser",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Break down the task 'Implement Streaming JSONL Parser'. The parser must be robust and performant. Subtasks should include: 1. Implement the core line-by-line file reading logic using the File API. 2. Integrate a schema validation library (like Zod) to parse `SessionMeta` and `ResponseItem` objects. 3. Implement robust error handling for malformed JSON lines and a fallback display. 4. Design a versioning system to handle potential schema drift. 5. Create a set of unit tests with valid, malformed, and large files. 6. Expose a simple API for the UI to call the parser and receive parsed data or errors.",
+			"reasoning": "High complexity due to the need for efficient, robust, and error-tolerant streaming logic. Handling large files, implementing schema validation, designing for schema drift (versioning), and comprehensive error recovery are significant challenges."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Implement Session File Loading UI",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Implement Session File Loading UI'. Create subtasks for building the user interface for file selection. This should include: 1. Create a React component for a file input button. 2. Implement a separate drag-and-drop zone component that handles file drop events and visual feedback. 3. Create a state management hook or component to handle the file loading lifecycle (idle, parsing, error, success). 4. Integrate the UI components to trigger the JSONL parser upon file selection and display the current state.",
+			"reasoning": "Medium complexity. It combines UI implementation (file input, drag-and-drop zone) with state management for the loading process and integration with the browser's File API and the backend parser logic."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Develop Session Metadata Panel",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down the task 'Develop Session Metadata Panel'. The goal is to create a React component that displays the `SessionMeta` object. Subtasks should include: 1. Create the main `SessionMetadataPanel` component that accepts `SessionMeta` as a prop. 2. Implement the layout to display key-value pairs for fields like timestamp, instructions, and agent version. 3. Create a dedicated sub-component to format and display the git information. 4. Style the component using Tailwind CSS for clarity and readability.",
+			"reasoning": "Low complexity. This is a presentational component that receives props and renders them. The main work is in layout and styling, not complex logic or state management."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Develop Virtualized Timeline View for Events",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Develop Virtualized Timeline View for Events'. The key is performance with large datasets. Subtasks should cover: 1. Research and select a suitable virtualization library (e.g., `react-window`, `tanstack-virtual`). 2. Create a `TimelineView` component that wraps the virtualization library. 3. Implement logic to pass the array of events to the virtualized list. 4. Develop a mechanism to estimate or measure the height of each event card for the virtualizer, as they will be dynamic. 5. Test scrolling performance and memory usage with a dataset of at least 5,000 events.",
+			"reasoning": "High complexity due to the performance-critical nature of virtualized lists. It requires integrating a specialized third-party library, handling dynamic item sizes, and ensuring smooth scrolling and low memory usage, which is notoriously difficult to get right."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Create Generic Event Card Component",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down the task 'Create Generic Event Card Component'. This component must render different content based on the event type. Subtasks should include: 1. Create a main `EventCard` component that takes a `ResponseItem` object as a prop. 2. Inside `EventCard`, implement a conditional rendering switch based on the event's type. 3. Create separate, specialized components for rendering the content of at least three key event types (e.g., `MessageEvent`, `LocalShellCallEvent`, `FileChangeEvent`). 4. Define a common visual structure (header, body, footer) for all event cards.",
+			"reasoning": "Medium complexity. The task involves creating a central component that acts as a dispatcher to different sub-renderers based on the event type. This requires careful prop management and conditional rendering logic to handle the variety of `ResponseItem` variants."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Develop File Tree View",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Develop File Tree View'. The goal is to display a hierarchical view of modified files. Subtasks should include: 1. Create a utility function that processes the flat `fileChanges` array and builds a nested tree data structure. 2. Implement a recursive React component `FileTreeNode` to render folders and files. 3. Manage the open/closed state of folders within the tree. 4. Implement a global state update or callback mechanism so that clicking a file notifies other parts of the app. 5. Style the tree with icons for files and folders.",
+			"reasoning": "Medium complexity. It requires a non-trivial data transformation step (flat list to tree). The UI component itself is recursive and needs its own state management for node expansion. Integrating this with global state adds to the complexity."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Implement Basic Diff Viewer with Monaco Editor",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down the task 'Implement Basic Diff Viewer with Monaco Editor'. This involves integrating the Monaco Editor as a React component. Subtasks should include: 1. Install and configure `@monaco-editor/react` or a similar wrapper. 2. Create a `DiffViewer` component that listens for the currently selected file from the application state. 3. Inside the component, use the Monaco loader to create a diff editor instance. 4. Set the `original` and `modified` models of the editor based on the `FileChange` data. 5. Configure basic editor options like `readOnly`, `theme`, and word wrap.",
+			"reasoning": "High complexity due to the integration of a large, powerful third-party library (Monaco Editor). It has a specific API and lifecycle that must be managed correctly within React's lifecycle to avoid memory leaks and performance issues."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Implement Basic Full-Text Search",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Implement Basic Full-Text Search'. The search should be performant and integrated with the timeline. Subtasks should include: 1. Create a search input component with state management and input debouncing. 2. Implement a function to build a simple in-memory search index from the parsed events. 3. Write the core search logic that filters the event list based on the search term. 4. Integrate the search results with the `VirtualizedTimelineView` to display only matching items. 5. Implement a highlighting mechanism for search terms within the visible `EventCard` components.",
+			"reasoning": "Medium complexity. A performant solution for large datasets requires creating a pre-computed index, debouncing input to avoid excessive re-renders, and efficiently updating the main timeline view, which is complex when combined with virtualization."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Implement Advanced Timeline Filtering",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down the task 'Implement Advanced Timeline Filtering'. The goal is a flexible filtering system. Subtasks should include: 1. Design and implement the state management for active filters (e.g., using `useReducer` or a state management library). 2. Create a `FilterPanel` UI component with controls for filtering by event type and other attributes. 3. Implement a memoized filtering function that takes the full event list and the active filters, and returns the filtered list. 4. Connect the output of the filter function to the `VirtualizedTimelineView`. 5. Add a button and logic to clear all active filters.",
+			"reasoning": "Medium complexity. The main challenge is in state management and creating a flexible filtering pipeline that can combine multiple criteria. The UI for selecting multiple filters can also become moderately complex."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Implement Bookmarking Feature",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Implement Bookmarking Feature'. This allows users to flag important events. Subtasks should include: 1. Add a 'Bookmark' button/icon to the `EventCard` component. 2. Implement a state management solution (e.g., a React context or Zustand store) to keep track of bookmarked event IDs. 3. Create a UI control (e.g., a toggle switch in the filter panel) to show only bookmarked events. 4. Ensure the list of bookmarked events is accessible for the export features.",
+			"reasoning": "Medium-low complexity. The core logic is simple: toggle a boolean or add/remove an ID from a set. The work involves plumbing this state through the UI (card button, filter toggle) and making it available to other features."
+		},
+		{
+			"taskId": 13,
+			"taskTitle": "Develop Command History View",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Develop Command History View'. This is a specialized filter and view. Subtasks should include: 1. Add a button or preset in the UI that applies a filter to show only `LocalShellCall` events. 2. Design and implement a specific layout within the event card for `LocalShellCall` events, clearly distinguishing the command from the output. 3. Ensure the events are displayed in the correct chronological order.",
+			"reasoning": "Medium-low complexity. It heavily relies on the pre-existing filtering infrastructure (Task 11). The primary new work is creating a UI preset and potentially a slightly different view for a specific event type, which is a small, contained change."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Enhance Diff Viewer with Syntax Highlighting",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Enhance Diff Viewer with Syntax Highlighting'. This builds on the basic Monaco integration. Subtasks should include: 1. Create a utility function that maps file extensions to Monaco's language identifiers (e.g., '.ts' -> 'typescript'). 2. Update the `DiffViewer` component to determine the language from the current file's name. 3. Pass the determined language identifier to the Monaco Editor's options. 4. Verify that diffs for different file types (JS, Python, Markdown) are highlighted correctly.",
+			"reasoning": "Medium complexity. This requires a deeper understanding of the Monaco Editor's API, specifically how to configure languages. The logic for mapping file extensions and applying the configuration adds a layer of complexity on top of the basic diff viewer setup."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Implement Export to JSON Feature",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down the task 'Implement Export to JSON Feature'. The goal is to download the currently visible events. Subtasks should include: 1. Add an 'Export to JSON' button to the UI. 2. Write a handler function that accesses the currently filtered list of events from the application state. 3. In the handler, use `JSON.stringify` to serialize the data and create a `Blob`. 4. Use the Blob to create an object URL and trigger a file download via a temporary anchor element.",
+			"reasoning": "Low complexity. The data to be exported is already available in the application's state. The task is to stringify it and use standard browser APIs to trigger a download, which is a well-known pattern."
+		},
+		{
+			"taskId": 16,
+			"taskTitle": "Implement Export to Markdown Feature",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Implement Export to Markdown Feature'. This requires generating a human-readable summary. Subtasks should include: 1. Design a template for the Markdown output, including sections for metadata, bookmarked events, and file diffs. 2. Implement a generator function that takes the session data and builds a Markdown string according to the template. 3. Pay special attention to formatting code blocks and diffs using appropriate Markdown syntax. 4. Add an 'Export to Markdown' button that uses this generator and triggers a client-side download.",
+			"reasoning": "Medium complexity. Unlike a simple JSON dump, this requires thoughtful data-to-text transformation. The logic to generate well-formatted Markdown, especially for code diffs and different event types, is non-trivial."
+		},
+		{
+			"taskId": 17,
+			"taskTitle": "Implement Session Library with IndexedDB",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Break down the task 'Implement Session Library with IndexedDB'. This provides persistent session history. Subtasks should include: 1. Select and install a promise-based IndexedDB wrapper library like `idb`. 2. Define the database schema for storing session metadata and create an initialization/migration script. 3. Create a data service with functions like `addSession`, `getAllSessions`, `getSession(id)`. 4. Integrate `addSession` into the successful file parsing flow. 5. Build a UI component that lists sessions from `getAllSessions` and allows reopening them. 6. Handle potential IndexedDB errors gracefully.",
+			"reasoning": "High complexity. The IndexedDB API is notoriously difficult. Even with a wrapper, it involves asynchronous database logic, schema management, and version migrations. Building a reliable service layer and UI on top of this is a significant effort."
+		},
+		{
+			"taskId": 18,
+			"taskTitle": "Ensure Responsive UI/UX",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Ensure Responsive UI/UX'. The application must adapt to different screen sizes. Subtasks should include: 1. Define the primary breakpoints (e.g., mobile, tablet, desktop). 2. Refactor the main application layout component to be a flexbox or grid layout that rearranges panels based on screen width. 3. Adapt the `SessionMetadataPanel` and `FileTreeView` to be collapsible or stack vertically on small screens. 4. Ensure the `VirtualizedTimelineView` and `DiffViewer` remain usable on mobile. 5. Perform manual testing across all target screen sizes using browser dev tools.",
+			"reasoning": "Medium complexity. Applying responsiveness retroactively across an entire application with multiple complex components (diff viewer, tree view, timeline) requires careful planning and testing to avoid breaking layouts or functionality."
+		},
+		{
+			"taskId": 19,
+			"taskTitle": "Implement Deep Linking",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Implement Deep Linking'. The URL should reflect the application's state. Subtasks should include: 1. Define a schema for encoding filter state and selected items into the URL hash. 2. Create a hook or component that listens to changes in application state (filters, selected event) and updates the URL hash accordingly. 3. Implement logic that runs on initial application load to parse the URL hash and restore the application state. 4. Ensure that updating the state from the URL does not trigger a new URL update, creating a loop.",
+			"reasoning": "Medium complexity. It requires careful management of state synchronization between the application and the URL. Custom logic is needed to serialize/deserialize the specific application state (filters, selections), and avoiding update loops can be tricky."
+		},
+		{
+			"taskId": 20,
+			"taskTitle": "Implement Artifact Extraction and Download",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Implement Artifact Extraction and Download'. Users should be able to download generated files. Subtasks should include: 1. Create a UI component to display a list of artifacts found in the parsed session data. 2. For each artifact, add a button to trigger a direct download. 3. Research and integrate a client-side zipping library like `jszip`. 4. Add a 'Download All as .zip' button that iterates through the artifacts, adds them to a zip archive in memory, and triggers a download of the zip file.",
+			"reasoning": "Medium-low complexity. Listing and downloading individual files is straightforward. The main complexity comes from the 'bundle as zip' feature, which requires integrating and using a third-party library for client-side file compression."
+		},
+		{
+			"taskId": 21,
+			"taskTitle": "Accessibility Audit and Implementation",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Expand the task 'Accessibility Audit and Implementation'. The application must be WCAG compliant. Subtasks should include: 1. Integrate an automated checker like `react-axe` into the development build. 2. Conduct a manual audit of keyboard navigability for all interactive elements. 3. Test the primary user flow with a screen reader. 4. Audit all UI components for color contrast compliance. 5. Create specific subtasks for each major accessibility issue found. 6. Add ARIA roles to complex components like the file tree and timeline.",
+			"reasoning": "High complexity. A proper accessibility audit is a comprehensive, cross-cutting task requiring specialized knowledge. Fixing issues in complex components like a virtualized list or a third-party editor can be very challenging."
+		},
+		{
+			"taskId": 22,
+			"taskTitle": "Optimize Large File Performance",
+			"complexityScore": 9,
+			"recommendedSubtasks": 7,
+			"expansionPrompt": "Break down the task 'Optimize Large File Performance'. This is a deep optimization effort. Subtasks should include: 1. Create a reproducible benchmark for parsing a >100MB file. 2. Refactor the JSONL parsing logic to run inside a Web Worker. 3. Implement the message passing interface between the worker and the main thread. 4. Use the browser's performance profiler to identify rendering bottlenecks. 5. Analyze memory usage with a large file loaded. 6. Implement optimizations, such as memoizing expensive components or optimizing data structures. 7. Re-benchmark to verify improvements.",
+			"reasoning": "Very high complexity. It involves a major architectural change (Web Workers), which introduces complexity in state management and communication. It requires specialized performance profiling and optimization skills for both JavaScript execution and React rendering."
+		},
+		{
+			"taskId": 23,
+			"taskTitle": "Design Multi-Session Comparison Feature",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Design Multi-Session Comparison Feature'. This is a design and architecture task for a major new feature. Subtasks should include: 1. Brainstorm and document key comparison metrics. 2. Create user flow diagrams for selecting sessions to compare. 3. Design UI mockups for a 'comparison dashboard' that shows aggregated stats. 4. Design UI mockups for a 'side-by-side' timeline or diff view. 5. Outline the data models and front-end architecture needed to support this feature.",
+			"reasoning": "High complexity for a design task. It's not just about drawing screens; it's about defining a new, complex feature from scratch. It requires product thinking, UX design, and technical foresight to create a feasible and valuable design."
+		},
+		{
+			"taskId": 24,
+			"taskTitle": "Implement Analytics and Success Metrics",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Implement Analytics and Success Metrics'. The goal is local, privacy-preserving metrics. Subtasks should include: 1. Finalize a list of key metrics to track (e.g., parse success rate, parse time, feature usage). 2. Create a simple `MetricsService` class to aggregate and store these metrics in memory or local storage. 3. Add calls to this service at relevant points in the code. 4. Create a hidden developer panel or a console command to display the collected metrics.",
+			"reasoning": "Medium complexity. The 'privacy-preserving' constraint simplifies this by removing third-party integrations, but instrumenting code across multiple features requires careful planning to avoid tight coupling and to design a clean, reusable service."
+		},
+		{
+			"taskId": 25,
+			"taskTitle": "Architect Plugin System for Custom Events",
+			"complexityScore": 10,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Expand the task 'Architect Plugin System for Custom Events'. This is a high-level design task. Subtasks should include: 1. Research plugin architectures from other successful applications. 2. Define the core Plugin API: how a plugin registers a custom event type, its schema, and its renderer component. 3. Design the runtime mechanism for how the main application will discover, load, and integrate plugins. 4. Define the data flow for custom events. 5. Create a proof-of-concept 'hello world' plugin to test the proposed architecture. 6. Write a technical design document detailing the entire system.",
+			"reasoning": "Very high complexity. Designing a flexible, secure, and easy-to-use plugin system is a difficult software architecture problem. It requires deep thinking about API design, versioning, security, and integration points throughout the application."
+		},
+		{
+			"taskId": 26,
+			"taskTitle": "Build Electron Desktop Wrapper",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Build Electron Desktop Wrapper'. The goal is a cross-platform desktop app. Subtasks should include: 1. Initialize a new Electron project using a template like Electron Forge. 2. Configure the Electron `main.js` to load the web app's build output. 3. Set up the build pipeline using Electron Forge/Builder to create distributable packages for macOS, Windows, and Linux. 4. Replace the web File API with Electron's `dialog` module for a native file picker experience. 5. Test the packaged application on at least two target operating systems.",
+			"reasoning": "High complexity. It introduces a new technology stack (Electron) and build system. Cross-platform packaging, code signing, and auto-updates are notoriously tricky. A production-ready desktop app is a complex undertaking."
+		},
+		{
+			"taskId": 27,
+			"taskTitle": "Design Team Collaboration Web Service",
+			"complexityScore": 9,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Expand the task 'Design Team Collaboration Web Service'. This is a high-level architecture design document. Subtasks should include: 1. Define core features and entities (Users, Teams, Sessions, Comments). 2. Propose a high-level system diagram. 3. Design the database schema. 4. Define the API contract (e.g., REST endpoints or GraphQL schema). 5. Outline the authentication/authorization flow. 6. Propose a technology stack for the backend and database. 7. Describe the real-time collaboration architecture. 8. Outline a deployment strategy.",
+			"reasoning": "Very high complexity. This is designing a full SaaS product from the ground up. Even as a design-only task, it requires broad and deep expertise across the full stack, including backend, database, APIs, security, and infrastructure."
+		}
+	]
+}

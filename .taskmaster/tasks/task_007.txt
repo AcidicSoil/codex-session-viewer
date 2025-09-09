@@ -1,0 +1,37 @@
+# Task ID: 7
+# Title: Create Generic Event Card Component
+# Status: in-progress
+# Dependencies: 6
+# Priority: high
+# Description: Design and implement a React component to render a single event from the timeline.
+# Details:
+The component should be able to display different types of events (`Message`, `FunctionCall`, `Reasoning`, etc.) based on the `ResponseItem` data. It should have a clear visual structure.
+
+# Test Strategy:
+Render various event types and verify they are displayed correctly. Unit test the component with mock `ResponseItem` data.
+
+# Subtasks:
+## 1. Create EventCard component [pending]
+### Dependencies: None
+### Description: Define props and skeleton layout for a generic event card.
+### Details:
+
+
+## 2. Conditional rendering by event type [pending]
+### Dependencies: 7.1
+### Description: Switch on ResponseItem.type to delegate to specialized renderers.
+### Details:
+
+
+## 3. Specialized renderers for key types [pending]
+### Dependencies: 7.2
+### Description: Implement views for MessageEvent, LocalShellCallEvent, and FileChangeEvent.
+### Details:
+
+
+## 4. Standardize header/body/footer [pending]
+### Dependencies: 7.1, 7.2
+### Description: Apply common visual structure and actions across all event cards.
+### Details:
+
+

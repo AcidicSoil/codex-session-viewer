@@ -1,0 +1,19 @@
+# Task ID: 15
+# Title: Implement Export to JSON Feature
+# Status: pending
+# Dependencies: 11
+# Priority: medium
+# Description: Allow users to export the current view of events (including filters) to a JSON file.
+# Details:
+Create a function that transforms the currently visible event data into a JSON string. Use client-side blob generation to trigger a file download.
+
+# Test Strategy:
+Apply a filter, then export to JSON. Verify the downloaded file contains only the filtered events. Test exporting with no filters.
+
+# Subtasks:
+## 1. Optional slim JSON export [pending]
+### Dependencies: None
+### Description: Offer a compact JSON export mode stripping non-essential keys per type to reduce file size.
+### Details:
+
+

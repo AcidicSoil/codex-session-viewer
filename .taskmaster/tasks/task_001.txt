@@ -1,0 +1,11 @@
+# Task ID: 1
+# Title: Initialize Project with Frontend Stack
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Set up the initial project structure using Vite, React 18, TypeScript, Tailwind CSS, and Headless UI.
+# Details:
+Configure Vite for fast development. Install and configure TypeScript with strict settings. Set up Tailwind CSS for styling and Headless UI for accessible components. Establish basic project layout (src, components, etc.).
+
+# Test Strategy:
+Verify that the development server runs (`npm run dev`), a basic component renders, and Tailwind classes are applied correctly.

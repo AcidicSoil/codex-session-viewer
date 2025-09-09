@@ -1,0 +1,60 @@
+{
+  "DocFetchReport": {
+    "status": "OK",
+    "created_utc": "2025-09-08T20:20:00Z",
+    "languages": ["TypeScript"],
+    "tech_stack": ["Web Streams API", "React 18", "Vite"],
+    "tools_called": [
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "Blob.stream", "url": "https://developer.mozilla.org/en-US/docs/Web/API/Blob/stream", "retrieved_utc": "2025-09-08T00:00:00Z"},
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "TextDecoderStream", "url": "https://developer.mozilla.org/en-US/docs/Web/API/TextDecoderStream", "retrieved_utc": "2025-09-08T00:00:00Z"},
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "ReadableStream", "url": "https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream", "retrieved_utc": "2025-09-08T00:00:00Z"},
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "TransformStream", "url": "https://developer.mozilla.org/en-US/docs/Web/API/TransformStream", "retrieved_utc": "2025-09-08T00:00:00Z"},
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "IndexedDB API", "url": "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API", "retrieved_utc": "2025-09-08T20:18:00Z"},
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "IDBDatabase", "url": "https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase", "retrieved_utc": "2025-09-08T20:18:00Z"},
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "IDBObjectStore", "url": "https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore", "retrieved_utc": "2025-09-08T20:18:00Z"},
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "HTMLAnchorElement.download", "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#attr-download", "retrieved_utc": "2025-09-08T20:18:00Z"},
+      {"tool": "gitmcp.fetch_generic_url_content", "topic": "URL.createObjectURL", "url": "https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL_static", "retrieved_utc": "2025-09-08T20:18:00Z"}
+    ],
+    "sources": [
+      {"title": "Blob: stream() method", "url": "https://developer.mozilla.org/en-US/docs/Web/API/Blob/stream", "last_modified": "2024-03-11"},
+      {"title": "TextDecoderStream", "url": "https://developer.mozilla.org/en-US/docs/Web/API/TextDecoderStream", "last_modified": "2025-07-04"},
+      {"title": "ReadableStream", "url": "https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream", "last_modified": "2025-07-03"},
+      {"title": "TransformStream", "url": "https://developer.mozilla.org/en-US/docs/Web/API/TransformStream", "last_modified": "2025-07-03"},
+      {"title": "IndexedDB API", "url": "https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API"},
+      {"title": "IDBDatabase", "url": "https://developer.mozilla.org/en-US/docs/Web/API/IDBDatabase"},
+      {"title": "IDBObjectStore", "url": "https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore"},
+      {"title": "HTML a: download attribute", "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#attr-download"},
+      {"title": "URL.createObjectURL()", "url": "https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL_static"}
+    ],
+    "coverage": {
+      "web_streams": true,
+      "file_api": true,
+      "jsonl_format": "assumed standard newline-delimited JSON",
+      "indexeddb": true,
+      "download_api": true,
+      "exports": { "json_shape": "{ meta, events }", "markdown": true },
+      "bookmarks_persistence": "IndexedDB-backed with localStorage migration"
+    },
+    "key_guidance": [
+      "Blob.stream() returns a ReadableStream of bytes that can be piped.",
+      "TextDecoderStream converts byte chunks to string chunks (UTF-8 by default).",
+      "Use TransformStream to split string chunks into complete lines, retaining a carryover buffer across chunks.",
+      "ReadableStream is async iterable; for await...of can consume lines without locking other readers."
+    ],
+    "gaps": [],
+    "informed_changes": [
+      {
+        "change": "Add streamLines(blob) async generator using Blob.stream -> TextDecoderStream -> TransformStream(line splitter)",
+        "based_on": ["Blob.stream", "TextDecoderStream", "TransformStream"]
+      },
+      {
+        "change": "Persist bookmarks using IndexedDB with read/write helpers and localStorage migration fallback",
+        "based_on": ["IndexedDB API", "IDBDatabase", "IDBObjectStore"]
+      },
+      {
+        "change": "Add exportJson and exportMarkdown utilities and UI buttons (respects bookmarks filter; filename suffix)",
+        "based_on": ["HTMLAnchorElement.download", "URL.createObjectURL"]
+      }
+    ]
+  }
+}
