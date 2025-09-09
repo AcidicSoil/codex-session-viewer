@@ -17,11 +17,12 @@ interface SessionRecord {
 ```
 
 ### fileHashes
-
+Stores file hashes along with an optional modification timestamp to avoid re-hashing unchanged files.
 ```ts
 interface FileHashRecord {
   path: string
   hash: string
+  mtime?: number
   updatedAt: number
 }
 ```
@@ -43,7 +44,7 @@ const session = await loadSession(id)      // read
 const all = await listSessions()           // list
 await deleteSession(id)                    // delete
 
-await putHash(path, hash)                  // create/update hash
+await putHash(path, hash, mtime)           // create/update hash with modification time
 const hashRec = await getHash(path)        // read hash
 ```
 
