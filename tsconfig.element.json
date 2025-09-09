@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./dist",
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "target": "ES2017",
+    "lib": ["ES2017", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/element.ts"]
+}

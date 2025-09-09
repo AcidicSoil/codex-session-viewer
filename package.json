@@ -9,7 +9,7 @@
   "types": "dist/element.d.ts",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.element.json",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
