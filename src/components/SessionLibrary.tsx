@@ -10,6 +10,7 @@ interface Props {
 export default function SessionLibrary({ loader }: Props) {
   const [sessions, setSessions] = React.useState<SessionRecord[]>([])
   const [name, setName] = React.useState('')
+  const [error, setError] = React.useState<string | null>(null)
 
   const refresh = React.useCallback(async () => {
     setSessions(await listSessions())
@@ -21,9 +22,15 @@ export default function SessionLibrary({ loader }: Props) {
 
   async function handleSave() {
     if (!loader.state.events.length) return
-    await loader.saveSession(name || new Date().toISOString())
-    setName('')
-    await refresh()
+    try {
+      await loader.saveSession(name || new Date().toISOString())
+      setName('')
+      await refresh()
+      setError(null)
+    } catch (err) {
+      console.error(err)
+      setError('Failed to save session')
+    }
   }
 
   async function handleLoad(id: string) {
@@ -31,8 +38,14 @@ export default function SessionLibrary({ loader }: Props) {
   }
 
   async function handleDelete(id: string) {
-    await deleteSession(id)
-    await refresh()
+    try {
+      await deleteSession(id)
+      await refresh()
+      setError(null)
+    } catch (err) {
+      console.error(err)
+      setError('Failed to delete session')
+    }
   }
 
   return (
@@ -47,6 +60,7 @@ export default function SessionLibrary({ loader }: Props) {
         />
         <Button onClick={handleSave} disabled={!loader.state.events.length}>Save</Button>
       </div>
+      {error && <div className="text-sm text-red-500">{error}</div>}
       <div className="max-h-64 overflow-auto divide-y">
         {sessions.map((s) => (
           <div key={s.id} className="py-2 flex items-center gap-2 justify-between">
