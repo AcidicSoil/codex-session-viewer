@@ -5,6 +5,8 @@ The All Sessions list supports two sort orders:
 - Newest (default): attempts to parse a timestamp from path (YYYY-MM-DD / YYYYMMDD / epoch). Falls back to name.
 - Name: ascending path name (A → Z).
 
+The timestamp parsing logic lives in `src/utils/timestamp.ts`.
+
 Implementation details
 - A `sortKey` is computed in `useAutoDiscovery()` and exposed on each asset.
 - The UI also includes a local parser for robustness.

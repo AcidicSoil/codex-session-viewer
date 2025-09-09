@@ -1,11 +1,10 @@
 import { useCallback, useMemo, useReducer } from 'react'
 import { streamParseSession, type ParserError } from '../parser'
+import { saveSession as dbSave, loadSession as dbLoad } from '../utils/session-db'
 
 export type LoadPhase = 'idle' | 'parsing' | 'error' | 'success'
 
-import type { SessionMetaParsed } from '../parser'
-
-import type { ResponseItemParsed } from '../parser'
+import type { SessionMetaParsed, ResponseItemParsed } from '../parser'
 
 interface State {
   phase: LoadPhase
@@ -80,7 +79,16 @@ export function useFileLoader() {
     dispatch({ type: 'ingest', events, meta })
   }, [])
 
-  return { state, progress, start, reset, ingest }
+  const saveSession = useCallback(async (id: string) => {
+    await dbSave(id, state.meta, state.events)
+  }, [state.meta, state.events])
+
+  const loadSession = useCallback(async (id: string) => {
+    const rec = await dbLoad(id)
+    if (rec) ingest(rec.events, rec.meta)
+  }, [ingest])
+
+  return { state, progress, start, reset, ingest, saveSession, loadSession }
 }
 
 export default useFileLoader
