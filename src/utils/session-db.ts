@@ -49,8 +49,15 @@ function getDB() {
 
 export async function saveSession(id: string, meta: SessionMetaParsed | undefined, events: ResponseItemParsed[]) {
   const db = await getDB()
+  const existing = await db.get('sessions', id)
   const now = Date.now()
-  const rec: SessionRecord = { id, meta, events, createdAt: now, updatedAt: now }
+  const rec: SessionRecord = {
+    id,
+    meta,
+    events,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now
+  }
   await db.put('sessions', rec)
 }
 
