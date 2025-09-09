@@ -1,6 +1,7 @@
 import * as React from 'react'
 import type { ResponseItem } from '../types/events'
-import { parseUnifiedDiffToSides, languageFromPath } from '../utils/diff'
+import { parseUnifiedDiffToSides } from '../utils/diff'
+import { getLanguageForPath } from '../utils/language'
 import { analyzeDiff, safeTruncate } from '../utils/guards'
 import { Button } from './ui/button'
 
@@ -44,7 +45,7 @@ export default function FilePreview({ path, events, onOpenDiff, maxChars = 200_0
 
   const clipped = previewText.length > maxChars
   const display = clipped ? previewText.slice(0, maxChars) + '\n… (truncated)' : previewText
-  const lang = languageFromPath(path)
+  const lang = getLanguageForPath(path)
 
   return (
     <div className="space-y-2">
