@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./element.js": "./dist/element.js"
+  },
+  "types": "dist/element.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -29,7 +29,9 @@ node_modules/
 # tasks/
 
 
-dist/
+dist/*
+!dist/element.js
+!dist/element.d.ts
 scripts/
 error-logs/
 .cursor/
