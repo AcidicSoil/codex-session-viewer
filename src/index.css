@@ -1,3 +1,4 @@
 @import 'tailwindcss';
+@import './theme.css';
 
 /* App-level tweaks can go here */

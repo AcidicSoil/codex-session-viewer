@@ -48,15 +48,29 @@ export function parseResponseItemLine(line: string): SafeResult<ResponseItemPars
   // Preserve base fields when available, and tuck the original payload under `data`.
   if (isRecord(j.data)) {
     const base = j.data
-    const fallback = {
-      type: 'Other',
-      id: typeof base.id === 'string' ? base.id : undefined,
-      at: typeof base.at === 'string' ? base.at : undefined,
-      index: typeof base.index === 'number' ? base.index : undefined,
-      data: base,
+    const t = typeof (base as any).type === 'string' ? (base as any).type : undefined
+    const known = [
+      'Message',
+      'Reasoning',
+      'FunctionCall',
+      'LocalShellCall',
+      'WebSearchCall',
+      'CustomToolCall',
+      'FileChange',
+      'Other',
+    ]
+    // Only coerce to Other when type is missing or unknown
+    if (!t || !known.includes(t)) {
+      const fallback = {
+        type: 'Other',
+        id: typeof base.id === 'string' ? base.id : undefined,
+        at: typeof base.at === 'string' ? base.at : undefined,
+        index: typeof base.index === 'number' ? base.index : undefined,
+        data: base,
+      }
+      const alt = ResponseItemSchema.safeParse(fallback)
+      if (alt.success) return { success: true, data: alt.data }
     }
-    const alt = ResponseItemSchema.safeParse(fallback)
-    if (alt.success) return { success: true, data: alt.data }
   }
 
   return { success: false, error: res.error, reason: 'invalid_schema' }
@@ -109,8 +123,10 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
 
   switch (t) {
     case 'message': {
+      if ((base as any).content == null) return null
       const role = typeof base.role === 'string' ? base.role : 'assistant'
-      const content = flattenContent((base as any).content) ?? ''
+      const content = flattenContent((base as any).content)
+      if (content == null) return null
       const model = typeof (base as any).model === 'string' ? (base as any).model : undefined
       return { type: 'Message', role, content, model, id: base.id, at: base.at, index: base.index }
     }

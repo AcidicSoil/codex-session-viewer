@@ -27,6 +27,7 @@ import useAutoDiscovery from './hooks/useAutoDiscovery'
 import SessionsList from './components/SessionsList'
 import { matchesEvent } from './utils/search'
 import ExportModal from './components/ExportModal'
+import ThemePicker from './components/ThemePicker'
 
 function DevButtons({ onGenerate }: { onGenerate: () => void }) {
   return (
@@ -167,6 +168,7 @@ function AppInner() {
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <h1 className="text-2xl font-semibold">Codex Session Viewer</h1>
       <p className="text-gray-600">Vite + React + TS + Tailwind + Headless UI</p>
+      <ThemePicker />
 
       <button
         className="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-500 transition"
