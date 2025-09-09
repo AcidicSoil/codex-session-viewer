@@ -9,6 +9,20 @@ A lightweight UI to inspect Codex CLI session logs. Includes:
 - Export to JSON/Markdown
 - Bookmarks with IndexedDB persistence (and migration from localStorage)
 
+Web Component
+--------------
+
+This project exposes a minimal `<codex-session-viewer>` custom element. It self-registers when `dist/element.js` is loaded and the class is also available for direct import.
+
+```html
+<script type="module" src="/dist/element.js"></script>
+<codex-session-viewer></codex-session-viewer>
+```
+
+```ts
+import 'codex-session-viewer/element.js'
+```
+
 Getting Started
 ---------------
 
