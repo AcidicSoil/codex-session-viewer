@@ -38,16 +38,17 @@ Usage
 -----
 
 - Open a session: use “Choose .jsonl” or drag + drop a `.jsonl`/`.ndjson` file.
+- Reload: use the reload button to re-scan for session files without refreshing the page.
 - Auto‑detected sessions: the app lists any logs found under `/.codex/sessions`, `/sessions`, or `/artifacts/sessions` inside the repo. Click a chip to load one.
 - All Sessions: click “View all (N)” to see every detected session with search, copy path, raw open, and Load actions.
-- Files panel: shows paths from both `FileChange` events and auto‑discovered project files (see below). Select a file to preview its latest change and open a full diff.
+- Files panel: shows paths from both `FileChange` events and auto‑discovered project files (see below). Select a file to preview its latest change.
 
 Diff Viewer
 -----------
 
 - The Diff Viewer uses `@monaco-editor/react` + `monaco-editor`, which are listed in `package.json`.
 - It is lazy-loaded at runtime. If the modules are not yet installed, a plain fallback view is shown.
-- Open it from any `FileChange` card via the “Open diff” button.
+- Diffs open in a dedicated viewer when triggered from supported actions (e.g., apply_patch events).
 - FunctionCall apply_patch support: when a `FunctionCall` event invokes the `shell` tool with an `apply_patch` envelope, the viewer parses the patch into per-file diffs and renders them inline on the event card. A status pill shows success/failure if result metadata is available. Use the Raw/Rendered toggle to copy or download the original patch text.
 
 Themes and Editor Theme

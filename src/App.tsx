@@ -437,18 +437,7 @@ function AppInner() {
               <div className="md:col-span-8">
                 {selectedFile && (
                   <div className="border rounded p-2 h-[30vh] md:h-[60vh] overflow-auto">
-                    <FilePreview
-                      path={selectedFile}
-                      events={loader.state.events as any}
-                      onOpenDiff={({ path, diff }) => {
-                        if (!diff) {
-                          setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
-                          return
-                        }
-                        const { original, modified } = parseUnifiedDiffToSides(diff)
-                        setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
-                      }}
-                    />
+                    <FilePreview path={selectedFile} events={loader.state.events as any} />
                   </div>
                 )}
               </div>
@@ -800,19 +789,6 @@ function AppInner() {
                               onRevealFile={(p) => setSelectedFile(p)}
                               highlight={search}
                               applyPatchResultMeta={pairApplyPatchResultMeta(loader.state.events as any, it.absIndex)}
-                              onOpenDiff={({ path, diff }) => {
-                                try {
-                                  if (!diff) {
-                                    setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
-                                    return
-                                  }
-                                  const { original, modified } = parseUnifiedDiffToSides(diff)
-                                  setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
-                                } catch (e) {
-                                  console.warn('openDiff failed', e)
-                                  setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
-                                }
-                              }}
                             />
                           </ErrorBoundary>
                         </div>

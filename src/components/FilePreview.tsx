@@ -3,17 +3,24 @@ import type { ResponseItem } from '../types/events'
 import { parseUnifiedDiffToSides } from '../utils/diff'
 import { getLanguageForPath } from '../utils/language'
 import { analyzeDiff, safeTruncate } from '../utils/guards'
-import { Button } from './ui/button'
 
 export interface FilePreviewProps {
+  /** File path to locate within the event list */
   path: string
+  /** Full list of session events to search */
   events: readonly ResponseItem[]
-  onOpenDiff?: (opts: { path: string; diff?: string }) => void
+  /** Maximum characters to render in the preview */
   maxChars?: number
 }
 
-export default function FilePreview({ path, events, onOpenDiff, maxChars = 200_000 }: FilePreviewProps) {
-  // Find the last FileChange event for this path
+/**
+ * Renders a quick preview of the latest change for a given file path.
+ * Searches the provided events in reverse to find the most recent
+ * `FileChange` entry and displays a truncated view of the modified side
+ * of the diff. Large or binary diffs are guarded to avoid UI jank.
+ */
+export default function FilePreview({ path, events, maxChars = 200_000 }: FilePreviewProps) {
+  // Scan from the end for efficiency since recent events appear last
   const lastChange = React.useMemo(() => {
     for (let i = events.length - 1; i >= 0; i--) {
       const ev = events[i]

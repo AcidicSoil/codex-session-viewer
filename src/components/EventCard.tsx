@@ -126,7 +126,6 @@ export interface EventCardProps {
   index?: number
   bookmarkKey?: string
   onRevealFile?: (path: string) => void
-  onOpenDiff?: (opts: { path: string; diff?: string }) => void
   highlight?: string
   applyPatchResultMeta?: { exit_code?: number; exitCode?: number; duration_seconds?: number; durationSeconds?: number } | null
 }
@@ -248,7 +247,12 @@ function eventKey(item: ResponseItem, index?: number) {
   return String(id ?? (typeof index === 'number' ? `idx-${index}` : `${(item as any).type}-${Math.random()}`))
 }
 
-export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOpenDiff, highlight, applyPatchResultMeta }: EventCardProps) {
+/**
+ * Displays a single session event with optional bookmarking and metadata.
+ * Non-essential controls like "Open diff" were removed for a cleaner UI,
+ * leaving only the bookmark toggle and basic details.
+ */
+export default function EventCard({ item, index, bookmarkKey, onRevealFile, highlight, applyPatchResultMeta }: EventCardProps) {
   const { toggle, has } = useBookmarks()
   const key = bookmarkKey ?? computeEventKey(item, typeof index === 'number' ? index : 0)
   const at = 'at' in item ? (item as any).at : undefined
