@@ -39,12 +39,18 @@ export interface FileTreeProps {
   selectedPath?: string
   onSelect?: (path: string) => void
   className?: string
+  // Map of path -> change type ('added' | 'modified' | 'deleted')
+  changes?: Readonly<Record<string, 'added' | 'modified' | 'deleted'>>
+  // Set of paths that have session log diffs
+  logDiffs?: ReadonlySet<string>
 }
 
-export default function FileTree({ paths, selectedPath, onSelect, className }: FileTreeProps) {
+export default function FileTree({ paths, selectedPath, onSelect, className, changes, logDiffs }: FileTreeProps) {
   const tree = React.useMemo(() => buildFileTree(Array.from(new Set(paths))), [paths])
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
   const itemRefs = React.useRef(new Map<string, HTMLDivElement | null>())
+  const changeKeys = React.useMemo(() => new Set(Object.keys(changes || {})), [changes])
+  const logSet = React.useMemo(() => logDiffs ?? new Set<string>(), [logDiffs])
 
   // Expand ancestors and scroll selected into view when selection changes
   React.useEffect(() => {
@@ -68,6 +74,9 @@ export default function FileTree({ paths, selectedPath, onSelect, className }: F
         selectedPath={selectedPath}
         onSelect={onSelect}
         itemRefs={itemRefs}
+        changes={changes}
+        changeKeys={changeKeys}
+        logDiffs={logSet}
       />
     </div>
   )
@@ -81,6 +90,9 @@ function TreeNodes({
   selectedPath,
   onSelect,
   itemRefs,
+  changes,
+  changeKeys,
+  logDiffs,
 }: {
   nodes: FileTreeNode[]
   depth: number
@@ -89,7 +101,56 @@ function TreeNodes({
   selectedPath?: string
   onSelect?: (path: string) => void
   itemRefs: React.MutableRefObject<Map<string, HTMLDivElement | null>>
+  changes?: Readonly<Record<string, 'added' | 'modified' | 'deleted'>>
+  changeKeys: Set<string>
+  logDiffs: ReadonlySet<string>
 }) {
+  function dirChangeType(path: string): 'added' | 'modified' | 'deleted' | undefined {
+    // Determine folder badge by scanning descendant changed items (simple, efficient for small sets)
+    let hasAdded = false, hasModified = false, hasDeleted = false
+    const prefix = path ? path + '/' : ''
+    for (const k of changeKeys) {
+      if (k === path || k.startsWith(prefix)) {
+        const t = changes?.[k]
+        if (t === 'deleted') hasDeleted = true
+        else if (t === 'added') hasAdded = true
+        else if (t === 'modified') hasModified = true
+        if (hasDeleted) return 'deleted'
+      }
+    }
+    if (hasAdded) return 'added'
+    if (hasModified) return 'modified'
+    return undefined
+  }
+
+  function ChangeDot({ type }: { type?: 'added' | 'modified' | 'deleted' }) {
+    if (!type) return null
+    const color = type === 'added' ? 'bg-green-600' : type === 'deleted' ? 'bg-red-600' : 'bg-amber-600'
+    const label = type
+    return (
+      <span
+        className={`ml-1 inline-block h-2 w-2 rounded-full ${color}`}
+        title={label}
+        aria-label={label}
+      />
+    )
+  }
+
+  function dirHasLogDiff(path: string): boolean {
+    const prefix = path ? path + '/' : ''
+    for (const p of logDiffs) {
+      if (p === path || p.startsWith(prefix)) return true
+    }
+    return false
+  }
+
+  function LogToast({ show }: { show: boolean }) {
+    if (!show) return null
+    return (
+      <span className="ml-1 inline-block px-1 text-[10px] leading-4 rounded bg-indigo-600 text-white" title="Has session diffs" aria-label="Has session diffs">diff</span>
+    )
+  }
+
   return (
     <div className="select-none">
       {nodes.map((n) => (
@@ -119,12 +180,16 @@ function TreeNodes({
                 <Chevron open={expanded.has(n.path)} />
                 <FolderIcon />
                 <span className="font-medium">{n.name}</span>
+                <ChangeDot type={dirChangeType(n.path)} />
+                <LogToast show={dirHasLogDiff(n.path)} />
               </>
             ) : (
               <>
                 <span className="w-3" />
                 <FileIcon />
                 <span className="truncate">{n.name}</span>
+                <ChangeDot type={changes?.[n.path]} />
+                <LogToast show={logDiffs.has(n.path)} />
               </>
             )}
           </div>
@@ -137,6 +202,9 @@ function TreeNodes({
               selectedPath={selectedPath}
               onSelect={onSelect}
               itemRefs={itemRefs}
+              changes={changes}
+              changeKeys={changeKeys}
+              logDiffs={logDiffs}
             />
           )}
         </div>
@@ -144,4 +212,3 @@ function TreeNodes({
     </div>
   )
 }
-

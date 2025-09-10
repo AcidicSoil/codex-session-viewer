@@ -1055,7 +1055,7 @@
             "title": "Decide directory access + security approach",
             "description": "Choose File System Access API as primary (DirectoryPicker + persisted handles) and define fallback (manual zip upload). Document permission prompts and limitations.",
             "details": "Deliver docs/scanner.md section outlining browser support, permission flows, and why live watchers aren’t available; rescans are manual or scheduled.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 60
           },
@@ -1082,7 +1082,7 @@
             "title": "Rescan + change detection",
             "description": "Compute deltas (added/modified/deleted) by comparing current scan vs snapshot; produce a consumable ChangeSet for the Diff Viewer.",
             "details": "Files: src/scanner/diffIndex.ts. Include mtime if available; detect text/binary via simple sniff; expose summary counts.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "60.2"
             ],
@@ -1093,7 +1093,7 @@
             "title": ".codex/sessions integration",
             "description": "Scan `.codex/sessions` under the chosen root; parse session JSONL and correlate events with file paths to annotate changes with session context.",
             "details": "Files: src/scanner/sessionsLink.ts. Reuse existing JSONL parser; produce mapping for Diff Viewer to jump from event → file and vice versa.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "60.2"
             ],
@@ -1104,7 +1104,7 @@
             "title": "Diff Viewer integration",
             "description": "Expose a provider that supplies before/after content for changed files and session-linked diffs so the Diff Viewer can render unified/side-by-side views.",
             "details": "Wire a new diff data source into existing viewer controls; add a Changed Files panel with counts and quick open.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "39",
               "60.4"
@@ -1116,7 +1116,7 @@
             "title": "UI: Connect Workspace + Rescan + Progress",
             "description": "Add a UI flow to connect a folder, show the selected root, display changed files list, progress/estimates, and a Rescan button (with debounce).",
             "details": "Use Headless UI modal or settings panel; surface permission errors and tips; integrate with existing reload button if present.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "60.2"
             ],
@@ -1138,7 +1138,7 @@
             "title": "Tests: scanner correctness and diff integration",
             "description": "Unit tests for hashing and change detection; integration test that selecting a folder, scanning, editing a file, and rescanning shows expected changes and renders diffs.",
             "details": "Mock FS handles where possible; include text/binary edge cases and large directory simulation.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 60
           },
@@ -1282,11 +1282,22 @@
         ],
         "priority": "high",
         "subtasks": []
+      },
+      {
+        "id": 64,
+        "title": "Implement Comprehensive Application Logging",
+        "description": "Introduce a centralized logging utility to instrument key application flows, providing structured logs with levels, sampling, and privacy controls for improved debugging and monitoring.",
+        "details": "1. **Create Central Logger Module (`src/utils/logger.ts`):**\n   - Export a singleton logger instance configured on initialization.\n   - The logger should support levels: `debug`, `info`, `warn`, `error`.\n   - Implement methods like `logger.info(message, context, payload)`.\n\n2. **Environment Variable Control:**\n   - Read `VITE_LOG_LEVEL` from `import.meta.env` to set the active log level (default to 'info' in production, 'debug' in development).\n   - Read `VITE_LOG_SAMPLING_RATE` (0.0 to 1.0) to control sampling for noisy events.\n   - If a log call's level is below the configured level, the function should return immediately for minimal performance impact.\n\n3. **Remote Logging & Batching:**\n   - If `VITE_LOG_SERVER_URL` is defined, buffer log events in an in-memory array.\n   - Periodically (e.g., every 5 seconds) or when the buffer reaches a certain size (e.g., 20 events), send the batch to the server URL via `fetch` POST request.\n   - Use `navigator.sendBeacon` in a `pagehide` or `beforeunload` event listener to attempt sending any remaining logs before the user navigates away.\n   - Wrap network calls in `try/catch` to prevent logging failures from crashing the app.\n\n4. **Privacy Guard & Sanitization:**\n   - Implement a `sanitize(payload)` function that is automatically called on all log payloads.\n   - This function should recursively traverse objects/arrays and:\n     - Truncate strings longer than 1024 characters.\n     - Truncate arrays with more than 50 elements.\n     - Redact values for keys matching a regex like `/secret|token|password|key|pii/i`.\n\n5. **Instrumentation Points:**\n   - **`src/main.tsx`**: Log app initialization and environment configuration (`logger.info('App Initializing', { env: import.meta.env })`).\n   - **`src/components/ErrorBoundary.tsx`**: In `componentDidCatch`, call `logger.error('ErrorBoundary Caught Error', { error, errorInfo })`.\n   - **`src/workers/fs-scanner.ts`**: The worker cannot directly import the logger. It should use `postMessage({ type: 'log', level: 'info', ... })` to send log data back to the main thread. The main thread will have a listener that forwards these messages to the central logger.\n   - **`src/lib/utils/session-db.ts`**: Log key IndexedDB operations like `logger.info('Session saved to DB', { sessionId })` and `logger.error('Failed to write to DB', { error })`.\n   - **`src/lib/parsers/applyPatch.ts`**: Log success and failure scenarios, e.g., `logger.warn('Patch application failed', { filePath, hunk })`.\n   - **UI Components (`DiffViewer`, `FileTree`, etc.)**: Add `debug` level logs for component mounting, prop changes, and user interactions (e.g., `logger.debug('File selected in tree', { path })`). Use sampling for high-frequency events like scrolling or dragging.\n\n6. **Developer Documentation (`docs/logging.md`):**\n   - Create a new markdown file explaining the logging system.\n   - Document the log event schema, log levels, and how to control them via `.env` variables.\n   - Provide a taxonomy of key log events and their contexts (e.g., `context: 'SessionDB'`, `context: 'FileTree'`).\n   - Explain how to view logs in the browser console and how to set up a local server to receive remote logs.",
+        "testStrategy": "1. **Unit Tests (`src/utils/logger.test.ts`):**\n   - Write tests to verify that log methods are correctly filtered by `VITE_LOG_LEVEL`. For example, when level is 'warn', `logger.info` and `logger.debug` should not produce output.\n   - Test the `sanitize` function to ensure it correctly truncates large data and redacts sensitive keys.\n   - Mock `fetch` and `navigator.sendBeacon` to assert that logs are correctly batched and sent to the `VITE_LOG_SERVER_URL`.\n   - Test the network error handling by making the mocked `fetch` throw an error, ensuring the application does not crash.\n   - Verify the sampling logic by calling a logger method in a loop and asserting the number of actual log calls is within the expected range.\n\n2. **Integration Tests:**\n   - In a test for file loading (related to Task 32/33), spy on `logger.info` to confirm that a 'session_loaded' event is logged upon successful file processing.\n   - Create a test that mounts a component designed to throw an error within the `ErrorBoundary` and assert that `logger.error` is called with the correct error details.\n\n3. **Manual Verification:**\n   - Run the application with `VITE_LOG_LEVEL=debug` in the `.env` file. Open the developer console and perform various actions (loading a session, clicking files). Verify that detailed, structured logs appear.\n   - Change the `VITE_LOG_LEVEL` to `warn` and restart the dev server. Repeat the actions and confirm that only warnings and errors are logged.\n   - Set up a simple local Node.js/Express server that listens for POST requests and prints the body. Set `VITE_LOG_SERVER_URL` to point to it. Verify that log batches are received by the server.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-08T17:44:30.733Z",
-      "updated": "2025-09-10T18:02:56.720Z",
+      "updated": "2025-09-10T22:59:57.227Z",
       "description": "Tasks for master context"
     }
   }

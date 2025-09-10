@@ -2,7 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import type { SessionMetaParsed, ResponseItemParsed } from '../parser'
 
 const DB_NAME = 'csv-sessions'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 export interface SessionRecord {
   id: string
@@ -28,6 +28,10 @@ interface SessionDBSchema extends DBSchema {
     key: string
     value: FileHashRecord
   }
+  settings: {
+    key: string
+    value: any
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<SessionDBSchema>> | undefined
@@ -41,6 +45,9 @@ function getDB() {
         }
         if (!db.objectStoreNames.contains('fileHashes')) {
           db.createObjectStore('fileHashes', { keyPath: 'path' })
+        }
+        if (!db.objectStoreNames.contains('settings')) {
+          db.createObjectStore('settings')
         }
       }
     })
@@ -86,4 +93,26 @@ export async function putHash(path: string, hash: string, mtime?: number) {
 export async function getHash(path: string) {
   const db = await getDB()
   return db.get('fileHashes', path)
+}
+
+
+// Settings helpers (e.g., persisted handles)
+export async function setSetting<T = any>(key: string, value: T) {
+  const db = await getDB()
+  await db.put('settings', value, key)
+}
+
+export async function getSetting<T = any>(key: string): Promise<T | undefined> {
+  const db = await getDB()
+  return db.get('settings', key) as any
+}
+
+export async function deleteSetting(key: string) {
+  const db = await getDB()
+  await db.delete('settings', key)
+}
+
+export async function listHashes() {
+  const db = await getDB()
+  return db.getAll('fileHashes')
 }

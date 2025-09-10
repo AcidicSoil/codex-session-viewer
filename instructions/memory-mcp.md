@@ -6,6 +6,14 @@ globs: **/*
 alwaysApply: true
 ---
 
+# path: instructions/memory-mcp.md
+
+---
+description: Usage contract and core concepts for Knowledge Graph Memory MCP server
+globs: **/*
+alwaysApply: true
+---
+
 # Knowledge Graph Memory Server (alias: memory)
 
 ## Core Concepts

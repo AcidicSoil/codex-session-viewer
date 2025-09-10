@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { Disclosure } from '@headlessui/react'
 import { streamTextLines } from './utils/lineReader'
@@ -18,6 +19,9 @@ import { useBookmarks } from './state/bookmarks'
 import { Button } from './components/ui/button'
 import { eventKey } from './utils/eventKey'
 import { parseHash, updateHash } from './utils/hashState'
+import { startFileSystemScanFromHandle } from './utils/fs-scanner'
+import { listHashes, getSetting, setSetting, deleteSetting } from './utils/session-db'
+import { buildChangeSet, type ChangeSet } from './scanner/diffIndex'
 import { exportJson, exportMarkdown, exportHtml, exportCsv, buildFilename } from './utils/exporters'
 import type { ResponseItem } from './types'
 import FileTree from './components/FileTree'
@@ -25,7 +29,7 @@ import FilePreview from './components/FilePreview'
 import DiffViewer from './components/DiffViewer'
 import { extractApplyPatchText } from './parsers/applyPatch'
 import { parseUnifiedDiffToSides } from './utils/diff'
-import { isApplyPatchFunction, passesFunctionNameFilter, sanitizeFnFilterList } from './utils/functionFilters'
+import { isApplyPatchFunction, passesFunctionNameFilter, sanitizeFnFilterList, isGenericFileEditFunction } from './utils/functionFilters'
 import { getLanguageForPath } from './utils/language'
 import useAutoDiscovery from './hooks/useAutoDiscovery'
 import SessionsList from './components/SessionsList'
@@ -33,6 +37,9 @@ import { matchesEvent } from './utils/search'
 import ExportModal from './components/ExportModal'
 import ThemePicker from './components/ThemePicker'
 import { containsApplyPatchAnywhere } from './utils/applyPatchHints'
+import { getWorkspaceDiff } from './scanner/diffProvider'
+import { readFileText } from './utils/fs-io'
+import { enumerateFiles, enumerateFilesInfo, type FileEntryInfo } from './utils/dir-enum'
 
 function DevButtons({ onGenerate }: { onGenerate: () => void }) {
   return (
@@ -119,6 +126,291 @@ function AppInner() {
   const [chipScanning, setChipScanning] = useState(false)
   const [chipProgress, setChipProgress] = useState(0)
   const [chipOnlyMatches, setChipOnlyMatches] = useState(false)
+  const [workspace, setWorkspace] = useState<FileSystemDirectoryHandle | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [progressPath, setProgressPath] = useState<string | null>(null)
+  const [changeSet, setChangeSet] = useState<ChangeSet | null>(null)
+  const [sessionsHandle, setSessionsHandle] = useState<FileSystemDirectoryHandle | null>(null)
+  const [sessionsList, setSessionsList] = useState<FileEntryInfo[]>([])
+  const [workspaceSessions, setWorkspaceSessions] = useState<FileEntryInfo[]>([])
+  const [sessionsSort, setSessionsSort] = useState<'date-desc'|'date-asc'|'name-asc'|'name-desc'>('date-desc')
+  const [sessionsFilterText, setSessionsFilterText] = useState('')
+  const [sessionsMinKB, setSessionsMinKB] = useState('')
+  const [sessionsMaxKB, setSessionsMaxKB] = useState('')
+  const [changeMap, setChangeMap] = useState<Record<string, 'added' | 'modified' | 'deleted'>>({})
+  const [autoDetect, setAutoDetect] = useState(true)
+  const [showFileTree, setShowFileTree] = useState(false)
+  const [workspaceFiles, setWorkspaceFiles] = useState<string[]>([])
+  const [logMismatchSet, setLogMismatchSet] = useState<Set<string>>(new Set())
+  const [genericDiffOnly, setGenericDiffOnly] = useState(false)
+  const applyPatchCount = React.useMemo(() => {
+    try { return (loader.state.events ?? []).filter((e: any) => isApplyPatchFunction(e)).length } catch { return 0 }
+  }, [loader.state.events])
+
+  async function connectWorkspace() {
+    try {
+      // @ts-ignore experimental API
+      const handle: FileSystemDirectoryHandle = await (window as any).showDirectoryPicker?.({ id: 'workspace', mode: 'read' })
+      if (!handle) return
+      setWorkspace(handle)
+      try { await setSetting('workspaceHandle', handle) } catch {}
+      try { await refreshWorkspaceFiles(handle) } catch {}
+    } catch {}
+  }
+
+  async function rescan() {
+    if (!workspace) return
+    const before = await listHashes()
+    const runner = startFileSystemScanFromHandle(workspace)
+    setScanning(true)
+    const off = runner.onProgress((p) => setProgressPath(p))
+    await new Promise<void>((resolve) => {
+      const onMsg = (e: MessageEvent<any>) => {
+        if (e.data === 'done' || e.data === 'aborted') {
+          runner.worker.removeEventListener('message', onMsg as any)
+          off()
+          resolve()
+        }
+      }
+      runner.worker.addEventListener('message', onMsg as any)
+    })
+    const after = await listHashes()
+    const cs = buildChangeSet(before, after)
+    setChangeSet(cs)
+    setChangeMap(Object.fromEntries(cs.items.map((it) => [it.path, it.type])))
+    try { await refreshWorkspaceFiles(workspace) } catch {}
+    try { await refreshLogMismatches(workspace) } catch {}
+    try { await refreshWorkspaceSessionsInfo(workspace) } catch { setWorkspaceSessions([]) }
+    setScanning(false)
+    setProgressPath(null)
+  }
+
+  async function refreshWorkspaceFiles(root: FileSystemDirectoryHandle) {
+    // Only include files; directories are inferred in the tree
+    const files = await enumerateFiles(root, (_p, isFile) => isFile)
+    setWorkspaceFiles(files)
+  }
+
+  async function refreshWorkspaceSessionsInfo(root: FileSystemDirectoryHandle | null = workspace) {
+    if (!root) { setWorkspaceSessions([]); return }
+    const sess = await enumerateFilesInfo(root, (p, isFile) => isFile && /\.(jsonl|ndjson|json)$/i.test(p))
+    setWorkspaceSessions(sess)
+  }
+
+  async function refreshLogMismatches(root: FileSystemDirectoryHandle | null) {
+    if (!root) { setLogMismatchSet(new Set()); return }
+    const events = loader.state.events ?? []
+    const latest = new Map<string, string>()
+    for (let i = events.length - 1; i >= 0; i--) {
+      const ev: any = events[i]
+      if (!ev || ev.type !== 'FileChange' || !ev.path || !ev.diff) continue
+      const p = String(ev.path)
+      if (latest.has(p)) continue
+      try {
+        const { modified } = parseUnifiedDiffToSides(ev.diff)
+        latest.set(p, modified)
+      } catch {}
+    }
+    const mismatches = new Set<string>()
+    for (const [p, expected] of latest) {
+      let actual = ''
+      try { actual = await readFileText(root, p) } catch { actual = '' }
+      if (actual !== expected) mismatches.add(p)
+    }
+    setLogMismatchSet(mismatches)
+  }
+
+  // Background auto-rescan (lightweight progress; avoids toggling global scanning UI)
+  useEffect(() => {
+    if (!workspace || !autoDetect) return
+    let cancelled = false
+    let timer: any = null
+    let running = false
+    async function tick() {
+      if (cancelled || running) return
+      running = true
+      try {
+        const before = await listHashes()
+        const runner = startFileSystemScanFromHandle(workspace)
+        await new Promise<void>((resolve) => {
+          const onMsg = (e: MessageEvent<any>) => {
+            if (e.data === 'done' || e.data === 'aborted') {
+              runner.worker.removeEventListener('message', onMsg as any)
+              resolve()
+            }
+          }
+          runner.worker.addEventListener('message', onMsg as any)
+        })
+        const after = await listHashes()
+        const cs = buildChangeSet(before, after)
+        if (!cancelled) {
+          setChangeSet(cs)
+          setChangeMap(Object.fromEntries(cs.items.map((it) => [it.path, it.type])))
+          try { await refreshWorkspaceFiles(workspace) } catch {}
+          try { await refreshLogMismatches(workspace) } catch {}
+        }
+      } catch {}
+      finally {
+        running = false
+        if (!cancelled) timer = setTimeout(tick, 15000)
+      }
+    }
+    // initial run and schedule
+    tick()
+    return () => { cancelled = true; if (timer) clearTimeout(timer) }
+  }, [workspace, autoDetect])
+
+  // Auto-restore workspace
+  useEffect(() => {
+    (async () => {
+      try {
+        const w = await getSetting<FileSystemDirectoryHandle>('workspaceHandle')
+        if (w) {
+          // @ts-ignore
+          const state = await (w as any).queryPermission?.({ mode: 'read' })
+          if (state === 'granted') { setWorkspace(w); try { await refreshWorkspaceFiles(w); await refreshLogMismatches(w) } catch {} }
+        }
+        try {
+          const pref = await getSetting<boolean>('ui.showFileTree')
+          if (typeof pref === 'boolean') setShowFileTree(pref)
+        } catch {}
+      } catch {}
+    })()
+  }, [])
+
+  // Recompute mismatches when session events change
+  useEffect(() => {
+    (async () => { try { await refreshLogMismatches(workspace) } catch {} })()
+  }, [loader.state.events, workspace])
+
+  // Auto-connect to persisted .codex/sessions if permission remains granted
+  useEffect(() => {
+    (async () => {
+      try {
+        const h = await getSetting<FileSystemDirectoryHandle>('sessionsHandle')
+        if (h) {
+          // @ts-ignore experimental
+          const state = await (h as any).queryPermission?.({ mode: 'read' })
+          if (state === 'granted') {
+            setSessionsHandle(h)
+            await rescanSessions(h)
+          }
+        }
+      } catch (e) {
+        console.warn('sessionsHandle restore failed', e)
+      }
+    })()
+  }, [])
+
+  async function connectSessions() {
+    try {
+      // @ts-ignore experimental
+      const dir: FileSystemDirectoryHandle = await (window as any).showDirectoryPicker?.({ id: 'codex_sessions', mode: 'read' })
+      if (!dir) return
+      setSessionsHandle(dir)
+      await setSetting('sessionsHandle', dir)
+      await rescanSessions(dir)
+    } catch (e) {
+      console.warn('connectSessions cancelled or failed', e)
+    }
+  }
+
+  async function rescanSessions(root: FileSystemDirectoryHandle | null = sessionsHandle) {
+    if (!root) return
+    setScanning(true)
+    try {
+      const { enumerateFilesInfo } = await import('./utils/dir-enum')
+      const sess = await enumerateFilesInfo(root, (p, isFile) => isFile && /\.(jsonl|ndjson|json)$/i.test(p))
+      setSessionsList(sess)
+    } catch { setSessionsList([]) }
+    finally {
+      setScanning(false)
+      setProgressPath(null)
+    }
+  }
+
+  // Extract sortable date from a session path (best-effort)
+  function parseSessionDate(p: string): number | null {
+    const s = p.replace(/\\/g, '/');
+    const m1 = s.match(/(\d{4})[\/_\-.](\d{2})[\/_\-.](\d{2})/)
+    if (m1) {
+      const y = Number(m1[1]), mo = Number(m1[2]) - 1, d = Number(m1[3])
+      const t = Date.UTC(y, mo, d)
+      return isNaN(t) ? null : t
+    }
+    const m2 = s.match(/(\d{4})(\d{2})(\d{2})/)
+    if (m2) {
+      const y = Number(m2[1]), mo = Number(m2[2]) - 1, d = Number(m2[3])
+      const t = Date.UTC(y, mo, d)
+      return isNaN(t) ? null : t
+    }
+    // Try ISO date prefix
+    const m3 = s.match(/(\d{4}-\d{2}-\d{2}T[^_/]+)/)
+    if (m3) { const t = Date.parse(m3[1]); return isNaN(t) ? null : t }
+    return null
+  }
+
+  function sortSessions(list: FileEntryInfo[]): FileEntryInfo[] {
+    const arr = [...list]
+    const cmpName = (a: FileEntryInfo, b: FileEntryInfo) => a.path.localeCompare(b.path)
+    const cmpDate = (a: FileEntryInfo, b: FileEntryInfo) => {
+      const ta = parseSessionDate(a.path); const tb = parseSessionDate(b.path)
+      if (ta != null && tb != null) return ta - tb
+      if (ta != null) return -1
+      if (tb != null) return 1
+      return cmpName(a, b)
+    }
+    switch (sessionsSort) {
+      case 'date-asc': arr.sort(cmpDate); break
+      case 'date-desc': arr.sort((a,b) => -cmpDate(a,b)); break
+      case 'name-desc': arr.sort((a,b) => -cmpName(a,b)); break
+      default: arr.sort(cmpName)
+    }
+    return arr
+  }
+
+  function filterSessions(list: FileEntryInfo[]): FileEntryInfo[] {
+    const q = sessionsFilterText.trim().toLowerCase()
+    const min = Number(sessionsMinKB)
+    const max = Number(sessionsMaxKB)
+    return list.filter((item) => {
+      const matchText = q ? item.path.toLowerCase().includes(q) : true
+      const sizeKB = (item.size ?? 0) / 1024
+      const matchMin = !Number.isFinite(min) || sessionsMinKB === '' ? true : sizeKB >= min
+      const matchMax = !Number.isFinite(max) || sessionsMaxKB === '' ? true : sizeKB <= max
+      return matchText && matchMin && matchMax
+    })
+  }
+
+  const displayedSessions = React.useMemo(() => sortSessions(filterSessions(sessionsList)), [sessionsList, sessionsSort, sessionsFilterText, sessionsMinKB, sessionsMaxKB])
+  const displayedWorkspaceSessions = React.useMemo(() => sortSessions(filterSessions(workspaceSessions)), [workspaceSessions, sessionsSort, sessionsFilterText, sessionsMinKB, sessionsMaxKB])
+
+  async function loadFromHandle(root: FileSystemDirectoryHandle | null, path: string) {
+    if (!root) return
+    try {
+      const parts = path.split('/').filter(Boolean)
+      let dir: any = root
+      for (let i = 0; i < parts.length - 1; i++) dir = await dir.getDirectoryHandle(parts[i]!)
+      const fh = await dir.getFileHandle(parts[parts.length - 1]!)
+      const file = await fh.getFile()
+      await handleFile(file)
+    } catch (e) {
+      console.warn('loadFromHandle failed', e)
+    }
+  }
+
+  async function openWorkspaceDiff(path: string) {
+    if (!workspace) return
+    try {
+      const { original, modified } = await getWorkspaceDiff(workspace, path, loader.state.events as any)
+      setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
+    } catch {
+      try {
+        const after = await readFileText(workspace, path)
+        setActiveDiff({ path, original: '', modified: after, language: getLanguageForPath(path) })
+      } catch {}
+    }
+  }
 
   function safeMatches(ev: any, q: string) {
     try {
@@ -149,6 +441,7 @@ function AppInner() {
       })
       .filter(({ ev }) => (typeFilter === 'All' && !showOther ? (ev as any).type !== 'Other' : true))
       .filter(({ ev }) => (onlyApplyText ? containsApplyPatchAnywhere(ev as any) : true))
+      .filter(({ ev }) => (genericDiffOnly ? isGenericFileEditFunction(ev as any) : true))
       // Function name filter (applies to FunctionCall; special 'apply_patch')
       .filter(({ ev }) => passesFunctionNameFilter(ev as any, fnFilter, typeFilter))
       .filter(({ ev }) => (search ? safeMatches(ev as any, search) : true))
@@ -191,6 +484,8 @@ function AppInner() {
     setShowOther(o === '1' || o === 'true')
     const ap = String((h as any).ap || '').toLowerCase()
     setOnlyApplyText(ap === '1' || ap === 'true')
+    const gd = String((h as any).gd || '').toLowerCase()
+    setGenericDiffOnly(gd === '1' || gd === 'true')
     const validTypes = new Set(['All','Message','Reasoning','FunctionCall','LocalShellCall','WebSearchCall','CustomToolCall','FileChange','Other','ToolCalls'])
     if (h.t && validTypes.has(h.t)) setTypeFilter(h.t as any)
     const validRoles = new Set(['All','user','assistant','system'])
@@ -219,11 +514,13 @@ function AppInner() {
       else delete (next as any).o
       if (onlyApplyText) (next as any).ap = '1'
       else delete (next as any).ap
+      if (genericDiffOnly) (next as any).gd = '1'
+      else delete (next as any).gd
       if (fnFilter && fnFilter.length) (next as any).fn = sanitizeFnFilterList(fnFilter).join(',')
       else delete (next as any).fn
       return next
     })
-  }, [showBookmarksOnly, selectedFile, typeFilter, roleFilter, search, pathFilter, showOther, fnFilter, onlyApplyText])
+  }, [showBookmarksOnly, selectedFile, typeFilter, roleFilter, search, pathFilter, showOther, fnFilter, onlyApplyText, genericDiffOnly])
 
   // Auto-open diff when a file is selected
   useEffect(() => {
@@ -232,36 +529,211 @@ function AppInner() {
       return
     }
     const events = loader.state.events ?? []
+    let handled = false
     for (let i = events.length - 1; i >= 0; i--) {
       const ev: any = events[i]
       if (ev.type === 'FileChange' && ev.path === selectedFile) {
         if (ev.diff) {
           try {
             const { original, modified } = parseUnifiedDiffToSides(ev.diff)
-            setActiveDiff({
-              path: selectedFile,
-              original,
-              modified,
-              language: getLanguageForPath(selectedFile),
-            })
+            setActiveDiff({ path: selectedFile, original, modified, language: getLanguageForPath(selectedFile) })
+            handled = true
           } catch {
-            setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile) })
+            // fall through to fallback below
           }
-        } else {
-          setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile) })
         }
-        return
+        break // Found a matching FileChange; either showed diff or will fallback
       }
     }
-    // No matching event; clear diff
-    setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile) })
-  }, [selectedFile, loader.state.events])
+    if (handled) return
+    // Attempt workspace/apply_patch fallback if available
+    ;(async () => {
+      try {
+        if (workspace) {
+          const { original, modified } = await getWorkspaceDiff(workspace, selectedFile, events as any)
+          setActiveDiff({ path: selectedFile, original, modified, language: getLanguageForPath(selectedFile) })
+          return
+        }
+      } catch {}
+      setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile) })
+    })()
+  }, [selectedFile, loader.state.events, workspace])
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <h1 className="text-2xl font-semibold">Codex Session Viewer</h1>
       {/* Theme picker retained for functionality; remove demo/disclosure and counter button */}
       <ThemePicker />
+
+      <div className="space-y-2 p-4 bg-white rounded shadow">
+        <h2 className="font-medium">Workspace</h2>
+        <div className="flex items-center gap-3">
+          <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={connectWorkspace}>Connect Workspace</button>
+          <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={rescan} disabled={!workspace || scanning}>{scanning ? 'Scanning…' : 'Rescan'}</button>
+          <label className="ml-2 inline-flex items-center gap-1 text-sm">
+            <input type="checkbox" checked={autoDetect} onChange={(e) => setAutoDetect(e.target.checked)} />
+            <span>Auto-detect</span>
+          </label>
+          {workspace && (
+            <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={async () => { setWorkspace(null); setChangeSet(null); try { await deleteSetting('workspaceHandle') } catch {} }}>Disconnect</button>
+          )}
+          {progressPath && <span className="text-xs opacity-70 truncate max-w-[40ch]">{progressPath}</span>}
+          <span className="flex-1" />
+          {!showFileTree ? (
+            <button
+              className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+              onClick={async () => { setShowFileTree(true); try { await setSetting('ui.showFileTree', true) } catch {}; try { if (workspace) await refreshWorkspaceFiles(workspace) } catch {} }}
+            >
+              Add File Tree
+            </button>
+          ) : (
+            <button
+              className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+              onClick={async () => { setShowFileTree(false); try { await setSetting('ui.showFileTree', false) } catch {} }}
+            >
+              Remove File Tree
+            </button>
+          )}
+        </div>
+        <div className="text-sm">
+      {changeSet ? (
+        <div className="mt-2">
+          <div className="mb-2">Added {changeSet.added} • Modified {changeSet.modified} • Deleted {changeSet.deleted}</div>
+          <div className="mb-2 flex items-center gap-2 text-xs">
+            <input
+              className="border rounded px-1 py-0.5"
+              placeholder="Filter sessions/files…"
+              value={sessionsFilterText}
+              onChange={(e) => setSessionsFilterText(e.target.value)}
+              title="Filter by substring"
+            />
+            <input
+              className="border rounded px-1 py-0.5 w-24"
+              placeholder="Min KB"
+              value={sessionsMinKB}
+              onChange={(e) => setSessionsMinKB(e.target.value)}
+              title="Minimum size in KB"
+              inputMode="numeric"
+            />
+            <input
+              className="border rounded px-1 py-0.5 w-24"
+              placeholder="Max KB"
+              value={sessionsMaxKB}
+              onChange={(e) => setSessionsMaxKB(e.target.value)}
+              title="Maximum size in KB"
+              inputMode="numeric"
+            />
+            <select
+              className="border rounded px-1 py-0.5"
+              value={sessionsSort}
+              onChange={(e) => setSessionsSort(e.target.value as any)}
+              title="Sort order"
+            >
+              <option value="date-desc">Date (newest)</option>
+              <option value="date-asc">Date (oldest)</option>
+              <option value="name-asc">Name (A→Z)</option>
+              <option value="name-desc">Name (Z→A)</option>
+            </select>
+          </div>
+          <ul className="max-h-48 overflow-auto space-y-1">
+            {displayedWorkspaceSessions.map((s) => (
+              <li key={s.path} className="flex items-center gap-2">
+                <button className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200" onClick={() => loadFromHandle(workspace, s.path)}>Load</button>
+                <span className="truncate" title={s.path}>{s.path}</span>
+                {typeof s.size === 'number' && <span className="text-xs text-gray-500">({Math.round((s.size/1024)*10)/10} KB)</span>}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 font-medium">Changed Files</div>
+          <ul className="max-h-48 overflow-auto space-y-1">
+            {changeSet.items.map((it) => (
+              <li key={it.path} className="flex items-center gap-2">
+                <span className={`px-1 rounded text-white ${it.type === 'added' ? 'bg-green-600' : it.type === 'deleted' ? 'bg-red-600' : 'bg-amber-600'}`}>{it.type}</span>
+                <button className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200" onClick={() => openWorkspaceDiff(it.path)}>Open diff</button>
+                <span className="truncate" title={it.path}>{it.path}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="opacity-70">Connect a workspace and run Rescan to see changes.</div>
+      )}
+        </div>
+      </div>
+
+      <div className="space-y-2 p-4 bg-white rounded shadow">
+        <h2 className="font-medium">.codex/sessions</h2>
+        <div className="flex items-center gap-3">
+          {!sessionsHandle && (
+            <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={connectSessions}>Set .codex/sessions</button>
+          )}
+          {sessionsHandle && (
+            <>
+              <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={() => rescanSessions()}>Rescan Sessions</button>
+              <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={async () => { await deleteSetting('sessionsHandle'); setSessionsHandle(null); setSessionsList([]) }}>Clear</button>
+              <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={connectSessions}>Change Folder</button>
+            </>
+          )}
+          {progressPath && <span className="text-xs opacity-70 truncate max-w-[40ch]">{progressPath}</span>}
+        </div>
+        {sessionsHandle ? (
+          <div className="text-sm">
+            {sessionsList.length === 0 ? (
+              <div className="opacity-70">No session files detected in this folder.</div>
+            ) : (
+              <>
+              <div className="mb-2 flex items-center gap-2 text-xs">
+                <input
+                  className="border rounded px-1 py-0.5"
+                  placeholder="Filter sessions…"
+                  value={sessionsFilterText}
+                  onChange={(e) => setSessionsFilterText(e.target.value)}
+                  title="Filter by substring"
+                />
+                <input
+                  className="border rounded px-1 py-0.5 w-24"
+                  placeholder="Min KB"
+                  value={sessionsMinKB}
+                  onChange={(e) => setSessionsMinKB(e.target.value)}
+                  title="Minimum size in KB"
+                  inputMode="numeric"
+                />
+                <input
+                  className="border rounded px-1 py-0.5 w-24"
+                  placeholder="Max KB"
+                  value={sessionsMaxKB}
+                  onChange={(e) => setSessionsMaxKB(e.target.value)}
+                  title="Maximum size in KB"
+                  inputMode="numeric"
+                />
+                <select
+                  className="border rounded px-1 py-0.5"
+                  value={sessionsSort}
+                  onChange={(e) => setSessionsSort(e.target.value as any)}
+                  title="Sort order"
+                >
+                  <option value="date-desc">Date (newest)</option>
+                  <option value="date-asc">Date (oldest)</option>
+                  <option value="name-asc">Name (A→Z)</option>
+                  <option value="name-desc">Name (Z→A)</option>
+                </select>
+              </div>
+              <ul className="max-h-48 overflow-auto space-y-1">
+                {displayedSessions.map((s) => (
+                  <li key={s.path} className="flex items-center gap-2">
+                    <button className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200" onClick={() => loadFromHandle(sessionsHandle, s.path)}>Load</button>
+                    <span className="truncate" title={s.path}>{s.path}</span>
+                    {typeof s.size === 'number' && <span className="text-xs text-gray-500">({Math.round((s.size/1024)*10)/10} KB)</span>}
+                  </li>
+                ))}
+              </ul>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="text-sm opacity-70">Pick your .codex/sessions folder once to enable auto-connect on next visits.</div>
+        )}
+      </div>
 
       <div className="space-y-3 p-4 bg-white rounded shadow">
         <h2 className="font-medium">Open a session file</h2>
@@ -411,30 +883,39 @@ function AppInner() {
       </div>
       <MetadataPanel meta={loader.state.meta} />
 
-      {((loader.state.events && loader.state.events.length > 0) || projectFiles.length > 0) && (
+      {(
+        (showFileTree && ((workspaceFiles.length > 0) || (loader.state.events && loader.state.events.length > 0) || projectFiles.length > 0))
+        || Boolean(selectedFile)
+      ) && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Files</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-              <div className="md:col-span-4">
-                <div className="border rounded h-[30vh] md:h-[60vh] overflow-auto">
-                  <FileTree
-                    paths={(() => {
-                      const eventPaths = (loader.state.events ?? [])
-                        .filter((ev) => (ev as any).type === 'FileChange')
-                        .map((ev) => (ev as any).path as string)
-                      const all = new Set<string>(eventPaths)
-                      for (const p of projectFiles) all.add(p)
-                      return Array.from(all)
-                    })()}
-                    selectedPath={selectedFile}
-                    onSelect={(p) => setSelectedFile(p)}
-                  />
+              {showFileTree && (
+                <div className="md:col-span-4">
+                  <div className="border rounded h-[30vh] md:h-[60vh] overflow-auto">
+                    <FileTree
+                      paths={(() => {
+                        // Prefer actual workspace file list when available
+                        if (workspace && workspaceFiles.length > 0) return workspaceFiles
+                        const eventPaths = (loader.state.events ?? [])
+                          .filter((ev) => (ev as any).type === 'FileChange')
+                          .map((ev) => (ev as any).path as string)
+                        const all = new Set<string>(eventPaths)
+                        for (const p of projectFiles) all.add(p)
+                        return Array.from(all)
+                      })()}
+                      selectedPath={selectedFile}
+                      onSelect={(p) => setSelectedFile(p)}
+                      changes={changeMap}
+                      logDiffs={logMismatchSet}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="md:col-span-8">
+              )}
+              <div className={showFileTree ? "md:col-span-8" : "md:col-span-12"}>
                 {selectedFile && (
                   <div className="border rounded p-2 h-[30vh] md:h-[60vh] overflow-auto">
                     <FilePreview
@@ -574,32 +1055,41 @@ function AppInner() {
                       }
                       const options = Array.from(nameCounts.entries()).sort((a,b) => b[1]-a[1])
                       const hasApply = applyPatchCount > 0
+                      const otherOptions = options.filter(([n]) => n !== 'shell')
                       return (
                         <div className="flex flex-wrap gap-2 items-center">
-                          {hasApply && (
-                            <Button
-                              size="sm"
-                              variant={fnFilter.includes('apply_patch') ? 'secondary' : 'outline'}
-                              onClick={() => setFnFilter((prev) => prev.includes('apply_patch') ? prev.filter((v) => v !== 'apply_patch') : [...prev, 'apply_patch'])}
-                              title="Show only apply_patch FunctionCall events"
-                            >
-                              apply_patch ({applyPatchCount})
-                            </Button>
-                          )}
-                          {options.map(([name, cnt]) => (
-                            <Button
-                              key={name}
-                              size="sm"
-                              variant={fnFilter.includes(name) ? 'secondary' : 'outline'}
-                              onClick={() => setFnFilter((prev) => prev.includes(name) ? prev.filter((v) => v !== name) : [...prev, name])}
-                              title={`Filter FunctionCall name: ${name}`}
-                            >
-                              {name} ({cnt})
-                            </Button>
-                          ))}
-                          {fnFilter.length > 0 && (
-                            <Button size="sm" variant="outline" onClick={() => setFnFilter([])}>Clear fn</Button>
-                          )}
+                          {/* apply_patch filter moved to front-facing toolbar */}
+                          <Button
+                            size="sm"
+                            variant={genericDiffOnly ? 'secondary' : 'outline'}
+                            onClick={() => setGenericDiffOnly((v) => !v)}
+                            title="Filter: generic file-editing tool calls"
+                          >
+                            File edits (generic)
+                          </Button>
+                          <details className="relative">
+                            <summary className="h-9 px-3 text-sm leading-5 rounded-md cursor-pointer select-none bg-gray-800 border border-gray-700 text-gray-100 hover:bg-gray-700">Function Calls ▾</summary>
+                            <div className="absolute left-0 z-10 mt-1 w-[18rem] max-w-[95vw] rounded-md border bg-white shadow p-2">
+                              <div className="text-xs font-semibold text-gray-600 mb-1">Select function calls</div>
+                              <div className="max-h-64 overflow-auto pr-1">
+                                {otherOptions.map(([name, cnt]) => (
+                                  <label key={name} className="flex items-center gap-2 text-sm py-0.5">
+                                    <input
+                                      type="checkbox"
+                                      checked={fnFilter.includes(name)}
+                                      onChange={(e) => setFnFilter((prev) => e.target.checked ? [...prev, name] : prev.filter((v) => v !== name))}
+                                    />
+                                    <span className="flex-1 truncate" title={name}>{name}</span>
+                                    <span className="text-xs text-gray-500">{cnt}</span>
+                                  </label>
+                                ))}
+                              </div>
+                              <div className="mt-2 flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => setFnFilter([])}>Clear</Button>
+                                <Button size="sm" variant="outline" onClick={() => setFnFilter(otherOptions.map(([n]) => n))}>All</Button>
+                              </div>
+                            </div>
+                          </details>
                         </div>
                       )
                       } catch (e) {
@@ -673,16 +1163,7 @@ function AppInner() {
                       >
                         {showOther ? 'Other: shown' : 'Other: hidden'}
                       </Button>
-                      {/* apply_patch anywhere toggle with count */}
-                      <Button
-                        variant={onlyApplyText ? 'secondary' : 'outline'}
-                        size="default"
-                        onClick={() => setOnlyApplyText((v) => !v)}
-                        aria-pressed={onlyApplyText}
-                        title="Show only events that contain apply_patch anywhere"
-                      >
-                        {(() => { const count = (() => { try { return (loader.state.events ?? []).filter((e) => containsApplyPatchAnywhere(e as any)).length } catch { return 0 } })(); return onlyApplyText ? `apply_patch: only (${count})` : `apply_patch: any (${count})` })()}
-                      </Button>
+                      {/* apply_patch anywhere toggle moved to main toolbar */}
                     </div>
                   </div>
                 </details>
@@ -693,6 +1174,25 @@ function AppInner() {
                 onClick={() => setShowBookmarksOnly((v) => !v)}
               >
                 {showBookmarksOnly ? 'Showing bookmarks' : `Bookmarks (${keys.length})`}
+              </Button>
+              {/* Front-facing apply_patch FunctionCall filter */}
+              <Button
+                variant={fnFilter.includes('apply_patch') ? 'secondary' : 'outline'}
+                size="default"
+                onClick={() => setFnFilter((prev) => { const exists = prev.includes('apply_patch'); if (!exists) setTypeFilter('FunctionCall'); return exists ? prev.filter((v) => v !== 'apply_patch') : [...prev, 'apply_patch']; })}
+                title="Filter: apply_patch FunctionCall events"
+              >
+                apply_patch ({applyPatchCount})
+              </Button>
+              {/* Front-facing apply_patch anywhere toggle */}
+              <Button
+                variant={onlyApplyText ? 'secondary' : 'outline'}
+                size="default"
+                onClick={() => setOnlyApplyText((v) => !v)}
+                aria-pressed={onlyApplyText}
+                title="Show only events that contain apply_patch anywhere"
+              >
+                {(() => { const count = (() => { try { return (loader.state.events ?? []).filter((e) => containsApplyPatchAnywhere(e as any)).length } catch { return 0 } })(); return onlyApplyText ? `apply_patch: only (${count})` : `apply_patch: any (${count})` })()}
               </Button>
               <Button
                 variant="outline"

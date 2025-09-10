@@ -10,6 +10,36 @@ export function isApplyPatchFunction(ev: any): boolean {
   }
 }
 
+/** Heuristic: function calls that likely edit files, excluding apply_patch. */
+export function isGenericFileEditFunction(ev: any): boolean {
+  if (!ev || ev.type !== 'FunctionCall') return false
+  if (isApplyPatchFunction(ev)) return false
+  const name = String(ev.name ?? '').toLowerCase()
+  const nameHints = ['edit_block', 'create_or_update_file', 'update_file', 'create_file', 'push_files', 'write_file']
+  if (nameHints.some((h) => name.includes(h))) return true
+  // Inspect args shape
+  try {
+    const raw = ev.args
+    const a = typeof raw === 'string' ? JSON.parse(raw) : raw
+    if (a && typeof a === 'object') {
+      const keys = Object.keys(a).map((k) => k.toLowerCase())
+      const pathy = keys.some((k) => ['path', 'filepath', 'file', 'files', 'paths'].includes(k))
+      const contenty = keys.some((k) => ['content', 'newcontent', 'patch', 'diff', 'changes'].includes(k))
+      if (pathy && contenty) return true
+      if (Array.isArray((a as any).files) || Array.isArray((a as any).paths)) return true
+    }
+  } catch {}
+  // Inspect result metadata for patch/diff indicators
+  try {
+    const r = (ev as any).result
+    if (r) {
+      const m = (r as any).metadata || (r as any).meta
+      if (m && (m.patch || m.diff)) return true
+    }
+  } catch {}
+  return false
+}
+
 /**
  * Return true if the event passes the selected function-name filters.
  * - Empty selection ⇒ pass-through (no filtering).

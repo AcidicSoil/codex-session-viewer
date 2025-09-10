@@ -1,14 +1,53 @@
 # File System Scanner
 
-The viewer runs a background worker that indexes local files to speed up diffing and session discovery.
+This app can index files to power the Files panel and Diff Viewer.
 
-## Indexed Roots
+Decision
+--------
 
-- **Current working directory** – the origin's root directory provided by the File System Access API.
-- **`.codex/sessions`** – if present, this folder is scanned to list session logs.
+- Primary access: `showDirectoryPicker()` (File System Access API) with read‑only default and optional `readwrite` when needed.
+- Fallback: manual import (drag a `.zip` or session `.jsonl` files) when the API is unavailable or permission is denied.
+- OPFS (`navigator.storage.getDirectory()`): used for internal caches only; it does not scan your computer.
 
-Each file found under these roots is read and hashed with SHA-256. The resulting `{ path, hash }` pairs are stored in IndexedDB via the `fileHashes` store in `src/utils/session-db.ts`.
+Scope and Roots
+---------------
 
-## Privacy Notes
+- Selected workspace directory (via picker).
+- If present within the workspace: `./.codex/sessions`.
 
-The hashes never leave your browser, but they persist in IndexedDB. Because file paths and content digests are retained, they may reveal information about your project. Clear site data if you don't want this information stored locally.
+Indexing
+--------
+
+- A worker walks the directory tree and computes SHA‑256 digests using Web Crypto. Results `{ path, hash, mtime }` are stored in IndexedDB (`fileHashes`).
+- Rescan compares a previous snapshot with the latest scan to produce a ChangeSet: `added`, `modified`, `deleted` with counts.
+
+Permissions and Security
+------------------------
+
+- Transient user activation is required to pick a directory. Browsers may block access to sensitive/system locations.
+- Handles can be persisted in IndexedDB (structured clone) but are origin‑scoped. If permission is revoked, the UI prompts to reconnect.
+- No background access without an explicit user action. Clearing site data removes cached hashes and any stored handles.
+
+Browser Support
+---------------
+
+- `showDirectoryPicker()` is currently Chromium‑based only. Safari/Firefox users will see the fallback (manual import).
+- OPFS is widely available for origin‑private storage.
+
+Privacy Notes
+-------------
+
+- Hashes and relative paths remain local to your browser (IndexedDB). They may reveal filenames and change frequency. Clear site data to remove.
+
+Errors and Recovery
+-------------------
+
+- Permission denied → explain why access is needed and offer fallback import.
+- Revoked handle → show reconnect prompt; retain previous snapshot for diff until replaced.
+
+References
+----------
+
+- MDN File System API, `showDirectoryPicker()`, `StorageManager.getDirectory()`.
+- MDN SubtleCrypto `digest()`.
+- See also: [Workspace Scanning — PoC](./scanner-poc.md) for a minimal runnable example.

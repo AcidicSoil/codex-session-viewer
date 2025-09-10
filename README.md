@@ -63,7 +63,7 @@ Notes
 - The file tree ignores leading `./` and `/` and normalizes Windows paths.
 - Auto‑discovered project files: at build time we enumerate common source locations (e.g. `src/**`, `scripts/**`, `public/**`, plus a few root files). This augments the file tree even if your session has few or no `FileChange` events.
 - Auto‑detected sessions: during dev/build, files under `/.codex/sessions/**/*.{jsonl,ndjson,json}` (and `/sessions`, `/artifacts/sessions`) are discovered and listed. This only works for files that live inside the Vite project root; the app does not scan your filesystem at runtime.
-- For details on the indexing worker and the hashes it stores in IndexedDB, see [docs/fs-scanner.md](docs/fs-scanner.md).
+- For workspace scanning, permissions, and privacy details, see [docs/fs-scanner.md](docs/fs-scanner.md).
 - If you have many sessions, use “View all (N)” for a searchable list; chips only show the first 12 for quick access.
 - URL hash preserves the “bookmarks only” toggle (`b=1`) and selected file (`f=path`).
 - URL hash also preserves optional filters when set: type (`t=<TypeFilter>`), role (`r=user|assistant|system`).

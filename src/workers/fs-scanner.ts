@@ -19,7 +19,7 @@ async function scanDir(dir: FileSystemDirectoryHandle, prefix = ''): Promise<voi
       const mtime = file.lastModified
       if (existing?.mtime === mtime) continue
       const hash = await hashFile(file)
-      await putHash(path, hash)
+      await putHash(path, hash, mtime)
       ;(self as any).postMessage({ type: 'progress', path })
     } else if (handle.kind === 'directory') {
       await scanDir(handle, path)
