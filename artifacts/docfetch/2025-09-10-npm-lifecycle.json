@@ -1,0 +1,51 @@
+{
+  "status": "OK",
+  "languages": ["TypeScript", "HTML", "CSS"],
+  "tech_stack": ["npm", "Vite", "React", "Tailwind (Vite plugin)", "Vitest", "Testing Library", "Monaco", "Zustand", "Zod"],
+  "tools_called": [
+    {
+      "tool": "gitmcp",
+      "query": "npm/cli docs: scripts, package-json, rebuild",
+      "time_utc": "2025-09-10T11:34:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "title": "npm scripts",
+      "url": "https://raw.githubusercontent.com/npm/cli/latest/docs/lib/content/using-npm/scripts.md"
+    },
+    {
+      "title": "package.json reference",
+      "url": "https://raw.githubusercontent.com/npm/cli/latest/docs/lib/content/configuring-npm/package-json.md"
+    },
+    {
+      "title": "npm rebuild (lifecycle context)",
+      "url": "https://raw.githubusercontent.com/npm/cli/latest/docs/lib/content/commands/npm-rebuild.md"
+    }
+  ],
+  "coverage": {
+    "areas": ["npm lifecycle scripts for package.json"],
+    "sufficiency": "sufficient",
+    "notes": "Change only touches npm lifecycle behavior; framework docs not required for this edit."
+  },
+  "key_guidance": [
+    "Lifecycle scripts (preinstall/install/postinstall) run during npm install.",
+    "Install hook is commonly used to build or rebuild artifacts.",
+    "Scripts semantics and environment variables apply to lifecycle hooks."
+  ],
+  "owner_repo_resolution": [
+    {
+      "library": "npm CLI",
+      "candidates": ["npm/cli"],
+      "selected": "npm/cli",
+      "confidence": 0.95,
+      "method": "docs repository via gitmcp"
+    }
+  ],
+  "informed_changes": [
+    "Add install lifecycle that runs the existing build to ensure dist/element.js and types exist after dependency installation."
+  ],
+  "gaps": [],
+  "memory_unavailable": true
+}
+

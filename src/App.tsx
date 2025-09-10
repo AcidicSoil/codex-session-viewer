@@ -260,40 +260,8 @@ function AppInner() {
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <h1 className="text-2xl font-semibold">Codex Session Viewer</h1>
-      <p className="text-gray-600">Vite + React + TS + Tailwind + Headless UI</p>
+      {/* Theme picker retained for functionality; remove demo/disclosure and counter button */}
       <ThemePicker />
-
-      <button
-        className="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-500 transition"
-        onClick={() => setCount((c) => c + 1)}
-      >
-        Clicked {count} times
-      </button>
-
-      <Disclosure>
-        {({ open }) => (
-          <div className="space-y-2">
-            <Disclosure.Button className="flex items-center gap-2 px-3 py-2 rounded bg-white shadow hover:shadow-md transition">
-              <span>What is this app?</span>
-              <span
-                className="text-indigo-600 transition"
-                style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              >
-                ▾
-              </span>
-            </Disclosure.Button>
-            <Disclosure.Panel className="p-3 text-sm text-gray-700 bg-white rounded shadow space-y-2">
-              <p>A viewer for Codex CLI sessions. Now includes streaming parser, metadata, and a virtualized timeline.</p>
-              <DevButtons onGenerate={() => {
-                loader.reset()
-                const events = generateSyntheticEvents(5000)
-                const meta = { id: `synthetic-${Date.now()}`, timestamp: new Date().toISOString(), version: 1, instructions: 'Synthetic dataset' } as any
-                loader.ingest(events as any, meta)
-              }} />
-            </Disclosure.Panel>
-          </div>
-        )}
-      </Disclosure>
 
       <div className="space-y-3 p-4 bg-white rounded shadow">
         <h2 className="font-medium">Open a session file</h2>

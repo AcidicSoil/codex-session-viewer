@@ -12,13 +12,16 @@ interface ThemeState {
 }
 
 const applyTheme = (theme: Theme) => {
+  if (typeof document === 'undefined') return
   document.documentElement.setAttribute('data-theme', theme)
 }
 
 const applyMode = (mode: Mode) => {
+  if (typeof document === 'undefined') return
   const root = document.documentElement
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
-  const isDark = mode === 'dark' || (mode === 'system' && prefersDark.matches)
+  const hasMM = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+  const prefersDark = hasMM ? window.matchMedia('(prefers-color-scheme: dark)') : { matches: false }
+  const isDark = mode === 'dark' || (mode === 'system' && !!prefersDark.matches)
   root.classList.toggle('dark', isDark)
   root.setAttribute('data-mode', isDark ? 'dark' : 'light')
 }
@@ -50,12 +53,16 @@ export const useTheme = create<ThemeState>()(
 )
 
 // Apply initial state
-applyTheme(useTheme.getState().theme)
-applyMode(useTheme.getState().mode)
+if (typeof document !== 'undefined') {
+  applyTheme(useTheme.getState().theme)
+  applyMode(useTheme.getState().mode)
+}
 
 // React to system preference changes when in system mode
-const media = window.matchMedia('(prefers-color-scheme: dark)')
-media.addEventListener('change', () => {
-  const { mode } = useTheme.getState()
-  if (mode === 'system') applyMode('system')
-})
+if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+  const media = window.matchMedia('(prefers-color-scheme: dark)')
+  media.addEventListener('change', () => {
+    const { mode } = useTheme.getState()
+    if (mode === 'system') applyMode('system')
+  })
+}

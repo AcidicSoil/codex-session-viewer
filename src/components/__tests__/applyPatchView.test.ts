@@ -25,9 +25,9 @@ describe('ApplyPatchView (SSR snapshot)', () => {
     const item = makeEventWithPatch(patch)
     const html = renderToString(React.createElement(ApplyPatchView, { item }))
     expect(html).toContain('apply_patch')
-    expect(html).toContain('Download raw')
+    // Copy/Download actions removed; ensure header renders
+    expect(html).toContain('apply_patch')
     // should include file name button or label
     expect(html).toContain('a.txt')
   })
 })
-

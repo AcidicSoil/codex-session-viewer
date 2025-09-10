@@ -153,7 +153,7 @@ export function CommandsView({
                   <td className="py-1 pr-2">{r.durationMs ?? ''}</td>
                   <td className="py-1 pr-2">
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => navigator.clipboard?.writeText(r.command)}>Copy</Button>
+                    {/* Removed: Copy button */}
                       <Button variant="outline" size="sm" onClick={() => onJumpToIndex(r.idx)}>Jump</Button>
                     </div>
                   </td>

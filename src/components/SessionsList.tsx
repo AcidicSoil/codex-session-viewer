@@ -208,17 +208,7 @@ function Row({ s, mark, busy, onLoad }: { s: DiscoveredSessionAsset; mark: boole
         </div>
       </div>
       <div className="flex gap-2 shrink-0">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigator.clipboard?.writeText(s.path)}
-          title="Copy path"
-        >
-          Copy
-        </Button>
-        <a href={s.url} target="_blank" rel="noreferrer noopener">
-          <Button variant="outline" size="sm" title="Open raw file">Raw</Button>
-        </a>
+        {/* Removed: Copy path / Raw buttons */}
         <Button
           variant="secondary"
           size="sm"

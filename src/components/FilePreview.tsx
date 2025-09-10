@@ -51,12 +51,7 @@ export default function FilePreview({ path, events, onOpenDiff, maxChars = 200_0
     <div className="space-y-2">
       <div className="text-xs text-gray-500 flex items-center justify-between gap-2">
         <div className="truncate" title={path}>{path}</div>
-        <div className="flex items-center gap-2">
-          <span className="text-gray-400">{lang}</span>
-          <Button size="sm" variant="outline" onClick={() => onOpenDiff?.({ path, diff: lastChange?.diff })}>
-            Open diff
-          </Button>
-        </div>
+        <div className="flex items-center gap-2"><span className="text-gray-400">{lang}</span></div>
       </div>
       <pre className="text-xs bg-gray-50 rounded p-2 max-h-64 overflow-auto whitespace-pre-wrap" aria-label="File preview">
 {display || 'No preview content.'}

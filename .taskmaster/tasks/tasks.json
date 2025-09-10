@@ -1028,6 +1028,15 @@
             "status": "done",
             "dependencies": [],
             "parentTaskId": 59
+          },
+          {
+            "id": 10,
+            "title": "Polish UI: remove dev/demo controls and excess buttons",
+            "description": "Remove demo counter, disclosure, and less-needed buttons (Copy/Raw/Open diff/etc.) per spec. Keep core functionality and bookmarks.",
+            "details": "- App: remove counter button, disclosure section, and tagline; keep ThemePicker.\n- FilePreview: remove 'Open diff' button and retain language badge.\n- EventCard: remove Reveal/Open/Copy JSON buttons; keep bookmarks.\n- SessionsList: remove Copy path and Raw buttons; keep Load.\n- ApplyPatchView: remove Copy raw and Download raw buttons; keep Raw/Rendered toggle.\n- CommandsView: remove per-row copy button.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 59
           }
         ]
       },
@@ -1239,11 +1248,45 @@
             "parentTaskId": 61
           }
         ]
+      },
+      {
+        "id": 62,
+        "title": "Standalone Two-File Diff Tool (Drag-and-Drop)",
+        "description": "Make the Diff Viewer usable as a standalone tool, allowing users to compare any two local files by dragging and dropping them (or selecting via file pickers).",
+        "details": "Scope\n- Entry point: add a top-level “Compare Files” tool (route or tab) available without loading a session.\n- Inputs: drag-and-drop zone that accepts one or two files; if only one is dropped, prompt for the second; also provide two file pickers as an accessible fallback.\n- Read/parse: read files as text (UTF-8 by default; try BOM-based detection). For non-text or very large files (>2MB), show a guard with an option to open anyway and a raw viewer fallback.\n- Diff: bypass unified-diff parsing and create Monaco models directly from the two text buffers; support swap-left/right; detect language from file extension.\n- UX: show filename chips, size info, language badge, word wrap toggle, inline/side-by-side toggle, ignore-trailing-whitespace; copy/download combined diff; clear/reset action.\n- A11y: fully keyboard operable; announce drop targets; ensure focus order and ARIA labels; contrast-safe controls.\n- Persistence: remember last view options (inline/side-by-side, wrap, ignore whitespace) in localStorage.\n- Theming: honor app theme and Monaco theme sync.\n\nDefinition of Done\n- Users can drag two files onto the tool and see a Monaco diff.\n- Works when launched without any session data.\n- Handles files up to at least 5MB each with responsive UI and no crashes.\n- Controls for swap sides, wrap, inline/side-by-side, ignore whitespace function as expected.\n- Accessible and keyboard-usable; basic screen reader labels present.\n- README gains a short “Compare two files” section with usage notes/limits.",
+        "testStrategy": "Unit: file read utility (text detection, guard conditions); options reducer. Integration: component test mounts Diff Tool with two string inputs. Manual: drag one file then second; drag two files at once; very large text file warning; binary-looking file warning; swap sides; toggles effect; theme sync. Performance: load 2x ~5MB .txt and ensure interaction remains responsive (no main-thread stalls >200ms).",
+        "status": "pending",
+        "dependencies": [
+          39,
+          41
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 63,
+        "title": "UI/UX Polish and Fixes (Filters, Buttons, States)",
+        "description": "Comprehensive UI pass to fix broken/annoying controls, refine filters, and normalize buttons/labels across the app.",
+        "details": "Scope\n- Filters UX: make filters discoverable and reliable; add clear-all; show active filter chips with counts; debounce text search; persist filters in URL hash and localStorage.\n- Buttons/controls: standardize sizes/variants/icons; enforce disabled/loading states; add tooltips and accessible labels; ensure consistent keyboard focus order and visible focus rings.\n- Empty/Loading/Errors: add empty-state messages, skeletons/spinners where needed; central toast/toaster for success/failed actions (copy/download/export); show recoverable error banners with retry.\n- Nonfunctional/broken items: audit all interactive elements in Timeline, Files panel, Diff Viewer, Exports; remove dead controls or wire them up; fix no-op toggles.\n- A11y: ARIA roles/names for buttons, toggles, tablists; ensure ESC closes popovers/modals; tab/shift+tab cycles correctly; provide screen-reader only labels where icons are used.\n- Consistency: typography scale, spacing, and color tokens; unify icon set; standard header/actions layout per panel.\n- Performance: ensure virtualized list keeps 60fps; throttle resize/scroll handlers; avoid unnecessary re-renders (memo/selectors) in filter-heavy views.\n- Preferences: persist user options (theme, wrap/inline, ignore whitespace, filters) and restore on load.\n- Diff Viewer niceties: add quick swap-sides, word-wrap toggle, ignore whitespace; show filename badges; graceful fallback when Monaco unavailable.\n\nDefinition of Done\n- All visible controls have correct hover/active/disabled/loading states and tooltips.\n- Filters operate reliably, can be cleared in one click, and persist via URL/localStorage.\n- Empty/loading/error states exist for Timeline, Files, Diff, and Exports; actions show toasts on success/failure.\n- Keyboard-only navigation covers main flows; basic screen reader checks pass on key screens.\n- No known broken/no-op controls remain; removed or wired.\n- Measurable: typing into search doesn’t drop below 45fps on a 5k-event session; initial render <1.5s on typical dev machine.\n\nOut of Scope\n- New major features; focus is stabilization and UX polish.\n",
+        "testStrategy": "Checklist-based manual QA across screens with a bug bash template. Add RTL tests for filter reducer logic and UI state toggles; vitest+@testing-library for buttons’ disabled/loading behavior and a11y labels. Add perf smoke (Timeline render under load) and a Cypress (or Playwright) basic flow if available. Verify URL/hash sync by reloading. Include a short a11y sweep via axe where feasible.",
+        "status": "pending",
+        "dependencies": [
+          35,
+          38,
+          39,
+          40,
+          41,
+          43,
+          44,
+          45
+        ],
+        "priority": "high",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-08T17:44:30.733Z",
-      "updated": "2025-09-09T23:45:55.823Z",
+      "updated": "2025-09-10T18:02:56.720Z",
       "description": "Tasks for master context"
     }
   }

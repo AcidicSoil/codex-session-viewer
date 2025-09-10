@@ -2,14 +2,14 @@
 
 ## Instruction Loading Model (Extended)
 
-* **Baseline:** This file (AGENTS.md) is the canonical baseline.
+- **Baseline:** This file (AGENTS.md) is the canonical baseline.
 
-* **Two extension types:**
+- **Two extension types:**
 
   1. **Behavior extensions**. Plain instruction files.
 
-     * Locations: `instructions/**/*.md`, `instructions/**/*.txt`
-     * Ignored: paths starting with `_`, or names containing `.archive.`
+     - Locations: `instructions/**/*.md`, `instructions/**/*.txt`
+     - Ignored: paths starting with `_`, or names containing `.archive.`
   2. **Rule-packs**. Files with YAML front matter:
 
      ```markdown
@@ -21,19 +21,19 @@
      <optional body>
      ```
 
-     * Locations: `instructions/**/*.md`, `instructions/**/*.mdc`, `.cursor/rules/**/*.mdc`
-     * Detection: file starts with `---` and declares `description`, `globs`, `alwaysApply`
+     - Locations: `instructions/**/*.md`, `instructions/**/*.mdc`, `.cursor/rules/**/*.mdc`
+     - Detection: file starts with `---` and declares `description`, `globs`, `alwaysApply`
 
-* **Scope semantics:**
+- **Scope semantics:**
 
-  * `globs` limits where the pack claims relevance. If empty or missing, scope is repo-wide.
-  * A pack can be listed even if no current files match, but it is marked “out of scope”.
+  - `globs` limits where the pack claims relevance. If empty or missing, scope is repo-wide.
+  - A pack can be listed even if no current files match, but it is marked “out of scope”.
 
-* **Order and precedence:**
+- **Order and precedence:**
 
-  * Default load order: lexicographic by path.
-  * User can reorder before apply. Later wins on conflict.
-  * If `alwaysApply: true`, default selection is **on** and pinned to the **end** of the order unless the user moves it.
+  - Default load order: lexicographic by path.
+  - User can reorder before apply. Later wins on conflict.
+  - If `alwaysApply: true`, default selection is **on** and pinned to the **end** of the order unless the user moves it.
 
 ---
 
@@ -41,28 +41,28 @@
 
 1. **Discover**
 
-   * Collect behavior extensions and rule-packs from the locations above.
-   * Exclude `_` prefixed paths and `.archive.` files.
+   - Collect behavior extensions and rule-packs from the locations above.
+   - Exclude `_` prefixed paths and `.archive.` files.
 2. **Summarize**
 
-   * Title = first `# H1` if present, else filename.
-   * For rule-packs show `alwaysApply` and `globs`.
+   - Title = first `# H1` if present, else filename.
+   - For rule-packs show `alwaysApply` and `globs`.
 3. **Confirm**
 
-   * Options: **Apply all**, **Apply none**, **Select subset and order**.
-   * Default = **Apply none** for behavior extensions. **Apply** for rule-packs with `alwaysApply: true`.
+   - Options: **Apply all**, **Apply none**, **Select subset and order**.
+   - Default = **Apply none** for behavior extensions. **Apply** for rule-packs with `alwaysApply: true`.
 4. **Record**
 
-   * Write final order to `DocFetchReport.approved_instructions[]`.
-   * Write approved rule-packs to `DocFetchReport.approved_rule_packs[]` with `{path, alwaysApply, globs}`.
+   - Write final order to `DocFetchReport.approved_instructions[]`.
+   - Write approved rule-packs to `DocFetchReport.approved_rule_packs[]` with `{path, alwaysApply, globs}`.
 
 ---
 
 ## Conflict resolution
 
-* **Specificity rule:** If both target the same scope, the later item in the final order wins.
-* **Pack vs. extension:** No special case. Order controls outcome.
-* **Out-of-scope packs:** Do not affect behavior. They remain listed as informational.
+- **Specificity rule:** If both target the same scope, the later item in the final order wins.
+- **Pack vs. extension:** No special case. Order controls outcome.
+- **Out-of-scope packs:** Do not affect behavior. They remain listed as informational.
 
 ---
 
@@ -70,9 +70,9 @@
 
 **Context tag — `@{file}` (no behavior change)**
 
-* Purpose: include files for retrieval only.
-* Syntax: `@{path/to/file.md}`. Globs allowed.
-* Report under `DocFetchReport.context_files[]`.
+- Purpose: include files for retrieval only.
+- Syntax: `@{path/to/file.md}`. Globs allowed.
+- Report under `DocFetchReport.context_files[]`.
 
 ---
 
@@ -88,36 +88,36 @@
 
 ## Validation
 
-* Behavior extension: must be readable text.
-* Rule-pack: must have front matter with `description` (string), `globs` (string), `alwaysApply` (bool).
-* Invalid items are skipped and logged in `DocFetchReport.validation_errors[]`.
+- Behavior extension: must be readable text.
+- Rule-pack: must have front matter with `description` (string), `globs` (string), `alwaysApply` (bool).
+- Invalid items are skipped and logged in `DocFetchReport.validation_errors[]`.
 
 ---
 
 ## Execution flow (docs integration)
 
-* **Preflight must list:**
+- **Preflight must list:**
 
-  * `DocFetchReport.context_files[]` from `@{...}`
-  * `DocFetchReport.approved_instructions[]`
-  * `DocFetchReport.approved_rule_packs[]`
-* Compose in this order:
+  - `DocFetchReport.context_files[]` from `@{...}`
+  - `DocFetchReport.approved_instructions[]`
+  - `DocFetchReport.approved_rule_packs[]`
+- Compose in this order:
 
   1. Baseline
   2. Behavior extensions
   3. Rule-packs
-* Proceed only when `DocFetchReport.status == "OK"`.
+- Proceed only when `DocFetchReport.status == "OK"`.
 
 ---
 
 ## Failure handling
 
-* If any approved item cannot be loaded:
+- If any approved item cannot be loaded:
 
-  * Do not finalize. Return a “Docs Missing” plan with missing paths and a fix.
-* If any context file fails:
+  - Do not finalize. Return a “Docs Missing” plan with missing paths and a fix.
+- If any context file fails:
 
-  * Continue. Add to `DocFetchReport.gaps.context_missing[]`. Suggest a fix in the plan.
+  - Continue. Add to `DocFetchReport.gaps.context_missing[]`. Suggest a fix in the plan.
 
 ---
 
@@ -174,29 +174,29 @@ When discovery/confirmation is used, add:
 
 **What to do:**
 
-* For every task that could touch code, configuration, APIs, tooling, or libraries:
+- For every task that could touch code, configuration, APIs, tooling, or libraries:
 
-  * Call **sourcebot** **or** **docfork** to fetch the latest documentation or guides.
-  * If the chosen primary call **fails**, immediately retry with the other primary (**docfork** ⇄ **sourcebot**); if that also **fails**, retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
-* Each successful call **MUST** capture:
+  - Call **sourcebot** **or** **docfork** to fetch the latest documentation or guides.
+  - If the chosen primary call **fails**, immediately retry with the other primary (**docfork** ⇄ **sourcebot**); if that also **fails**, retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
+- Each successful call **MUST** capture:
 
-  * Tool name, query/topic, retrieval timestamp (UTC), and source refs/URLs (or repo refs/commits).
-* Scope:
+  - Tool name, query/topic, retrieval timestamp (UTC), and source refs/URLs (or repo refs/commits).
+- Scope:
 
-  * Fetch docs for each **area to be touched** (framework, library, CLI, infra, etc.).
-  * Prefer focused topics (e.g., "exception handlers", "lifespan", "retry policy", "schema").
+  - Fetch docs for each **area to be touched** (framework, library, CLI, infra, etc.).
+  - Prefer focused topics (e.g., "exception handlers", "lifespan", "retry policy", "schema").
 
 **Failure handling:**
 
-* If **all** providers fail for a required area, **do not finalize**. Return a minimal plan that includes:
+- If **all** providers fail for a required area, **do not finalize**. Return a minimal plan that includes:
 
-  * The attempted providers and errors
-  * The specific topics/areas still uncovered
-  * A safe, read-only analysis and suggested next checks (or user confirmation).
+  - The attempted providers and errors
+  - The specific topics/areas still uncovered
+  - A safe, read-only analysis and suggested next checks (or user confirmation).
 
 **Proof-of-Work Artifact (required):**
 
-* Produce and attach a `DocFetchReport` (JSON) with `status`, `tools_called[]`, `sources[]`, `coverage`, `key_guidance[]`, `gaps`, and `informed_changes[]`.
+- Produce and attach a `DocFetchReport` (JSON) with `status`, `tools_called[]`, `sources[]`, `coverage`, `key_guidance[]`, `gaps`, and `informed_changes[]`.
 
 **Override Path (explicit, logged):**
 
@@ -217,32 +217,32 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 ## A.1) Tech & Language Identification (Pre-Requirement)
 
-* Before running Preflight (§A), the assistant must determine both:
+- Before running Preflight (§A), the assistant must determine both:
 
   1. The **primary language(s)** used in the project (e.g., TypeScript, Python, Go, Rust, Java, Bash).
   2. The **current project’s tech stack** (frameworks, libraries, infra, tools).
 
-* Sources to infer language/stack:
+- Sources to infer language/stack:
 
-  * Project tags (`${PROJECT_TAG}`), memory checkpoints, prior completion records.
-  * Files present in repo (e.g., manifests like `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, CI configs).
-  * File extensions in repo (`.ts`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.sh`, `.sql`, etc.).
-  * User/task context (explicit mentions of frameworks, CLIs, infra).
+  - Project tags (`${PROJECT_TAG}`), memory checkpoints, prior completion records.
+  - Files present in repo (e.g., manifests like `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, CI configs).
+  - File extensions in repo (`.ts`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.sh`, `.sql`, etc.).
+  - User/task context (explicit mentions of frameworks, CLIs, infra).
 
-* **Repo mapping requirement:** Resolve the **canonical GitHub OWNER/REPO** for each detected library/tool whenever feasible.
+- **Repo mapping requirement:** Resolve the **canonical GitHub OWNER/REPO** for each detected library/tool whenever feasible.
 
-  * **Resolution order:**
+  - **Resolution order:**
 
     1. **Registry mapping** (maintained lookup table for common libs).
     2. **Package index metadata** (e.g., npm `repository.url`, PyPI `project_urls` → `Source`/`Homepage`).
     3. **Official docs → GitHub link** discovery.
     4. **Targeted search** (as a last resort) with guardrails below.
-  * **Guardrails:** Prefer official orgs; require name similarity and recent activity; avoid forks and mirrors unless explicitly chosen.
-  * Record outcomes in `DocFetchReport.owner_repo_resolution[]` with candidates, selected repo, method, and confidence score.
+  - **Guardrails:** Prefer official orgs; require name similarity and recent activity; avoid forks and mirrors unless explicitly chosen.
+  - Record outcomes in `DocFetchReport.owner_repo_resolution[]` with candidates, selected repo, method, and confidence score.
 
-* Doc retrieval (§A) **must cover each identified language and stack element** that will be touched by the task.
+- Doc retrieval (§A) **must cover each identified language and stack element** that will be touched by the task.
 
-* Record both in the `DocFetchReport`:
+- Record both in the `DocFetchReport`:
 
 ```json
 "tech_stack": ["<stack1>", "<stack2>"],
@@ -253,118 +253,145 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 ## B) Decision Gate: No Finalize Without Proof (**MUST**)
 
-* The assistant **MUST NOT**: finalize, apply diffs, modify files, or deliver a definitive answer **unless** `DocFetchReport.status == "OK"`.
-* The planner/executor must verify `ctx.docs_ready == true` (set when at least one successful docs call exists **per required area**).
-* If `status != OK` or `ctx.docs_ready != true`:
+- The assistant **MUST NOT**: finalize, apply diffs, modify files, or deliver a definitive answer **unless** `DocFetchReport.status == "OK"`.
+- The planner/executor must verify `ctx.docs_ready == true` (set when at least one successful docs call exists **per required area**).
+- If `status != OK` or `ctx.docs_ready != true`:
 
-  * Stop. Return a **Docs Missing** message that lists the exact MCP calls and topics to run.
+  - Stop. Return a **Docs Missing** message that lists the exact MCP calls and topics to run.
 
 ---
 
 ## 0) Debugging
 
-* **Use consolidated docs-first flow** before touching any files or finalizing:
+- **Use consolidated docs-first flow** before touching any files or finalizing:
 
-  * Try **sourcebot** → **docfork** (if configured) → **contex7-mcp** → **gitmcp**.
-  * Record results in `DocFetchReport`.
+  - Try **sourcebot** → **docfork** (if configured) → **contex7-mcp** → **gitmcp**.
+  - Record results in `DocFetchReport`.
 
 ## 1) Startup memory bootstrap (memory)
 
-* On chat/session start: initialize **memory**.
+- On chat/session start: initialize **memory**.
 
-* Retrieve (project-scoped):
+- Retrieve (project-scoped):
 
-  * **memory** → latest `memory_checkpoints` and recent task completions.
-  * **memory** → ensure a graph namespace exists for this project and load prior nodes/edges.
+  - **memory** → latest `memory_checkpoints` and recent task completions.
+  - **memory** → ensure a graph namespace exists for this project and load prior nodes/edges.
 
-    * **Server alias**: `memory` (e.g., Smithery "Memory Server" such as `@modelcontextprotocol/server-memory`).
-    * **Bootstrap ops** (idempotent):
+    - **Server alias**: `memory` (e.g., Smithery "Memory Server" such as `@modelcontextprotocol/server-memory`).
+    - **Bootstrap ops** (idempotent):
 
-      * `create_entities` (or `upsert_entities`) for: `project:${PROJECT_TAG}`.
-      * `create_relations` to link existing tasks/files if present.
-      * `read_graph` / `search_nodes` to hydrate working context.
+      - `create_entities` (or `upsert_entities`) for: `project:${PROJECT_TAG}`.
+      - `create_relations` to link existing tasks/files if present.
+      - `read_graph` / `search_nodes` to hydrate working context.
 
-* Read/write rules:
+- Read/write rules:
 
-  * Prefer **memory** for free-form notes and checkpoints.
-  * Prefer **memory** for **structured** facts/relations (entities, edges, observations).
-  * If memory is unavailable, record `memory_unavailable: true` in the session preamble.
+  - Prefer **memory** for free-form notes and checkpoints.
+  - Prefer **memory** for **structured** facts/relations (entities, edges, observations).
+  - If memory is unavailable, record `memory_unavailable: true` in the session preamble.
+
+### 1.0) Memory MCP Server Usage Contract (**NEW**)
+
+- **Alias:** `memory`.
+- **Required tools:** `create_entities`, `create_relations`, `add_observations`, `delete_entities`, `delete_observations`, `delete_relations`, `read_graph`, `search_nodes`, `open_nodes`.
+- **Concept rules:**
+
+  - **Entities** carry `name`, `entityType`, `observations[]`. Names are unique. Observations are atomic facts.
+  - **Relations** are directed and written in **active voice**: `{from, to, relationType}`.
+  - **Observations** are strings attached to entities; add/remove independently.
+- **Operational guarantees:**
+
+  - Treat `create_*` as **idempotent upserts**. Skip duplicates silently.
+  - `delete_*` calls are **tolerant** to missing targets. No errors on non-existent items.
+  - `open_nodes` returns only requested entities and their inter-relations; silently skips misses.
+- **Usage patterns:**
+
+  - On startup, ensure `project:${PROJECT_TAG}` exists; seed task and file nodes as needed.
+  - During execution, append observations for subtask starts/finishes; keep `percent_complete` on `task:${task_id}`.
+  - On completion, upsert entities and relations for `project`, `task`, and `file:<path>` per §2.
+- **Setup pointers (non-blocking):**
+
+  - Storage file via `MEMORY_FILE_PATH` env; default `memory.json`.
+  - Configure server in **user** MCP config or workspace `.vscode/mcp.json`. Do not embed install steps here.
+- **Prompting note:**
+
+  - If a separate chat-personalization prompt is used, it must not override gates (§A, §B) nor status flow (§3). Treat it as guidance for memory creation frequency and categories.
 
 ### 1.1) Subtask plan and finish-in-one-go contract (**NEW**)
 
-* **Before starting execution**, derive a **subtask plan** with clear **Definition of Done (DoD)** per subtask.
-* **Finish-in-one-go policy:** Once execution starts, work the subtask list to completion within the session unless a blocking gate occurs (§A, §B, or external dependency). If blocked, record the block and propose an unblock plan; do not leave partial work without a recorded reason.
-* **Recording:** Persist the subtask plan to **memory** under `task:${task_id}` as `observations.plan` with timestamps.
+- **Before starting execution**, derive a **subtask plan** with clear **Definition of Done (DoD)** per subtask.
+- **Finish-in-one-go policy:** Once execution starts, work the subtask list to completion within the session unless a blocking gate occurs (§A, §B, or external dependency). If blocked, record the block and propose an unblock plan; do not leave partial work without a recorded reason.
+- **Recording:** Persist the subtask plan to **memory** under `task:${task_id}` as `observations.plan` with timestamps.
 
 ### 1.2) Execution logging to memory (**NEW**)
 
-* For each subtask: on **start** and **finish**, append an observation to `task:${task_id}` including `subtask_id`, `action`, `files_touched[]`, and short result.
-* Keep a running `percent_complete` on the task node. Update after each subtask.
-* Mirror links: `task:${task_id}` —\[touches]→ `file:<path>` as work proceeds, not only at the end.
+- For each subtask: on **start** and **finish**, append an observation to `task:${task_id}` including `subtask_id`, `action`, `files_touched[]`, and short result.
+- Keep a running `percent_complete` on the task node. Update after each subtask.
+- Mirror links: `task:${task_id}` —\[touches]→ `file:<path>` as work proceeds, not only at the end.
 
 ## 2) On task completion (status → done)
 
-* Write a concise completion to memory including:
+- Write a concise completion to memory including:
 
-  * `task_id`, `title`, `status`, `next step`
-  * Files touched
-  * Commit/PR link (if applicable)
-  * Test results (if applicable)
+  - `task_id`, `title`, `status`, `next step`
+  - Files touched
+  - Commit/PR link (if applicable)
+  - Test results (if applicable)
 
-* **Completion criteria (explicit):**
+- **Completion criteria (explicit):**
 
-  * All subtasks from §1.1 are marked **done** and their DoD satisfied.
-  * Required gates passed (§A, §B).
-  * Post-completion checks executed or proposed (§2.1).
+  - All subtasks from §1.1 are marked **done** and their DoD satisfied.
+  - Required gates passed (§A, §B).
+  - Post-completion checks executed or proposed (§2.1).
 
-* **Update the Knowledge Graph (memory)**:
+- **Update the Knowledge Graph (memory)**:
 
-  * Ensure base entity `project:${PROJECT_TAG}` exists.
-  * Upsert `task:${task_id}` and any `file:<path>` entities touched.
-  * Create/refresh relations:
+  - Ensure base entity `project:${PROJECT_TAG}` exists.
+  - Upsert `task:${task_id}` and any `file:<path>` entities touched.
+  - Create/refresh relations:
 
-    * `project:${PROJECT_TAG}` —\[owns]→ `task:${task_id}`
-    * `task:${task_id}` —\[touches]→ `file:<path>`
-    * `task:${task_id}` —\[status]→ `<status>`
-    * Optional: `task:${task_id}` —\[depends\_on]→ `<entity>`
-  * Attach `observations` capturing key outcomes (e.g., perf metrics, regressions, decisions).
+    - `project:${PROJECT_TAG}` —\[owns]→ `task:${task_id}`
+    - `task:${task_id}` —\[touches]→ `file:<path>`
+    - `task:${task_id}` —\[status]→ `<status>`
+    - Optional: `task:${task_id}` —\[depends\_on]→ `<entity>`
+  - Attach `observations` capturing key outcomes (e.g., perf metrics, regressions, decisions).
 
-* **Documentation maintenance (auto)** — when a task **changes user-facing behavior**, **APIs**, **setup**, **CLI**, or **examples**:
+- **Documentation maintenance (auto)** — when a task **changes user-facing behavior**, **APIs**, **setup**, **CLI**, or **examples**:
 
-  * **README.md** — keep **Install**, **Quickstart**, and **Usage/CLI** sections current. Add/adjust new flags, env vars, endpoints, and examples introduced by the task.
-  * **docs/CHANGELOG.md** — append an entry with **UTC date**, `task_id`, short summary, **breaking changes**, and **migration steps**. Create the file if missing.
-  * **docs/** pages — update or add topic pages. If present, refresh **`index.md`**/**`SUMMARY.md`**/**MkDocs/Sphinx nav** to include new pages (alphabetical within section unless a numbered order exists).
-  * **Build check** — run the project’s docs build if available (e.g., `npm run docs:build` | `mkdocs build` | `sphinx-build`). Record the result under `DocFetchReport.observations.docs_build`.
-  * **Sync scripts** — run `docs:sync`/`docs-sync` if defined; otherwise propose a TODO in the completion note.
-  * **Commit style** — use commit prefix `[docs] <scope>: <summary>` and link PR/issue.
-  * **Scope guard** — never edit `AGENTS.md` as part of docs maintenance.
+  - **README.md** — keep **Install**, **Quickstart**, and **Usage/CLI** sections current. Add/adjust new flags, env vars, endpoints, and examples introduced by the task.
+  - **docs/CHANGELOG.md** — append an entry with **UTC date**, `task_id`, short summary, **breaking changes**, and **migration steps**. Create the file if missing.
+  - **docs/** pages — update or add topic pages. If present, refresh **`index.md`**/**`SUMMARY.md`**/**MkDocs/Sphinx nav** to include new pages (alphabetical within section unless a numbered order exists).
+  - **Build check** — run the project’s docs build if available (e.g., `npm run docs:build` | `mkdocs build` | `sphinx-build`). Record the result under `DocFetchReport.observations.docs_build`.
+  - **Sync scripts** — run `docs:sync`/`docs-sync` if defined; otherwise propose a TODO in the completion note.
+  - **Commit style** — use commit prefix `[docs] <scope>: <summary>` and link PR/issue.
+  - **Scope guard** — never edit `AGENTS.md` as part of docs maintenance.
 
-* Seed/Update the knowledge graph **before** exiting the task so subsequent sessions can leverage it.
+- Seed/Update the knowledge graph **before** exiting the task so subsequent sessions can leverage it.
 
-* Do **NOT** write to `AGENTS.md` beyond these standing instructions.
+- Do **NOT** write to `AGENTS.md` beyond these standing instructions.
 
 ### 2.1) Post-completion checks and tests (**REVISED — Run-then-verify**)
 
-* **Order of operations:**
+- **Order of operations:**
   a) Append subtask completion logs to **memory** (§1.2).
   b) Set task status to **`verify`** (new intermediate state).
   c) Evaluate the **Safety Gate** per **§8 Environment & Testing Policy**.
   d) If **safe**, run **stateless checks automatically** (see §8 Allowed Automatic Checks).
   e) If **unsafe**, **defer** execution and emit a **Local Test Instructions** block for the user.
 
-* **Recording:** Write outcomes to `task:${task_id}.observations.test_results` and also set:
+- **Recording:** Write outcomes to `task:${task_id}.observations.test_results` and also set:
 
-  * `tests_deferred: true|false`
-  * `tests_deferred_reason: <string|null>`
-  * `test_log_path: artifacts/test/<UTC-timestamp>.log` when any checks are executed.
+  - `tests_deferred: true|false`
+  - `tests_deferred_reason: <string|null>`
+  - `test_log_path: artifacts/test/<UTC-timestamp>.log` when any checks are executed.
 
-* **Status transitions:**
+- **Status transitions:**
 
-  * On all checks passing → set status **`done`**.
-  * On failures → set status **`blocked`** and record an unblock plan.
-  * On deferral → set status **`needs-local-tests`** and include the instructions block.
+  - On all checks passing → set status **`done`**.
+  - On failures → set status **`blocked`** and record an unblock plan.
+  - On deferral → set status **`needs-local-tests`** and include the instructions block.
 
-* **Local Test Instructions (example, Proposed — not executed):**
+- **Local Test Instructions (example, Proposed — not executed):**
 
 ```bash
 # Proposed Local Test Instructions — copy/paste locally
@@ -389,15 +416,15 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 ## 3) Status management (**REVISED**)
 
-* Use Task Master MCP to set task status:
+- Use Task Master MCP to set task status:
 
-  * **`in-progress`** on start of execution after §A and §1.1 planning.
-  * **`verify`** automatically after memory updates and before tests (§2.1).
-  * **Auto-set `done`** when all subtasks are done, gates passed, and §2.1 checks succeed.
-  * **`needs-local-tests`** when §2.1 defers execution via the Safety Gate.
-  * **`blocked`** when a check fails or a gate prevents progress; include block reason and an unblock plan in memory.
+  - **`in-progress`** on start of execution after §A and §1.1 planning.
+  - **`verify`** automatically after memory updates and before tests (§2.1).
+  - **Auto-set `done`** when all subtasks are done, gates passed, and §2.1 checks succeed.
+  - **`needs-local-tests`** when §2.1 defers execution via the Safety Gate.
+  - **`blocked`** when a check fails or a gate prevents progress; include block reason and an unblock plan in memory.
 
-* **Transition rules:**
+- **Transition rules:**
   `in-progress → verify → done` on success.
   `verify → blocked` on check failure.
   `verify → needs-local-tests` on deferral.
@@ -406,36 +433,36 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 ## 4) Tagging for retrieval
 
-* Use tags: `${PROJECT_TAG}`, `project:${PROJECT_TAG}`, `memory_checkpoint`, `completion`, `agents`, `routine`, `instructions`, plus task-specific tags.
-* For memory entities/relations, mirror tags on observations (e.g., `graph`, `entity:task:${task_id}`, `file:<path>`), to ease cross-referencing with memory.
+- Use tags: `${PROJECT_TAG}`, `project:${PROJECT_TAG}`, `memory_checkpoint`, `completion`, `agents`, `routine`, `instructions`, plus task-specific tags.
+- For memory entities/relations, mirror tags on observations (e.g., `graph`, `entity:task:${task_id}`, `file:<path>`), to ease cross-referencing with memory.
 
 ---
 
 ## 5) Handling user requests for code or docs
 
-* When a task or a user requires **code**, **setup/config**, or **library/API documentation**:
+- When a task or a user requires **code**, **setup/config**, or **library/API documentation**:
 
-  * **MUST** run the **Preflight** (§A) using the consolidated order (**sourcebot | docfork → contex7-mcp → gitmcp**).
-  * Only proceed to produce diffs or create files after `DocFetchReport.status == "OK"`.
+  - **MUST** run the **Preflight** (§A) using the consolidated order (**sourcebot | docfork → contex7-mcp → gitmcp**).
+  - Only proceed to produce diffs or create files after `DocFetchReport.status == "OK"`.
 
 ---
 
 ## 6) Project tech stack specifics (generic)
 
-* Apply §A Preflight for the **current** stack and language(s).
-* Prefer official documentation and repositories resolved in §A.1.
-* If coverage is weak after **sourcebot → docfork → contex7-mcp → gitmcp**, fall back to targeted web search and record gaps.
+- Apply §A Preflight for the **current** stack and language(s).
+- Prefer official documentation and repositories resolved in §A.1.
+- If coverage is weak after **sourcebot → docfork → contex7-mcp → gitmcp**, fall back to targeted web search and record gaps.
 
 ---
 
 ## 7) Library docs retrieval (topic-focused)
 
-* Use **sourcebot** first to fetch current docs before code changes. If configured and suitable for your workflow, **docfork** may be used to assemble or snapshot the retrieved docs.
-* UI components: call shadcn-ui-mcp-server to retrieve component recipes and scaffolds before writing code; then generate. Log under DocFetchReport.tools\_called\[].
-* If the primary retrieval tool fails, use **contex7-mcp**.
-* If **contex7-mcp** also fails, use **gitmcp** (repo docs/source) to retrieve equivalents.
-* Summarize key guidance inline in `DocFetchReport.key_guidance` and map each planned change to a guidance line.
-* Always note in the task preamble that docs were fetched and which topics/IDs were used.
+- Use **sourcebot** first to fetch current docs before code changes. If configured and suitable for your workflow, **docfork** may be used to assemble or snapshot the retrieved docs.
+- UI components: call shadcn-ui-mcp-server to retrieve component recipes and scaffolds before writing code; then generate. Log under DocFetchReport.tools\_called\[].
+- If the primary retrieval tool fails, use **contex7-mcp**.
+- If **contex7-mcp** also fails, use **gitmcp** (repo docs/source) to retrieve equivalents.
+- Summarize key guidance inline in `DocFetchReport.key_guidance` and map each planned change to a guidance line.
+- Always note in the task preamble that docs were fetched and which topics/IDs were used.
 
 ---
 
@@ -453,40 +480,40 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 **Allowed Automatic Checks (when Safety Gate passes):**
 
-* Typecheck, lint, and format-check.
-* Build **dry-run** only.
-* Docs build if it does not write outside `./artifacts`.
-* Unit tests limited to **pure** functions with no I/O, no network, and no writes beyond `./artifacts`.
+- Typecheck, lint, and format-check.
+- Build **dry-run** only.
+- Docs build if it does not write outside `./artifacts`.
+- Unit tests limited to **pure** functions with no I/O, no network, and no writes beyond `./artifacts`.
 
 **Deferral conditions** (any true ⇒ **defer** and emit Local Test Instructions):
 
-* Active Python venv detected (`VIRTUAL_ENV` set) or `.venv/` present in repo.
-* Managed envs or shims detected (e.g., `conda`, `poetry env`, Nix shells).
-* Commands imply global mutations, installs, migrations, DB writes, or network calls without explicit approval.
-* OS or shell mismatch risk in user context.
+- Active Python venv detected (`VIRTUAL_ENV` set) or `.venv/` present in repo.
+- Managed envs or shims detected (e.g., `conda`, `poetry env`, Nix shells).
+- Commands imply global mutations, installs, migrations, DB writes, or network calls without explicit approval.
+- OS or shell mismatch risk in user context.
 
 **Python rule:** If Python commands are needed and considered safe, use **`uv`** exclusively (`uv run`, `uvx`). **Do not** activate existing venvs.
 
 **Pre-run Test Plan (required for any automatic run):**
 
-* Exact commands, working directory, environment variables, and expected exit codes.
-* A short **Risk table** explaining why each command is safe under the Safety Gate.
+- Exact commands, working directory, environment variables, and expected exit codes.
+- A short **Risk table** explaining why each command is safe under the Safety Gate.
 
 **Execution protocol (automatic checks):**
 
-* Run the approved commands exactly.
-* Capture stdout/stderr to `artifacts/test/<UTC-timestamp>.log`.
-* Do not modify other files.
+- Run the approved commands exactly.
+- Capture stdout/stderr to `artifacts/test/<UTC-timestamp>.log`.
+- Do not modify other files.
 
 **Post-run recording:**
 
-* Add outcomes to the completion note and `DocFetchReport`.
-* Update `task:${task_id}.observations.test_results` and `test_log_path`.
+- Add outcomes to the completion note and `DocFetchReport`.
+- Update `task:${task_id}.observations.test_results` and `test_log_path`.
 
 **Deferral protocol:**
 
-* Emit a **Local Test Instructions** block (see §2.1 example) with copy-paste commands, rationale, and expected exit codes.
-* Record `tests_deferred_reason` and set status to **`needs-local-tests`**.
+- Emit a **Local Test Instructions** block (see §2.1 example) with copy-paste commands, rationale, and expected exit codes.
+- Record `tests_deferred_reason` and set status to **`needs-local-tests`**.
 
 ---
 

@@ -55,19 +55,19 @@ Files: `src/components/ThemePicker.tsx` and integration in a settings menu. Use 
 ### Details:
 Files: `src/appTheme.ts` or `src/hooks/useApplyTheme.ts`. Verify no FOUC and initial mode resolves before first paint where possible.
 
-## 6. Accessibility: contrast checks and warnings [pending]
+## 6. Accessibility: contrast checks and warnings [done]
 ### Dependencies: None
 ### Description: Add a simple contrast checker for chosen primary/accent against surfaces. Show non-blocking warnings when selections risk failing WCAG AA.
 ### Details:
 Utility function + inline warning in the Theme Picker. Provide links to documentation for guidance.
 
-## 7. Tests: theme store, persistence, and UI smoke [pending]
+## 7. Tests: theme store, persistence, and UI smoke [done]
 ### Dependencies: 59.3
 ### Description: Unit tests for theme store (mode resolution, persistence, migrations). UI smoke test to ensure toggling mode flips root class and variables update.
 ### Details:
 Files: `src/state/theme.test.ts`, `src/components/ThemePicker.test.tsx` (lightweight).
 
-## 8. Docs: Theme settings and tips [pending]
+## 8. Docs: Theme settings and tips [done]
 ### Dependencies: 59.5
 ### Description: Document theme settings in README and docs/theme.md: how to open picker, modes, persistence, and troubleshooting (e.g., contrast warnings).
 ### Details:
@@ -80,4 +80,15 @@ Include screenshots/GIFs where useful. Mention System mode behavior and how it r
 - Detect app mode via theme store and data-mode attribute and set Monaco theme to `vs` or `vs-dark` accordingly when editor theme is `auto`.
 - Add a small select (auto/light/dark) in the DiffViewer header to override per-view.
 - Keep word-wrap/split toggles as-is; ensure no runtime errors when monaco packages are missing (lazy already covers).
+
+## 10. Polish UI: remove dev/demo controls and excess buttons [done]
+### Dependencies: None
+### Description: Remove demo counter, disclosure, and less-needed buttons (Copy/Raw/Open diff/etc.) per spec. Keep core functionality and bookmarks.
+### Details:
+- App: remove counter button, disclosure section, and tagline; keep ThemePicker.
+- FilePreview: remove 'Open diff' button and retain language badge.
+- EventCard: remove Reveal/Open/Copy JSON buttons; keep bookmarks.
+- SessionsList: remove Copy path and Raw buttons; keep Load.
+- ApplyPatchView: remove Copy raw and Download raw buttons; keep Raw/Rendered toggle.
+- CommandsView: remove per-row copy button.
 

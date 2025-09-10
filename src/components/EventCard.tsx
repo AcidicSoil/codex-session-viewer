@@ -279,26 +279,7 @@ export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOp
           )}
       </CardContent>
       <CardFooter className="justify-end gap-2">
-        {item.type === 'FileChange' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onRevealFile?.(item.path)}
-            aria-label="Reveal in file tree"
-          >
-            Reveal in tree
-          </Button>
-        )}
-        {item.type === 'FileChange' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenDiff?.({ path: item.path, diff: item.diff })}
-            aria-label="Open diff viewer"
-          >
-            Open diff
-          </Button>
-        )}
+        {/* Removed per spec: reveal/open/copy buttons trimmed for cleaner UI */}
         <Button
           variant={has(key) ? 'secondary' : 'outline'}
           size="icon"
@@ -309,16 +290,6 @@ export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOp
         >
           {has(key) ? <StarFilledIcon /> : <StarIcon />}
           <span className="sr-only">{has(key) ? 'Remove bookmark' : 'Add bookmark'}</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => navigator.clipboard?.writeText(JSON.stringify(item))}
-          aria-label="Copy JSON"
-          title="Copy JSON"
-        >
-          <ClipboardIcon />
-          <span className="sr-only">Copy JSON</span>
         </Button>
       </CardFooter>
     </Card>

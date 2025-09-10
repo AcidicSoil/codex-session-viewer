@@ -13,6 +13,7 @@ describe('computeMonacoTheme', () => {
   it('system uses data-mode', () => {
     expect(computeMonacoTheme('system', 'auto', 'dark')).toBe('vs-dark')
     expect(computeMonacoTheme('system', 'auto', 'light')).toBe('vs')
+    // SSR fallback: when data-mode is unavailable, default to light
+    expect(computeMonacoTheme('system', 'auto', null as any)).toBe('vs')
   })
 })
-

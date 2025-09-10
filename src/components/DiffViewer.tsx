@@ -40,7 +40,14 @@ export default function DiffViewer({ path, original, modified, language, height 
   // Theme: auto uses global mode; allow per-view override
   const { mode } = useTheme()
   const [editorThemePref, setEditorThemePref] = React.useState<'auto' | 'light' | 'dark'>('auto')
-  const monacoTheme = React.useMemo(() => computeMonacoTheme(mode, editorThemePref, document.documentElement.getAttribute('data-mode')), [mode, editorThemePref])
+  // SSR guard: document may be undefined in tests/server
+  const rootDataMode = typeof document !== 'undefined'
+    ? document.documentElement.getAttribute('data-mode')
+    : null
+  const monacoTheme = React.useMemo(
+    () => computeMonacoTheme(mode, editorThemePref, rootDataMode),
+    [mode, editorThemePref, rootDataMode]
+  )
 
   return (
     <div className="border rounded">

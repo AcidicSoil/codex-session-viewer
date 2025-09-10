@@ -1,6 +1,6 @@
 # Task ID: 53
 # Title: Package as Web App or NPM Package (replace Electron)
-# Status: pending
+# Status: deferred
 # Dependencies: 29, 46
 # Priority: low
 # Description: Provide distribution paths as a static web app and/or an installable npm package so users can either host the viewer or embed it in their apps.
