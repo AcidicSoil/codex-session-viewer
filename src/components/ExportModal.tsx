@@ -54,7 +54,7 @@ export default function ExportModal({ open, onClose, meta, items, filters, defau
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <label className="text-sm w-24">Format</label>
-              <select value={format} onChange={(e) => setFormat(e.target.value as any)} className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <select value={format} onChange={(e) => setFormat(e.target.value as any)} className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500">
                 <option value="csv">CSV</option>
                 <option value="json">JSON</option>
                 <option value="markdown">Markdown</option>

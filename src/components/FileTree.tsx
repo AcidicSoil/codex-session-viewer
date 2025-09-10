@@ -98,7 +98,7 @@ function TreeNodes({
             ref={(el) => itemRefs.current.set(n.path, el)}
             className={cn(
               'flex items-center gap-1 py-0.5 px-1 rounded hover:bg-gray-50 cursor-pointer',
-              selectedPath === n.path && 'bg-indigo-50 text-indigo-700',
+              selectedPath === n.path && 'bg-gray-100 text-gray-700',
             )}
             style={{ paddingLeft: 8 + depth * 14 }}
             onClick={() => {

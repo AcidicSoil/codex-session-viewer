@@ -3,7 +3,7 @@ import type { ResponseItem } from '../types'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { ClipboardIcon, StarFilledIcon, StarIcon } from './ui/icons'
+import { ClipboardIcon, StarFilledIcon, StarIcon, PlusIcon } from './ui/icons'
 import { useBookmarks } from '../state/bookmarks'
 import { eventKey as computeEventKey } from '../utils/eventKey'
 import { containsApplyPatchAnywhere } from '../utils/applyPatchHints'
@@ -204,7 +204,7 @@ function WebSearchCallView({ item }: { item: Extract<ResponseItem, { type: 'WebS
           {item.results.slice(0, 10).map((r, i) => (
             <li key={i} className="text-sm">
               {r.url ? (
-                <a className="text-indigo-600 hover:underline" href={r.url} target="_blank" rel="noreferrer noopener">
+                <a className="text-gray-600 hover:underline" href={r.url} target="_blank" rel="noreferrer noopener">
                   {r.title || r.url}
                 </a>
               ) : (
@@ -259,7 +259,11 @@ export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOp
         {typeof index === 'number' && <div className="text-xs text-gray-500">#{index + 1}</div>}
         {at && <div className="text-xs text-gray-500">{formatAt(at)}</div>}
         {has(key) && <Badge variant="secondary">Bookmarked</Badge>}
-        {containsApplyPatchAnywhere(item) && <Badge variant="outline" title="This event references apply_patch">✚ apply_patch</Badge>}
+        {containsApplyPatchAnywhere(item) && (
+          <Badge variant="outline" title="This event references apply_patch">
+            <PlusIcon className="h-3 w-3" /> apply_patch
+          </Badge>
+        )}
       </CardHeader>
       <CardContent>
         {item.type === 'Message' && <MessageEventView item={item} highlight={highlight} />}

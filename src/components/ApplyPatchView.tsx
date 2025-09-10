@@ -5,6 +5,7 @@ import { parseUnifiedDiffToSides } from '../utils/diff'
 import { extractApplyPatchText, parseApplyPatch } from '../parsers/applyPatch'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
+import { CircleIcon } from './ui/icons'
 
 export interface ApplyPatchViewProps {
   item: Extract<ResponseItem, { type: 'FunctionCall' }>
@@ -38,7 +39,13 @@ export default function ApplyPatchView({ item, pairedResultMeta }: ApplyPatchVie
         {typeof item.durationMs === 'number' && <span className="text-gray-400">{item.durationMs} ms</span>}
         {status && (
           <Badge variant={status.exitCode === 0 ? 'secondary' : 'destructive'}>
-            {status.exitCode === 0 ? 'success' : `exit ${status.exitCode}`} {status.duration != null && `• ${status.duration}s`}
+            {status.exitCode === 0 ? 'success' : `exit ${status.exitCode}`}
+            {status.duration != null && (
+              <>
+                <CircleIcon className="inline-block mx-1 h-1.5 w-1.5" />
+                {status.duration}s
+              </>
+            )}
           </Badge>
         )}
         <span className="text-gray-400">files: {ops.length}</span>

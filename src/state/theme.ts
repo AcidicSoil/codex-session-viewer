@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 type Mode = 'light' | 'dark' | 'system'
-type Theme = 'teal' | 'rose' | 'indigo'
+type Theme = 'slate'
 
 interface ThemeState {
   theme: Theme
@@ -26,7 +26,7 @@ const applyMode = (mode: Mode) => {
 export const useTheme = create<ThemeState>()(
   persist(
     (set) => ({
-      theme: 'teal',
+      theme: 'slate',
       mode: 'system',
       setTheme: (theme) => {
         applyTheme(theme)

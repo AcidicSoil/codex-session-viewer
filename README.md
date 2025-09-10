@@ -53,7 +53,7 @@ Diff Viewer
 Themes and Editor Theme
 -----------------------
 
-- Theme: Use the Theme picker (top of the page) to choose a color theme (`teal`, `rose`, `indigo`) and Mode (`light`, `dark`, `system`). The app persists your choice and honors system dark mode when `system` is selected.
+- Theme: Use the Theme picker (top of the page) to choose the `slate` theme and Mode (`light`, `dark`, `system`). The app persists your choice and honors system dark mode when `system` is selected.
 - Contrast guard: If primary/text contrast falls below recommended thresholds, an inline warning appears near the picker.
 - Diff Viewer editor theme: Each Diff Viewer instance has a small selector (auto/light/dark). `auto` tracks the app mode; `light`/`dark` override the Monaco editor theme for that view only.
 

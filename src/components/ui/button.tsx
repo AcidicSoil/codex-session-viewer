@@ -5,15 +5,15 @@ type Variant = 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | '
 type Size = 'default' | 'sm' | 'lg' | 'icon'
 
 const base =
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 disabled:pointer-events-none disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 disabled:pointer-events-none disabled:opacity-50'
 
 const variants: Record<Variant, string> = {
-  default: 'bg-teal-600 text-white hover:bg-teal-500',
-  secondary: 'bg-gray-700 text-gray-100 hover:bg-gray-600',
+  default: 'bg-gray-900 text-white hover:bg-gray-800',
+  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
   destructive: 'bg-red-600 text-white hover:bg-red-500',
-  outline: 'border border-gray-600 bg-transparent hover:bg-gray-800 text-gray-100',
-  ghost: 'bg-transparent hover:bg-gray-800 text-gray-100',
-  link: 'bg-transparent text-teal-400 underline-offset-4 hover:underline'
+  outline: 'border border-gray-300 bg-transparent hover:bg-gray-100 text-gray-900',
+  ghost: 'bg-transparent hover:bg-gray-100 text-gray-900',
+  link: 'bg-transparent text-gray-900 underline-offset-4 hover:underline'
 }
 
 const sizes: Record<Size, string> = {

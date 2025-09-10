@@ -33,6 +33,7 @@ import { matchesEvent } from './utils/search'
 import ExportModal from './components/ExportModal'
 import ThemePicker from './components/ThemePicker'
 import { containsApplyPatchAnywhere } from './utils/applyPatchHints'
+import { CircleIcon, ChevronDownIcon, XIcon } from './components/ui/icons'
 
 function DevButtons({ onGenerate }: { onGenerate: () => void }) {
   return (
@@ -264,7 +265,7 @@ function AppInner() {
       <ThemePicker />
 
       <button
-        className="px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-500 transition"
+        className="px-3 py-2 rounded bg-gray-900 text-white hover:bg-gray-800 transition"
         onClick={() => setCount((c) => c + 1)}
       >
         Clicked {count} times
@@ -275,12 +276,10 @@ function AppInner() {
           <div className="space-y-2">
             <Disclosure.Button className="flex items-center gap-2 px-3 py-2 rounded bg-white shadow hover:shadow-md transition">
               <span>What is this app?</span>
-              <span
-                className="text-indigo-600 transition"
+              <ChevronDownIcon
+                className="text-gray-600 transition"
                 style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              >
-                ▾
-              </span>
+              />
             </Disclosure.Button>
             <Disclosure.Panel className="p-3 text-sm text-gray-700 bg-white rounded shadow space-y-2">
               <p>A viewer for Codex CLI sessions. Now includes streaming parser, metadata, and a virtualized timeline.</p>
@@ -380,7 +379,9 @@ function AppInner() {
                       await handleFile(file)
                     }}
                   >
-                  {(idx + 1) + '. '} {item.path.split('/').slice(-1)[0]} {chipMarks[item.path] && <span className="ml-1 text-emerald-600" title="Content match">●</span>}
+                  {(idx + 1) + '. '} {item.path.split('/').slice(-1)[0]} {chipMarks[item.path] && (
+                    <CircleIcon className="ml-1 text-gray-500 h-2 w-2" />
+                  )}
                 </Button>
                 )})
               })()}
@@ -416,7 +417,7 @@ function AppInner() {
         )}
 
         {loader.state.phase === 'parsing' && (
-          <p className="text-sm text-indigo-700">Parsing… ok {loader.progress.ok}, errors {loader.progress.fail}</p>
+          <p className="text-sm text-gray-600">Parsing… ok {loader.progress.ok}, errors {loader.progress.fail}</p>
         )}
         {loader.state.phase === 'success' && (
           <div className="text-sm text-green-700">
@@ -565,7 +566,7 @@ function AppInner() {
                     <select
                       value={typeFilter}
                       onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-                      className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                       aria-label="Filter by event type"
                     >
                       {TYPE_OPTIONS.map((t) => (
@@ -649,7 +650,7 @@ function AppInner() {
                         // Ensure role filter is effective by switching to Message when needed
                         if (next !== 'All' && typeFilter !== 'Message') setTypeFilter('Message')
                       }}
-                      className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                       aria-label="Filter message role"
                       title={typeFilter !== 'Message' && roleFilter !== 'All' ? 'Role filter applies to Message events' : undefined}
                     >
@@ -668,13 +669,13 @@ function AppInner() {
                 placeholder="Search events…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 aria-label="Search events"
               />
               <div className="relative">
                 <details className="[&_summary::-webkit-details-marker]:hidden">
-                  <summary className="h-9 px-3 text-sm leading-5 border rounded-md cursor-pointer select-none flex items-center gap-2 bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700">
-                    Advanced filters ▾
+                  <summary className="h-9 px-3 text-sm leading-5 border rounded-md cursor-pointer select-none flex items-center gap-1 bg-gray-100 border-gray-300 text-gray-800 hover:bg-gray-200">
+                    Advanced filters <ChevronDownIcon className="h-4 w-4" />
                   </summary>
                   <div className="absolute left-0 z-10 mt-1 w-[24rem] max-w-[95vw] rounded-md border bg-white shadow p-3">
                     <div className="mb-2 text-xs font-semibold text-gray-600">Advanced filters</div>
@@ -684,7 +685,7 @@ function AppInner() {
                         placeholder="Path filter (e.g., src/ or app.tsx)"
                         value={pathFilter}
                         onChange={(e) => setPathFilter(e.target.value)}
-                        className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                         aria-label="Filter by file path"
                       />
                       <Button
@@ -741,7 +742,7 @@ function AppInner() {
                   <summary
                     className={
                       `h-9 px-3 text-sm leading-5 rounded-md cursor-pointer select-none ${
-                        loader.state.events.length ? 'bg-teal-600 text-white hover:bg-teal-500' : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                        loader.state.events.length ? 'bg-gray-900 text-white hover:bg-gray-800' : 'bg-gray-700 text-gray-400 cursor-not-allowed'
                       }`
                     }
                     aria-disabled={!loader.state.events.length}
@@ -786,7 +787,7 @@ function AppInner() {
                         aria-label={`Clear ${c.key}`}
                         onClick={c.onClear}
                       >
-                        ×
+                        <XIcon className="h-3 w-3" />
                       </button>
                     </Badge>
                   ))}

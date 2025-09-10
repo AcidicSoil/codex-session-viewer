@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../state/theme'
 
-const themes = ['teal', 'rose', 'indigo'] as const
+const themes = ['slate'] as const
 const modes = ['light', 'dark', 'system'] as const
 
 function parseRGBTriplet(s: string): [number, number, number] | null {

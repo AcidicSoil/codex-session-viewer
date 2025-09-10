@@ -47,7 +47,7 @@ export function DropZone({ onFile, acceptExtensions = ['.jsonl', '.txt'], classN
           onDrop={onDrop}
           className={
             `m-2 border-2 border-dashed rounded p-6 text-center transition ${
-              isOver ? 'border-indigo-600 bg-indigo-50' : 'border-gray-300'
+              isOver ? 'border-gray-600 bg-gray-100' : 'border-gray-300'
             }`
           }
         >

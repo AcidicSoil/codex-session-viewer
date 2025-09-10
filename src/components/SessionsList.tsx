@@ -2,6 +2,7 @@ import * as React from 'react'
 import type { DiscoveredSessionAsset } from '../hooks/useAutoDiscovery'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
+import { CircleIcon } from './ui/icons'
 import { parseTimestampFromPath } from '../utils/timestamp'
 
 export interface SessionsListProps {
@@ -96,7 +97,7 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
               value={scanQuery}
               onChange={(e) => setScanQuery(e.target.value)}
               placeholder="Content filter (e.g., apply_patch)"
-              className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 w-56"
+            className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 w-56"
               title="Fetch sessions and mark those whose content contains this text"
             />
             <Button
@@ -131,7 +132,7 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
             )}
           </div>
           <select
-            className="h-9 px-2 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 px-2 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             value={sort}
             onChange={(e) => setSort(e.target.value as any)}
             title="Sort order"
@@ -144,7 +145,7 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search by path…"
-            className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 w-64"
+            className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 w-64"
           />
           {onClose && (
             <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
@@ -173,7 +174,7 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
             <div className="max-h-[50vh] overflow-auto">
               {matches.length > 0 && (
                 <div>
-                  <div className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 sticky top-0">Matches ({matches.length})</div>
+                <div className="px-2 py-1 text-xs font-semibold text-gray-700 bg-gray-100 sticky top-0">Matches ({matches.length})</div>
                   <div className="divide-y">
                     {matches.map((s) => (
                       <Row key={s.path} s={s} mark={true} busy={busy} onLoad={handleLoad} />
@@ -204,7 +205,8 @@ function Row({ s, mark, busy, onLoad }: { s: DiscoveredSessionAsset; mark: boole
     <div className="py-2 flex items-center gap-2 justify-between">
       <div className="min-w-0 flex-1">
         <div className="text-sm truncate" title={s.path}>
-          {s.path} {mark && <span title="Content match" className="ml-1 text-emerald-600">●</span>}
+          {s.path}{' '}
+          {mark && <CircleIcon className="ml-1 text-gray-500 h-2 w-2" />}
         </div>
       </div>
       <div className="flex gap-2 shrink-0">

@@ -2,6 +2,7 @@ import * as React from 'react'
 import type { ResponseItem } from '../types'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Button } from './ui/button'
+import { ChevronDownIcon } from './ui/icons'
 import { downloadText } from '../utils/download'
 
 export interface CommandRow {
@@ -85,13 +86,13 @@ export function CommandsView({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search commands…"
-            className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             aria-label="Search commands"
           />
           <select
             value={exit}
             onChange={(e) => setExit(e.target.value as any)}
-            className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 px-3 text-sm leading-5 border rounded-md bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             aria-label="Exit code filter"
           >
             {(['All', 'Success', 'Failed'] as const).map((t) => (
@@ -102,7 +103,7 @@ export function CommandsView({
             value={minMs}
             onChange={(e) => setMinMs(e.target.value)}
             placeholder="Min ms"
-            className="h-9 px-3 text-sm leading-5 border rounded-md w-28 bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="h-9 px-3 text-sm leading-5 border rounded-md w-28 bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
             aria-label="Min duration in ms"
             inputMode="numeric"
             pattern="[0-9]*"
@@ -110,7 +111,9 @@ export function CommandsView({
           <Button variant="outline" size="default" onClick={() => { setQ(''); setExit('All'); setMinMs('') }}>Clear</Button>
           <div className="relative">
             <details className="[&_summary::-webkit-details-marker]:hidden">
-              <summary className="h-9 px-3 text-sm leading-5 rounded-md cursor-pointer select-none bg-teal-600 text-white hover:bg-teal-500">Export ▾</summary>
+              <summary className="h-9 px-3 text-sm leading-5 rounded-md cursor-pointer select-none bg-gray-800 text-white hover:bg-gray-700 flex items-center gap-1">
+                Export <ChevronDownIcon className="h-4 w-4" />
+              </summary>
               <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border bg-white shadow">
                 <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={exportCsv}>CSV</button>
                 <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={exportJson}>JSON</button>
