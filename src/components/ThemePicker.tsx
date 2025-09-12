@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import { HexColorInput, HexColorPicker } from 'react-colorful'
 import { useTheme } from '../state/theme'
 
-const themes = ['teal', 'rose', 'indigo'] as const
 const modes = ['light', 'dark', 'system'] as const
+const swatches: Record<string, string> = {
+  teal: '#0d9488',
+  rose: '#f43f5e',
+  indigo: '#4f46e5',
+}
 
 function parseRGBTriplet(s: string): [number, number, number] | null {
   const parts = s.trim().split(/\s+/).map((n) => parseFloat(n))
@@ -28,8 +33,18 @@ function contrastRatio(a: [number, number, number], b: [number, number, number])
 }
 
 export default function ThemePicker() {
-  const { theme, mode, setTheme, setMode } = useTheme()
+  const { theme, mode, setTheme, setMode, customPrimary, setCustomPrimary } = useTheme()
+  const [hex, setHex] = useState<string>(customPrimary ?? swatches[theme] ?? '#0d9488')
   const [contrastWarn, setContrastWarn] = useState<string | null>(null)
+
+  // Sync local input with store
+  useEffect(() => {
+    setHex(customPrimary ?? swatches[theme] ?? '#0d9488')
+  }, [customPrimary, theme])
+
+  useEffect(() => {
+    setCustomPrimary(hex)
+  }, [hex, setCustomPrimary])
 
   const computeContrast = useMemo(() => () => {
     try {
@@ -51,34 +66,64 @@ export default function ThemePicker() {
 
   useEffect(() => {
     setContrastWarn(computeContrast())
-  }, [theme, mode, computeContrast])
+  }, [theme, mode, customPrimary, computeContrast])
 
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-sm">Theme</label>
-      <select
-        className="border rounded px-2 py-1 text-sm bg-background text-foreground"
-        value={theme}
-        onChange={(e) => setTheme(e.target.value as any)}
-      >
-        {themes.map((t) => (
-          <option key={t} value={t}>
-            {t}
-          </option>
-        ))}
-      </select>
-      <label className="text-sm ml-4">Mode</label>
-      <select
-        className="border rounded px-2 py-1 text-sm bg-background text-foreground"
-        value={mode}
-        onChange={(e) => setMode(e.target.value as any)}
-      >
-        {modes.map((m) => (
-          <option key={m} value={m}>
-            {m}
-          </option>
-        ))}
-      </select>
+    <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2">
+          <div className="text-sm font-medium">Primary Color</div>
+          <div className="flex items-center gap-3">
+            <div className="w-40">
+              <HexColorPicker color={hex} onChange={setHex} className="h-28 w-40" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs">Hex</span>
+                <div className="flex items-center gap-1 border rounded px-2 py-1 bg-background text-foreground">
+                  <span className="text-xs">#</span>
+                  <HexColorInput color={hex} onChange={setHex} prefixed={false} className="text-sm w-24 outline-none bg-transparent" aria-label="Primary color hex" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {Object.entries(swatches).map(([name, value]) => (
+                  <button
+                    key={name}
+                    type="button"
+                    className="h-6 w-6 rounded border ring-0"
+                    style={{ backgroundColor: value }}
+                    title={name}
+                    onClick={() => { setTheme(name as any); setCustomPrimary(value) }}
+                    aria-label={`Set ${name} theme`}
+                  />
+                ))}
+                <button
+                  type="button"
+                  className="ml-1 text-xs underline"
+                  onClick={() => { setTheme('teal'); setCustomPrimary(null) }}
+                  title="Reset to theme defaults"
+                >Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <label className="text-sm">Mode</label>
+        <select
+          className="border rounded px-2 py-1 text-sm bg-background text-foreground"
+          value={mode}
+          onChange={(e) => setMode(e.target.value as any)}
+        >
+          {modes.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {contrastWarn && (
         <span className="ml-2 text-xs text-amber-700" role="status">{contrastWarn}</span>
       )}

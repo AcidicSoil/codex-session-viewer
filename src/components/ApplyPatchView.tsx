@@ -46,6 +46,20 @@ export default function ApplyPatchView({ item, pairedResultMeta }: ApplyPatchVie
           <Button size="sm" variant="outline" onClick={() => setShowRaw((v) => !v)}>
             {showRaw ? 'Rendered' : 'Raw'}
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigator.clipboard?.writeText(patchText)}
+          >
+            Copy raw
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => downloadText(patchText, 'patch.diff')}
+          >
+            Download raw
+          </Button>
         </div>
       </div>
 

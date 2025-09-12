@@ -10,6 +10,7 @@ import TimelineView from './components/TimelineView'
 import CommandsView from './components/CommandsView'
 import EventCard from './components/EventCard'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
+import CollapsibleCard from './components/ui/collapsible-card'
 import { Badge } from './components/ui/badge'
 import { ScrollArea } from './components/ui/scroll-area'
 import { generateSyntheticEvents } from './utils/synthetic'
@@ -27,16 +28,17 @@ import type { ResponseItem } from './types'
 import FileTree from './components/FileTree'
 import FilePreview from './components/FilePreview'
 import DiffViewer from './components/DiffViewer'
+import TwoFileDiff from './components/TwoFileDiff'
 import { extractApplyPatchText } from './parsers/applyPatch'
 import { parseUnifiedDiffToSides } from './utils/diff'
-import { isApplyPatchFunction, passesFunctionNameFilter, sanitizeFnFilterList, isGenericFileEditFunction } from './utils/functionFilters'
+import { isApplyPatchFunction, passesFunctionNameFilter, sanitizeFnFilterList } from './utils/functionFilters'
 import { getLanguageForPath } from './utils/language'
 import useAutoDiscovery from './hooks/useAutoDiscovery'
 import SessionsList from './components/SessionsList'
 import { matchesEvent } from './utils/search'
 import ExportModal from './components/ExportModal'
-import ThemePicker from './components/ThemePicker'
-import { containsApplyPatchAnywhere } from './utils/applyPatchHints'
+import ThemeDrawer from './components/ThemeDrawer'
+import SessionLibrary from './components/SessionLibrary'
 import { getWorkspaceDiff } from './scanner/diffProvider'
 import { readFileText } from './utils/fs-io'
 import { enumerateFiles, enumerateFilesInfo, type FileEntryInfo } from './utils/dir-enum'
@@ -119,7 +121,7 @@ function AppInner() {
   const { projectFiles, sessionAssets, isLoading, reload } = useAutoDiscovery()
   const [showAllSessions, setShowAllSessions] = useState(false)
   const [showExport, setShowExport] = useState(false)
-  const [onlyApplyText, setOnlyApplyText] = useState(false)
+  // Removed: apply_patch-anywhere content filter (kept only diff-related filter via FunctionCall)
   // Chip-level bulk marking for auto-detected sessions
   const [chipScanQuery, setChipScanQuery] = useState('')
   const [chipMarks, setChipMarks] = useState<Record<string, boolean>>({})
@@ -142,16 +144,42 @@ function AppInner() {
   const [showFileTree, setShowFileTree] = useState(false)
   const [workspaceFiles, setWorkspaceFiles] = useState<string[]>([])
   const [logMismatchSet, setLogMismatchSet] = useState<Set<string>>(new Set())
-  const [genericDiffOnly, setGenericDiffOnly] = useState(false)
+  // Removed: generic file-edit filter toggle
+  const [sessionKey, setSessionKey] = useState(0)
   const applyPatchCount = React.useMemo(() => {
     try { return (loader.state.events ?? []).filter((e: any) => isApplyPatchFunction(e)).length } catch { return 0 }
   }, [loader.state.events])
+
+  function resetUIForNewSession() {
+    try { clear() } catch {}
+    setActiveDiff(undefined)
+    setSelectedFile(undefined)
+    setScrollToIndex(null)
+    setSearch('')
+    setPathFilter('')
+    setTypeFilter('All')
+    setRoleFilter('All')
+    setShowOther(false)
+    setFnFilter([])
+    // Removed: apply_patch-anywhere and generic-file-edit toggles
+    setShowAllSessions(false)
+    setShowExport(false)
+    setChipScanQuery('')
+    setChipMarks({})
+    setChipScanning(false)
+    setChipProgress(0)
+    setChipOnlyMatches(false)
+    setSessionKey((k) => k + 1)
+  }
 
   async function connectWorkspace() {
     try {
       // @ts-ignore experimental API
       const handle: FileSystemDirectoryHandle = await (window as any).showDirectoryPicker?.({ id: 'workspace', mode: 'read' })
       if (!handle) return
+      // Reset UI and clear current session when switching workspace
+      resetUIForNewSession()
+      loader.reset()
       setWorkspace(handle)
       try { await setSetting('workspaceHandle', handle) } catch {}
       try { await refreshWorkspaceFiles(handle) } catch {}
@@ -231,7 +259,7 @@ function AppInner() {
       running = true
       try {
         const before = await listHashes()
-        const runner = startFileSystemScanFromHandle(workspace)
+        const runner = startFileSystemScanFromHandle(workspace!)
         await new Promise<void>((resolve) => {
           const onMsg = (e: MessageEvent<any>) => {
             if (e.data === 'done' || e.data === 'aborted') {
@@ -246,8 +274,8 @@ function AppInner() {
         if (!cancelled) {
           setChangeSet(cs)
           setChangeMap(Object.fromEntries(cs.items.map((it) => [it.path, it.type])))
-          try { await refreshWorkspaceFiles(workspace) } catch {}
-          try { await refreshLogMismatches(workspace) } catch {}
+          try { await refreshWorkspaceFiles(workspace!) } catch {}
+          try { await refreshLogMismatches(workspace!) } catch {}
         }
       } catch {}
       finally {
@@ -282,6 +310,16 @@ function AppInner() {
   useEffect(() => {
     (async () => { try { await refreshLogMismatches(workspace) } catch {} })()
   }, [loader.state.events, workspace])
+
+  // UX: if all parsed events are "Other", auto-show them so timeline isn't empty
+  useEffect(() => {
+    try {
+      const evs = loader.state.events ?? []
+      if (evs.length > 0 && evs.every((e: any) => e?.type === 'Other')) {
+        setShowOther(true)
+      }
+    } catch {}
+  }, [loader.state.events])
 
   // Auto-connect to persisted .codex/sessions if permission remains granted
   useEffect(() => {
@@ -346,7 +384,7 @@ function AppInner() {
     }
     // Try ISO date prefix
     const m3 = s.match(/(\d{4}-\d{2}-\d{2}T[^_/]+)/)
-    if (m3) { const t = Date.parse(m3[1]); return isNaN(t) ? null : t }
+    if (m3) { const iso = m3[1]!; const t = Date.parse(iso); return isNaN(t) ? null : t }
     return null
   }
 
@@ -440,8 +478,7 @@ function AppInner() {
         return t === typeFilter
       })
       .filter(({ ev }) => (typeFilter === 'All' && !showOther ? (ev as any).type !== 'Other' : true))
-      .filter(({ ev }) => (onlyApplyText ? containsApplyPatchAnywhere(ev as any) : true))
-      .filter(({ ev }) => (genericDiffOnly ? isGenericFileEditFunction(ev as any) : true))
+      // Removed: apply_patch-anywhere and generic file-edit filters
       // Function name filter (applies to FunctionCall; special 'apply_patch')
       .filter(({ ev }) => passesFunctionNameFilter(ev as any, fnFilter, typeFilter))
       .filter(({ ev }) => (search ? safeMatches(ev as any, search) : true))
@@ -458,6 +495,8 @@ function AppInner() {
   }
 
   async function handleFile(file: File) {
+    // Reset UI immediately when loading a new session file
+    resetUIForNewSession()
     setSampleLines([])
     // Preview first 10 lines for quick feedback
     let i = 0
@@ -482,10 +521,6 @@ function AppInner() {
     if ((h as any).pf) setPathFilter(String((h as any).pf))
     const o = String((h as any).o || '').toLowerCase()
     setShowOther(o === '1' || o === 'true')
-    const ap = String((h as any).ap || '').toLowerCase()
-    setOnlyApplyText(ap === '1' || ap === 'true')
-    const gd = String((h as any).gd || '').toLowerCase()
-    setGenericDiffOnly(gd === '1' || gd === 'true')
     const validTypes = new Set(['All','Message','Reasoning','FunctionCall','LocalShellCall','WebSearchCall','CustomToolCall','FileChange','Other','ToolCalls'])
     if (h.t && validTypes.has(h.t)) setTypeFilter(h.t as any)
     const validRoles = new Set(['All','user','assistant','system'])
@@ -512,15 +547,12 @@ function AppInner() {
       else delete (next as any).pf
       if (showOther) (next as any).o = '1'
       else delete (next as any).o
-      if (onlyApplyText) (next as any).ap = '1'
-      else delete (next as any).ap
-      if (genericDiffOnly) (next as any).gd = '1'
-      else delete (next as any).gd
+      // Removed: apply_patch-anywhere and generic file-edit toggles in URL hash
       if (fnFilter && fnFilter.length) (next as any).fn = sanitizeFnFilterList(fnFilter).join(',')
       else delete (next as any).fn
       return next
     })
-  }, [showBookmarksOnly, selectedFile, typeFilter, roleFilter, search, pathFilter, showOther, fnFilter, onlyApplyText, genericDiffOnly])
+  }, [showBookmarksOnly, selectedFile, typeFilter, roleFilter, search, pathFilter, showOther, fnFilter])
 
   // Auto-open diff when a file is selected
   useEffect(() => {
@@ -536,7 +568,7 @@ function AppInner() {
         if (ev.diff) {
           try {
             const { original, modified } = parseUnifiedDiffToSides(ev.diff)
-            setActiveDiff({ path: selectedFile, original, modified, language: getLanguageForPath(selectedFile) })
+            setActiveDiff({ path: selectedFile, original, modified, language: getLanguageForPath(selectedFile!) })
             handled = true
           } catch {
             // fall through to fallback below
@@ -551,48 +583,64 @@ function AppInner() {
       try {
         if (workspace) {
           const { original, modified } = await getWorkspaceDiff(workspace, selectedFile, events as any)
-          setActiveDiff({ path: selectedFile, original, modified, language: getLanguageForPath(selectedFile) })
+          setActiveDiff({ path: selectedFile, original, modified, language: getLanguageForPath(selectedFile!) })
           return
         }
       } catch {}
-      setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile) })
+      setActiveDiff({ path: selectedFile, original: '', modified: '', language: getLanguageForPath(selectedFile!) })
     })()
   }, [selectedFile, loader.state.events, workspace])
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <h1 className="text-2xl font-semibold">Codex Session Viewer</h1>
-      {/* Theme picker retained for functionality; remove demo/disclosure and counter button */}
-      <ThemePicker />
+      {/* Appearance drawer with color picker */}
+      <ThemeDrawer />
 
-      <div className="space-y-2 p-4 bg-white rounded shadow">
-        <h2 className="font-medium">Workspace</h2>
+      <CollapsibleCard title="Workspace" defaultOpen>
         <div className="flex items-center gap-3">
-          <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={connectWorkspace}>Connect Workspace</button>
-          <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={rescan} disabled={!workspace || scanning}>{scanning ? 'Scanning…' : 'Rescan'}</button>
+          <Button variant="outline" size="sm" onClick={connectWorkspace}>Connect Workspace</Button>
+          <Button variant="outline" size="sm" onClick={rescan} disabled={!workspace || scanning}>{scanning ? 'Scanning…' : 'Rescan'}</Button>
           <label className="ml-2 inline-flex items-center gap-1 text-sm">
             <input type="checkbox" checked={autoDetect} onChange={(e) => setAutoDetect(e.target.checked)} />
             <span>Auto-detect</span>
           </label>
           {workspace && (
-            <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={async () => { setWorkspace(null); setChangeSet(null); try { await deleteSetting('workspaceHandle') } catch {} }}>Disconnect</button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                // Full cleanup: reset UI state, detach file tree, clear workspace files
+                try { resetUIForNewSession() } catch {}
+                setShowFileTree(false)
+                setWorkspaceFiles([])
+                setWorkspace(null)
+                setChangeSet(null)
+                try { await setSetting('ui.showFileTree', false) } catch {}
+                try { await deleteSetting('workspaceHandle') } catch {}
+              }}
+            >
+              Disconnect
+            </Button>
           )}
           {progressPath && <span className="text-xs opacity-70 truncate max-w-[40ch]">{progressPath}</span>}
           <span className="flex-1" />
           {!showFileTree ? (
-            <button
-              className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={async () => { setShowFileTree(true); try { await setSetting('ui.showFileTree', true) } catch {}; try { if (workspace) await refreshWorkspaceFiles(workspace) } catch {} }}
             >
               Add File Tree
-            </button>
+            </Button>
           ) : (
-            <button
-              className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={async () => { setShowFileTree(false); try { await setSetting('ui.showFileTree', false) } catch {} }}
             >
               Remove File Tree
-            </button>
+            </Button>
           )}
         </div>
         <div className="text-sm">
@@ -638,7 +686,7 @@ function AppInner() {
           <ul className="max-h-48 overflow-auto space-y-1">
             {displayedWorkspaceSessions.map((s) => (
               <li key={s.path} className="flex items-center gap-2">
-                <button className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200" onClick={() => loadFromHandle(workspace, s.path)}>Load</button>
+                <Button variant="outline" size="sm" onClick={() => loadFromHandle(workspace, s.path)}>Load</Button>
                 <span className="truncate" title={s.path}>{s.path}</span>
                 {typeof s.size === 'number' && <span className="text-xs text-gray-500">({Math.round((s.size/1024)*10)/10} KB)</span>}
               </li>
@@ -649,7 +697,7 @@ function AppInner() {
             {changeSet.items.map((it) => (
               <li key={it.path} className="flex items-center gap-2">
                 <span className={`px-1 rounded text-white ${it.type === 'added' ? 'bg-green-600' : it.type === 'deleted' ? 'bg-red-600' : 'bg-amber-600'}`}>{it.type}</span>
-                <button className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200" onClick={() => openWorkspaceDiff(it.path)}>Open diff</button>
+                <Button variant="outline" size="sm" onClick={() => openWorkspaceDiff(it.path)}>Open diff</Button>
                 <span className="truncate" title={it.path}>{it.path}</span>
               </li>
             ))}
@@ -659,19 +707,18 @@ function AppInner() {
         <div className="opacity-70">Connect a workspace and run Rescan to see changes.</div>
       )}
         </div>
-      </div>
+      </CollapsibleCard>
 
-      <div className="space-y-2 p-4 bg-white rounded shadow">
-        <h2 className="font-medium">.codex/sessions</h2>
+      <CollapsibleCard title=".codex/sessions" defaultOpen>
         <div className="flex items-center gap-3">
           {!sessionsHandle && (
-            <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={connectSessions}>Set .codex/sessions</button>
+            <Button variant="outline" size="sm" onClick={connectSessions}>Set .codex/sessions</Button>
           )}
           {sessionsHandle && (
             <>
-              <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={() => rescanSessions()}>Rescan Sessions</button>
-              <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={async () => { await deleteSetting('sessionsHandle'); setSessionsHandle(null); setSessionsList([]) }}>Clear</button>
-              <button className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300" onClick={connectSessions}>Change Folder</button>
+              <Button variant="outline" size="sm" onClick={() => rescanSessions()}>Rescan Sessions</Button>
+              <Button variant="outline" size="sm" onClick={async () => { await deleteSetting('sessionsHandle'); setSessionsHandle(null); setSessionsList([]) }}>Clear</Button>
+              <Button variant="outline" size="sm" onClick={connectSessions}>Change Folder</Button>
             </>
           )}
           {progressPath && <span className="text-xs opacity-70 truncate max-w-[40ch]">{progressPath}</span>}
@@ -721,7 +768,7 @@ function AppInner() {
               <ul className="max-h-48 overflow-auto space-y-1">
                 {displayedSessions.map((s) => (
                   <li key={s.path} className="flex items-center gap-2">
-                    <button className="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200" onClick={() => loadFromHandle(sessionsHandle, s.path)}>Load</button>
+                    <Button variant="outline" size="sm" onClick={() => loadFromHandle(sessionsHandle, s.path)}>Load</Button>
                     <span className="truncate" title={s.path}>{s.path}</span>
                     {typeof s.size === 'number' && <span className="text-xs text-gray-500">({Math.round((s.size/1024)*10)/10} KB)</span>}
                   </li>
@@ -733,10 +780,9 @@ function AppInner() {
         ) : (
           <div className="text-sm opacity-70">Pick your .codex/sessions folder once to enable auto-connect on next visits.</div>
         )}
-      </div>
+      </CollapsibleCard>
 
-      <div className="space-y-3 p-4 bg-white rounded shadow">
-        <h2 className="font-medium">Open a session file</h2>
+      <CollapsibleCard title="Open a session file" defaultOpen>
         <ErrorBoundary name="OpenSession">
           <div className="flex items-center gap-3">
             <FileInputButton label="Choose .jsonl" onFile={handleFile} />
@@ -880,23 +926,36 @@ function AppInner() {
         ) : (
           <p className="text-sm text-gray-500">Select or drop a .jsonl file to preview lines.</p>
         )}
-      </div>
+      </CollapsibleCard>
       <MetadataPanel meta={loader.state.meta} />
+      {/* Session Library visible on welcome screen */}
+      {(!loader.state.events || loader.state.events.length === 0) && (
+        <CollapsibleCard title="Session Library" defaultOpen>
+          <ErrorBoundary name="SessionLibrary">
+            <SessionLibrary loader={loader} onWillLoad={resetUIForNewSession} />
+          </ErrorBoundary>
+        </CollapsibleCard>
+      )}
+
+      {(!loader.state.events || loader.state.events.length === 0) && (
+        <CollapsibleCard title="Two‑File Diff" defaultOpen>
+          <ErrorBoundary name="TwoFileDiff">
+            <TwoFileDiff />
+          </ErrorBoundary>
+        </CollapsibleCard>
+      )}
 
       {(
         (showFileTree && ((workspaceFiles.length > 0) || (loader.state.events && loader.state.events.length > 0) || projectFiles.length > 0))
         || Boolean(selectedFile)
       ) && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Files</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+        <CollapsibleCard title="Files" defaultOpen>
+            <div key={`files-${sessionKey}`} className="grid grid-cols-1 md:grid-cols-12 gap-3">
               {showFileTree && (
                 <div className="md:col-span-4">
                   <div className="border rounded h-[30vh] md:h-[60vh] overflow-auto">
                     <FileTree
+                      key={`tree-${sessionKey}`}
                       paths={(() => {
                         // Prefer actual workspace file list when available
                         if (workspace && workspaceFiles.length > 0) return workspaceFiles
@@ -919,6 +978,7 @@ function AppInner() {
                 {selectedFile && (
                   <div className="border rounded p-2 h-[30vh] md:h-[60vh] overflow-auto">
                     <FilePreview
+                      key={`preview-${sessionKey}-${selectedFile}`}
                       path={selectedFile}
                       events={loader.state.events as any}
                       onOpenDiff={({ path, diff }) => {
@@ -934,12 +994,12 @@ function AppInner() {
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </CollapsibleCard>
       )}
 
       {loader.state.events && loader.state.events.length > 0 && (
         <CommandsView
+          key={`cmds-${sessionKey}`}
           events={loader.state.events as any}
           onJumpToIndex={(idx) => {
             setScrollToIndex(idx)
@@ -949,29 +1009,29 @@ function AppInner() {
 
       {loader.state.events && loader.state.events.length > 0 && (
         activeDiff && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Diff Viewer</CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setActiveDiff(undefined)}>Close</Button>
-            </CardHeader>
-            <CardContent>
-              <DiffViewer
-                path={activeDiff.path}
-                original={activeDiff.original}
-                modified={activeDiff.modified}
-                language={activeDiff.language}
-                height={"60vh"}
-              />
-            </CardContent>
-          </Card>
+          <CollapsibleCard
+            title="Diff Viewer"
+            headerRight={<Button variant="outline" size="sm" onClick={() => setActiveDiff(undefined)}>Close</Button>}
+            defaultOpen
+          >
+            <DiffViewer
+              key={`diff-${sessionKey}-${activeDiff?.path ?? ''}`}
+              path={activeDiff.path}
+              original={activeDiff.original}
+              modified={activeDiff.modified}
+              language={activeDiff.language}
+              height={"60vh"}
+            />
+          </CollapsibleCard>
         )
       )}
 
       {loader.state.events && loader.state.events.length > 0 && (
-        <Card>
+        <Card key={`timeline-${sessionKey}`}>
           <CardHeader>
             <CardTitle>Timeline</CardTitle>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            {/* Sticky toolbar to keep controls visible while scrolling the page */}
+            <div className="mt-2 flex flex-wrap items-center gap-2 sticky top-0 z-20 bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 border-b border-gray-800 py-2 px-1 -mx-1">
               <ErrorBoundary name="Toolbar">
               {(() => {
                 const events = loader.state.events ?? []
@@ -1007,8 +1067,6 @@ function AppInner() {
                   console.warn('roleCounts failed', e)
                 }
                 const TYPE_OPTIONS: TypeFilter[] = ['All','Message','Reasoning','FunctionCall','LocalShellCall','WebSearchCall','CustomToolCall','FileChange','Other','ToolCalls']
-                let applyAnyCount = 0
-                try { applyAnyCount = events.filter((e) => containsApplyPatchAnywhere(e as any)).length } catch {}
                 return (
                   <>
                     <select
@@ -1055,18 +1113,10 @@ function AppInner() {
                       }
                       const options = Array.from(nameCounts.entries()).sort((a,b) => b[1]-a[1])
                       const hasApply = applyPatchCount > 0
-                      const otherOptions = options.filter(([n]) => n !== 'shell')
+                      const otherOptions = options
                       return (
                         <div className="flex flex-wrap gap-2 items-center">
-                          {/* apply_patch filter moved to front-facing toolbar */}
-                          <Button
-                            size="sm"
-                            variant={genericDiffOnly ? 'secondary' : 'outline'}
-                            onClick={() => setGenericDiffOnly((v) => !v)}
-                            title="Filter: generic file-editing tool calls"
-                          >
-                            File edits (generic)
-                          </Button>
+                          {/* Removed: generic file-edit filter toggle */}
                           <details className="relative">
                             <summary className="h-9 px-3 text-sm leading-5 rounded-md cursor-pointer select-none bg-gray-800 border border-gray-700 text-gray-100 hover:bg-gray-700">Function Calls ▾</summary>
                             <div className="absolute left-0 z-10 mt-1 w-[18rem] max-w-[95vw] rounded-md border bg-white shadow p-2">
@@ -1163,7 +1213,6 @@ function AppInner() {
                       >
                         {showOther ? 'Other: shown' : 'Other: hidden'}
                       </Button>
-                      {/* apply_patch anywhere toggle moved to main toolbar */}
                     </div>
                   </div>
                 </details>
@@ -1184,16 +1233,7 @@ function AppInner() {
               >
                 apply_patch ({applyPatchCount})
               </Button>
-              {/* Front-facing apply_patch anywhere toggle */}
-              <Button
-                variant={onlyApplyText ? 'secondary' : 'outline'}
-                size="default"
-                onClick={() => setOnlyApplyText((v) => !v)}
-                aria-pressed={onlyApplyText}
-                title="Show only events that contain apply_patch anywhere"
-              >
-                {(() => { const count = (() => { try { return (loader.state.events ?? []).filter((e) => containsApplyPatchAnywhere(e as any)).length } catch { return 0 } })(); return onlyApplyText ? `apply_patch: only (${count})` : `apply_patch: any (${count})` })()}
-              </Button>
+              {/* Removed: apply_patch-anywhere content filter button */}
               <Button
                 variant="outline"
                 size="default"

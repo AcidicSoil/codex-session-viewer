@@ -1,0 +1,36 @@
+# Task ID: 65
+# Title: Sniff-then-Parse Strategy for JSONL Parser
+# Status: pending
+# Dependencies: 31
+# Priority: medium
+# Description: Add a two-phase parsing flow that samples early lines to learn wrapper keys, type aliases, and content paths, then applies a tailored normalization strategy during streaming to improve resilience to format drifts across exporters.
+# Details:
+Goals
+- Keep streaming and low memory; do not regress performance.
+- Sample first N non-empty, non-state lines (default 200) to detect:
+  - Wrapper keys: type="response_item" | "event_msg" | {record_type:"event"}, etc.
+  - Type aliases: message.created, tool_call.completed, function_call_output, agent_reasoning, etc.
+  - Content locations: payload.content[]; response.output_text[]; response.output[].content[].text.
+- Build a Strategy: { unwrapKeys, typeAliases, contentExtractors, skipKinds } and reuse during main pass.
+- Fall back to existing tolerant heuristics when Strategy is inconclusive.
+- Surface light metrics in dev builds (counts of mapped aliases, unwrapped wrappers, skipped states).
+
+Implementation
+- Add `sniffSession(blob, options)` → Strategy.
+- Route parser via `parseLineByVersion(version, line, strategy)` or optional context into validators.
+- Keep current wrapper unwrapping; Strategy only biases normalization.
+- Options: ParserOptions { enableSniff?: boolean (default true), sniffLines?: number (default 200) }.
+
+Edge Cases
+- Homogeneous v1 logs ⇒ Strategy mostly empty; minimal overhead.
+- Mixed-exporter files ⇒ Strategy aggregates hints; per-line fallback still applies.
+
+Acceptance
+- Fewer uncategorized "Other" events; more accurate Message/FunctionCall/Reasoning classification on heterogeneous logs.
+
+# Test Strategy:
+Unit tests + fixtures
+- Provide fixtures for response_item/event_msg, dotted types, content arrays, and state lines.
+- Assert Strategy detection (aliases, unwraps, extractors) and improved classification vs baseline.
+- Performance: parse time within 5% of baseline on ~2–3 MB logs.
+

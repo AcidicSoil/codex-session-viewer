@@ -51,7 +51,7 @@ export default function DiffViewer({ path, original, modified, language, height 
 
   return (
     <div className="border rounded">
-      <div className="px-2 py-1 text-xs text-gray-600 border-b bg-gray-50 flex items-center justify-between">
+      <div className="px-2 py-1 text-xs text-gray-600 border-b bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/75 sticky top-0 z-10 flex items-center justify-between">
         <span className="truncate" title={path}>{path || 'Diff'}</span>
         <div className="flex items-center gap-2">
           <label className="sr-only">Editor theme</label>

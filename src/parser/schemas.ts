@@ -11,7 +11,7 @@ export const GitInfoSchema = z.object({
 }).passthrough()
 
 export const SessionMetaSchema = z.object({
-  id: z.string().min(1, 'id required'),
+  id: z.string().min(1).optional(),
   timestamp: z.string().min(1, 'timestamp required'), // allow any ISO-like string; refine later if needed
   instructions: z.string().optional(),
   git: GitInfoSchema.optional(),

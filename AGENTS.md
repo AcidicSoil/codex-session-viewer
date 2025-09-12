@@ -1,5 +1,3 @@
-# path: AGENTS.md
-
 ## Instruction Loading Model (Extended)
 
 - **Baseline:** This file (AGENTS.md) is the canonical baseline.
@@ -452,6 +450,201 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 - Apply §A Preflight for the **current** stack and language(s).
 - Prefer official documentation and repositories resolved in §A.1.
 - If coverage is weak after **sourcebot → docfork → contex7-mcp → gitmcp**, fall back to targeted web search and record gaps.
+
+---
+
+## 6.1) Layered Execution Guides (**NEW**)
+
+Each layer defines role, task, context, reasoning, output format, and stop conditions. Use these blocks when planning and reviewing work in that layer.
+
+### Client/UI Layer — Frontend Engineer, UI Engineer, UX Designer
+
+1. **Role**
+
+   - Own user-facing components and flows.
+2. **Task**
+
+   - Draft routes and components. Specify Tailwind classes and responsive breakpoints. Define accessibility and keyboard flows. List loading, empty, and error states. Map data needs to hooks. Set performance budgets.
+3. **Context**
+
+   - Next.js app router. Tailwind. shadcn/ui allowed. Target Core Web Vitals good. WCAG 2.2 AA.
+4. **Reasoning**
+
+   - Prefer server components for data. Client components only for interactivity. Avoid prop drilling. Use context only for shared UI state. Minimize re-renders. Defer non-critical JS.
+5. **Output format**
+
+   - Markdown table: Route | Component | Type (server|client) | States | Data source | Notes.
+6. **Stop conditions**
+
+   - Any route lacks explicit states. Missing keyboard flow. CLS or LCP budget undefined. Unmapped data dependency.
+
+### Build & Tooling Layer — Frontend Build Engineer, Tooling Engineer, DevOps Engineer
+
+1. **Role**
+
+   - Maintain fast, reproducible builds and CI.
+2. **Task**
+
+   - Define bundler settings, lint, format, typecheck, unit test, and build steps. Configure CI matrix and caching. Enforce pre-commit hooks.
+3. **Context**
+
+   - Turbopack or Vite. ESLint. Prettier. Vitest. Node LTS.
+4. **Reasoning**
+
+   - Fail fast. Cache effectively. Keep steps isolated and deterministic. No network during tests unless mocked.
+5. **Output format**
+
+   - Checklist with commands, CI job matrix, cache keys, and expected durations.
+6. **Stop conditions**
+
+   - Non-deterministic builds. Unpinned tool versions. CI steps mutate global state. Missing cache strategy.
+
+### Language & Type Layer — Software Engineer, TypeScript/JavaScript Specialist
+
+1. **Role**
+
+   - Enforce language rules and type safety.
+2. **Task**
+
+   - Set `tsconfig` targets. Define strict compiler flags. Establish type patterns and utilities. Require JSDoc where types are complex.
+3. **Context**
+
+   - TypeScript strict mode. ESM. Node and browser targets as needed.
+4. **Reasoning**
+
+   - Prefer explicit types. Use generics judiciously. Model nullability. Narrow unions at boundaries.
+5. **Output format**
+
+   - `tsconfig` fragment, lint rules list, and target type coverage goals by package.
+6. **Stop conditions**
+
+   - `any` or `unknown` leaks to public APIs. Implicit `any` enabled. Type coverage goals undefined.
+
+### State & Data Layer — Frontend Engineer, State Management Specialist, Full-Stack Engineer
+
+1. **Role**
+
+   - Control state lifecycles and data fetching.
+2. **Task**
+
+   - Choose client vs server state. Define stores, selectors, and cache policy. Specify invalidation and suspense boundaries.
+3. **Context**
+
+   - React state, context, or a store. Fetch via RSC or client hooks. Cache with SWR or equivalent.
+4. **Reasoning**
+
+   - Server fetch by default. Co-locate state with consumers. Keep derived state computed. Normalize entities.
+5. **Output format**
+
+   - State inventory table: State | Scope | Source | Lifetime | Invalidation | Consumers.
+6. **Stop conditions**
+
+   - Duplicate sources of truth. Unbounded caches. Missing invalidation plan. Server-client mismatch.
+
+### API/Backend Layer — Backend Engineer, API Developer, Full-Stack Engineer
+
+1. **Role**
+
+   - Provide stable contracts for data and actions.
+2. **Task**
+
+   - Define endpoints or schema. Specify auth, pagination, filtering, errors, and idempotency. Version contracts.
+3. **Context**
+
+   - REST or GraphQL. JSON. OpenAPI or SDL.
+4. **Reasoning**
+
+   - Design for evolution. Prefer standard status codes. Use cursor pagination. Return problem details.
+5. **Output format**
+
+   - OpenAPI snippet or GraphQL SDL. Error model table and example requests.
+6. **Stop conditions**
+
+   - Breaking change without versioning. Inconsistent pagination. Ambiguous error semantics. Missing auth notes.
+
+### Database & Persistence Layer — Database Engineer, Data Engineer, Backend Engineer
+
+1. **Role**
+
+   - Safeguard data correctness and performance.
+2. **Task**
+
+   - Model schema. Choose indexes. Define migrations and retention. Set transaction boundaries.
+3. **Context**
+
+   - SQL or NoSQL. Managed service or local. Migration tool required.
+4. **Reasoning**
+
+   - Normalize until it hurts then denormalize where measured. Prefer declarative migrations. Use constraints.
+5. **Output format**
+
+   - Schema diagram or DDL. Migration plan with up and down steps. Index plan with rationale.
+6. **Stop conditions**
+
+   - Missing primary keys. Unsafe destructive migration. No rollback path. Unbounded growth.
+
+### Deployment & Hosting Layer — DevOps Engineer, Cloud Engineer, Platform Engineer
+
+1. **Role**
+
+   - Ship safely and reversibly.
+2. **Task**
+
+   - Define environments, build artifacts, release gates, and rollout strategy. Set rollback procedures.
+3. **Context**
+
+   - IaC preferred. Blue/green or canary. Artifact registry. Secrets manager.
+4. **Reasoning**
+
+   - Immutable artifacts. Promote by provenance. Automate checks before traffic shift.
+5. **Output format**
+
+   - Release plan: envs, gates, rollout, rollback steps, and metrics to watch.
+6. **Stop conditions**
+
+   - Manual pet deployments. No rollback tested. Secrets in env without manager. Drift from IaC.
+
+### Observability & Ops Layer — Site Reliability Engineer, DevOps Engineer, Monitoring Specialist
+
+1. **Role**
+
+   - Ensure reliability and rapid diagnosis.
+2. **Task**
+
+   - Define logs, metrics, traces, dashboards, SLOs, and alerts. Set runbooks.
+3. **Context**
+
+   - Centralized logging. Metrics store. Tracing. On-call rotation.
+4. **Reasoning**
+
+   - Measure user impact first. Alert on symptoms not causes. Keep noise low.
+5. **Output format**
+
+   - SLO doc. Alert rules list. Dashboard inventory with owners.
+6. **Stop conditions**
+
+   - No SLOs. Alerts without ownership. Missing runbooks. High alert noise.
+
+### Security & Auth Layer — Security Engineer, Identity and Access Management Engineer, DevOps with Security Focus
+
+1. **Role**
+
+   - Protect assets and identities.
+2. **Task**
+
+   - Define authN and authZ flows. Manage secrets. Apply threat modeling and controls.
+3. **Context**
+
+   - OAuth or OIDC. Role based access. Secret store.
+4. **Reasoning**
+
+   - Least privilege. Rotate secrets. Validate all inputs. Log security events.
+5. **Output format**
+
+   - Auth flow diagram. Permission matrix. Threat model checklist.
+6. **Stop conditions**
+
+   - Hardcoded secrets. Missing MFA for admin. Broad tokens. Unvalidated input at boundaries.
 
 ---
 

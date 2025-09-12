@@ -110,7 +110,7 @@ export function CommandsView({
           <Button variant="outline" size="default" onClick={() => { setQ(''); setExit('All'); setMinMs('') }}>Clear</Button>
           <div className="relative">
             <details className="[&_summary::-webkit-details-marker]:hidden">
-              <summary className="h-9 px-3 text-sm leading-5 rounded-md cursor-pointer select-none bg-teal-600 text-white hover:bg-teal-500">Export ▾</summary>
+              <summary className="h-9 px-3 text-sm leading-5 rounded-lg cursor-pointer select-none bg-primary text-primary-foreground hover:bg-primary/90">Export ▾</summary>
               <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border bg-white shadow">
                 <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={exportCsv}>CSV</button>
                 <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={exportJson}>JSON</button>
