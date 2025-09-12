@@ -1,4 +1,10 @@
-const LOG_ENDPOINT = (import.meta as any).env?.VITE_LOG_SERVER_URL || 'http://127.0.0.1:4317/log'
+const LOG_ENDPOINT = (
+  (import.meta as any).env?.VITE_LOG_SERVER_URL
+  || (typeof window !== 'undefined' && window.location?.protocol === 'https:'
+    ? '/log'
+    : 'http://127.0.0.1:4317/log'
+  )
+)
 
 async function postLog(payload: any) {
   try {
@@ -45,4 +51,3 @@ export function logInfo(context: string, message: string, extra?: unknown) {
     postLog({ level: 'info', context, message, extra, href: window.location?.href })
   } catch {}
 }
-

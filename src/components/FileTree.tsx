@@ -51,6 +51,48 @@ export default function FileTree({ paths, selectedPath, onSelect, className, cha
   const itemRefs = React.useRef(new Map<string, HTMLDivElement | null>())
   const changeKeys = React.useMemo(() => new Set(Object.keys(changes || {})), [changes])
   const logSet = React.useMemo(() => logDiffs ?? new Set<string>(), [logDiffs])
+  const wrapperRef = React.useRef<HTMLDivElement | null>(null)
+
+  // Ensure Preline TreeView auto-initializes in SPA mounts
+  React.useEffect(() => {
+    // Initialize Preline instance for this wrapper and clean up on unmount
+    let cleanup: (() => void) | undefined
+    try {
+      // @ts-ignore - provided by @preline/tree-view UMD
+      const API = (typeof window !== 'undefined') ? (window as any).HSTreeView : undefined
+      if (API?.autoInit) {
+        // Allow React to paint first
+        const t = setTimeout(() => {
+          try {
+            API.autoInit()
+            if (wrapperRef.current) {
+              const instWrap = API.getInstance(wrapperRef.current, true)
+              const inst = instWrap?.element
+              try { inst?.update?.() } catch {}
+              // Wire Preline click -> our expand/select behavior
+              try {
+                inst?.on?.('click', ({ data }: any) => {
+                  if (!data) return
+                  if (data.isDir) {
+                    setExpanded((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(data.path)) next.delete(data.path)
+                      else next.add(data.path)
+                      return next
+                    })
+                  } else {
+                    onSelect?.(data.path)
+                  }
+                })
+              } catch {}
+              cleanup = () => { try { inst?.destroy?.() } catch {} }
+            }
+          } catch {}
+        }, 0)
+        return () => { clearTimeout(t); try { cleanup?.() } catch {} }
+      }
+    } catch {}
+  }, [tree, onSelect])
 
   // Expand ancestors and scroll selected into view when selection changes
   React.useEffect(() => {
@@ -65,19 +107,25 @@ export default function FileTree({ paths, selectedPath, onSelect, className, cha
   }, [selectedPath])
 
   return (
-    <div className={cn('text-sm', className)}>
-      <TreeNodes
-        nodes={tree}
-        depth={0}
-        expanded={expanded}
-        setExpanded={setExpanded}
-        selectedPath={selectedPath}
-        onSelect={onSelect}
-        itemRefs={itemRefs}
-        changes={changes}
-        changeKeys={changeKeys}
-        logDiffs={logSet}
-      />
+    <div
+      ref={wrapperRef}
+      className={cn('text-sm', className)}
+      data-hs-tree-view
+    >
+      <div className="hs-tree-view [--hs-tree-view-item-indent-size:1rem]">
+        <TreeNodes
+          nodes={tree}
+          depth={0}
+          expanded={expanded}
+          setExpanded={setExpanded}
+          selectedPath={selectedPath}
+          onSelect={onSelect}
+          itemRefs={itemRefs}
+          changes={changes}
+          changeKeys={changeKeys}
+          logDiffs={logSet}
+        />
+      </div>
     </div>
   )
 }
@@ -154,30 +202,40 @@ function TreeNodes({
   return (
     <div className="select-none">
       {nodes.map((n) => (
-        <div key={n.path}>
+        <div
+          key={n.path}
+          data-hs-tree-view-item={JSON.stringify({ value: n.name, isDir: n.type === 'dir' })}
+          className="hs-tree-view-item"
+        >
           <div
             ref={(el) => itemRefs.current.set(n.path, el)}
             className={cn(
-              'flex items-center gap-1 py-0.5 px-1 rounded hover:bg-gray-50 cursor-pointer',
-              selectedPath === n.path && 'bg-indigo-50 text-indigo-700',
+              'flex items-center gap-1 py-1 px-1 rounded hover:bg-gray-50 cursor-pointer [&.selected]:bg-primary/10 [&.selected]:text-primary',
+              selectedPath === n.path && 'bg-primary/10 text-primary',
             )}
-            style={{ paddingLeft: 8 + depth * 14 }}
-            onClick={() => {
-              if (n.type === 'dir') {
-                setExpanded((prev) => {
-                  const next = new Set(prev)
-                  if (next.has(n.path)) next.delete(n.path)
-                  else next.add(n.path)
-                  return next
-                })
-              } else {
-                onSelect?.(n.path)
-              }
-            }}
+            style={{ paddingLeft: 8 + depth * 16 }}
+            aria-expanded={n.type === 'dir' ? expanded.has(n.path) : undefined}
+            role="treeitem"
           >
             {n.type === 'dir' ? (
               <>
-                <Chevron open={expanded.has(n.path)} />
+                <button
+                  type="button"
+                  className="shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setExpanded((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(n.path)) next.delete(n.path)
+                      else next.add(n.path)
+                      return next
+                    })
+                  }}
+                  title={expanded.has(n.path) ? 'Collapse' : 'Expand'}
+                  aria-label={expanded.has(n.path) ? 'Collapse' : 'Expand'}
+                >
+                  <Chevron open={expanded.has(n.path)} />
+                </button>
                 <FolderIcon />
                 <span className="font-medium">{n.name}</span>
                 <ChangeDot type={dirChangeType(n.path)} />
@@ -193,19 +251,21 @@ function TreeNodes({
               </>
             )}
           </div>
-          {n.type === 'dir' && n.children && n.children.length > 0 && expanded.has(n.path) && (
-            <TreeNodes
-              nodes={n.children}
-              depth={depth + 1}
-              expanded={expanded}
-              setExpanded={setExpanded}
-              selectedPath={selectedPath}
-              onSelect={onSelect}
-              itemRefs={itemRefs}
-              changes={changes}
-              changeKeys={changeKeys}
-              logDiffs={logDiffs}
-            />
+          {n.type === 'dir' && n.children && n.children.length > 0 && (
+            <div role="group" className={expanded.has(n.path) ? 'block' : 'hidden'}>
+              <TreeNodes
+                nodes={n.children}
+                depth={depth + 1}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                selectedPath={selectedPath}
+                onSelect={onSelect}
+                itemRefs={itemRefs}
+                changes={changes}
+                changeKeys={changeKeys}
+                logDiffs={logDiffs}
+              />
+            </div>
           )}
         </div>
       ))}

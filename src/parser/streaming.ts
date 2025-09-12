@@ -51,26 +51,63 @@ export async function* streamParseSession(
     lineNo++
     total++
 
-    if (lineNo === 1) {
-      const res = parseSessionMetaLine(line)
-      if (!res.success) {
+    // Skip empty/whitespace-only lines without counting as errors
+    if (!line || line.trim().length === 0) {
+      continue
+    }
+
+    // Skip array-style NDJSON markers ("[", "]", "],") without counting as errors
+    {
+      const t = line.trim()
+      if (t === '[' || t === ']' || t === '],') {
+        continue
+      }
+    }
+
+    // If meta has not been seen yet, try to parse it on the first real line (not necessarily line 1)
+    if (!meta) {
+      const mres = parseSessionMetaLine(line)
+      if (mres.success) {
+        meta = mres.data
+        version = pickVersion(meta)
+        yield { kind: 'meta', line: 1 as 1, meta, version }
+        continue
+      } else {
+        // Fallbacks when meta hasn't appeared yet:
+        // - Some exporters write an event first
+        // - Some write an internal state marker
+        // Try event parse; if it succeeds, synthesize a minimal meta once
+        const evTry = parseResponseItemLine(line)
+        if (evTry.success) {
+          meta = { timestamp: new Date().toISOString() } as SessionMetaParsed
+          version = pickVersion(meta)
+          yield { kind: 'meta', line: 1 as 1, meta, version }
+          // continue processing this parsed event below
+          parsed++
+          yield { kind: 'event', line: lineNo, event: evTry.data }
+          continue
+        }
+        // If it's a state marker, skip without counting as an error
+        try {
+          const obj = JSON.parse(line) as any
+          if (obj && typeof obj === 'object' && obj.record_type === 'state') {
+            continue
+          }
+        } catch {}
+        // Otherwise, record an error
         failed++
         yield {
           kind: 'error',
           error: {
             line: lineNo,
-            reason: res.reason,
-            message: res.error.message,
+            reason: mres.reason,
+            message: mres.error.message,
             raw: line,
           },
         }
         if (failed >= maxErrors) break
-      } else {
-        meta = res.data
-        version = pickVersion(meta)
-        yield { kind: 'meta', line: 1, meta, version }
+        continue
       }
-      continue
     }
 
     // Skip internal state records produced by some session exporters
@@ -78,7 +115,8 @@ export async function* streamParseSession(
     try {
       if (line.trim().startsWith('{')) {
         const obj = JSON.parse(line) as any
-        if (obj && typeof obj === 'object' && obj.record_type === 'state') {
+        const rt = (obj?.record_type ?? obj?.recordType ?? obj?.kind)
+        if (obj && typeof obj === 'object' && typeof rt === 'string' && String(rt).toLowerCase() === 'state') {
           // do not count as parsed or failed; just skip showing in timeline
           continue
         }

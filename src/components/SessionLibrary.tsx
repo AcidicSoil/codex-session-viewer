@@ -5,9 +5,10 @@ import { Button } from './ui/button'
 
 interface Props {
   loader: ReturnType<typeof useFileLoader>
+  onWillLoad?: () => void
 }
 
-export default function SessionLibrary({ loader }: Props) {
+export default function SessionLibrary({ loader, onWillLoad }: Props) {
   const [sessions, setSessions] = React.useState<SessionRecord[]>([])
   const [name, setName] = React.useState('')
   const [error, setError] = React.useState<string | null>(null)
@@ -34,6 +35,7 @@ export default function SessionLibrary({ loader }: Props) {
   }
 
   async function handleLoad(id: string) {
+    try { onWillLoad?.() } catch {}
     await loader.loadSession(id)
   }
 

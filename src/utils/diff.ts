@@ -26,7 +26,15 @@ export function parseUnifiedDiffToSides(diff: string): { original: string; modif
       }
       continue
     }
-    if (!inHunk) continue
+    // If we haven't seen a formal hunk header yet but the diff consists of raw
+    // context/added/removed lines, start treating subsequent lines as a hunk.
+    if (!inHunk) {
+      if (line.startsWith(' ') || line.startsWith('+') || line.startsWith('-') || line === '') {
+        inHunk = true
+      } else {
+        continue
+      }
+    }
     if (line.startsWith(' ')) {
       const content = line.slice(1)
       orig.push(content)

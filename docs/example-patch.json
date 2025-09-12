@@ -1,5 +1,0 @@
-{
-  "type": "FunctionCall",
-  "name": "shell",
-  "args": "{\"command\":[\"apply_patch\",\"*** Begin Patch\\n*** Update File: src/export/columns.ts\\n@@\\n-export function resolveColumns(selectedKeys?: string[]) {\\n+export function resolveColumns(selectedKeys?: string[]): ColumnMeta[] {\\n   const keys = selectedKeys && selectedKeys.length ? selectedKeys : DEFAULT_COLUMN_KEYS\\n   const byKey = Object.fromEntries(COLUMN_CATALOG.map((c) => [c.key, c])) as Record<string, ColumnMeta>\\n-  return keys.map((k) => byKey[k]).filter(Boolean)\\n+  return keys\\n+    .map((k) => byKey[k])\\n+    .filter((c): c is ColumnMeta => Boolean(c))\\n }\\n*** End Patch\"]}"
-}

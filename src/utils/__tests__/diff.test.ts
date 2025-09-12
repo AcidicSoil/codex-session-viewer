@@ -11,6 +11,21 @@ describe('diff utilities', () => {
     expect(modified).toContain('line5-new')
   })
 
+  it('parses headerless and hunkless diffs with +/-/space lines', () => {
+    const diff = [
+      ' line1',
+      '-line2',
+      '+line2-mod',
+      ' line3',
+      '',
+    ].join('\n')
+    const { original, modified } = parseUnifiedDiffToSides(diff)
+    expect(original).toContain('line2')
+    expect(modified).toContain('line2-mod')
+    expect(original).toContain('line1')
+    expect(modified).toContain('line1')
+  })
+
   it('detects binary and large diffs', () => {
     expect(analyzeText('\u0000abc').binary).toBe(true)
     expect(analyzeDiff('a'.repeat(600000)).large).toBe(true)

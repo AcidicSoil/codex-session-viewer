@@ -53,7 +53,8 @@ export function useFileLoader() {
   const start = useCallback(async (file: File) => {
     dispatch({ type: 'start' })
     try {
-      for await (const item of streamParseSession(file, { maxErrors: 100 })) {
+      // Use default (no hard cap) to avoid aborting large files with noisy lines
+      for await (const item of streamParseSession(file)) {
         if (item.kind === 'meta') dispatch({ type: 'meta', meta: item.meta })
         else if (item.kind === 'event') dispatch({ type: 'event', event: item.event })
         else if (item.kind === 'error') dispatch({ type: 'fail', error: item.error })
