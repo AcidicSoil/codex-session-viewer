@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeMonacoTheme } from '../DiffViewer'
+import { computeMonacoTheme } from '../DiffView'
 
 describe('computeMonacoTheme', () => {
   it('respects explicit overrides', () => {

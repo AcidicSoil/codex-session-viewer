@@ -1,7 +1,7 @@
 import type { ResponseItemParsed } from '../parser'
 
 // Produce a minimal unified diff for a single-file, single-hunk edit so the
-// DiffViewer can reconstruct original/modified sides meaningfully.
+// DiffView can reconstruct original/modified sides meaningfully.
 function makeUnifiedDiff(path: string, i: number): string {
   // Keep the first line unchanged (context), modify the second line.
   // The parser only relies on line prefixes (" ", "+", "-") and the

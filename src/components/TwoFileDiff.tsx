@@ -1,5 +1,5 @@
 import * as React from 'react'
-import DiffViewer from './DiffViewer'
+import DiffView from './DiffView'
 
 export default function TwoFileDiff() {
   const [a, setA] = React.useState<string>('')
@@ -26,7 +26,7 @@ export default function TwoFileDiff() {
         </label>
       </div>
       {(a !== '' || b !== '') && (
-        <DiffViewer
+        <DiffView
           path={nameB || nameA || 'untitled'}
           original={a}
           modified={b}
