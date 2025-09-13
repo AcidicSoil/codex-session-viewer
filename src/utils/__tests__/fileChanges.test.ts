@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getFileHistory } from '../fileChanges'
+import { getFileHistory, analyzeFileChanges } from '../fileChanges'
 import type { ResponseItem } from '../../types/events'
 
 describe('getFileHistory', () => {
@@ -14,6 +14,36 @@ describe('getFileHistory', () => {
     expect(hist).toHaveLength(2)
     expect(hist[0]!.diff).toBe('diff1')
     expect(hist[1]!.diff).toBe('diff3')
+  })
+})
+
+describe('analyzeFileChanges', () => {
+  it('maps file changes and apply_patch call outputs', () => {
+    const events: ResponseItem[] = [
+      {
+        type: 'FunctionCall',
+        name: 'shell',
+        args: JSON.stringify({ command: ['apply_patch', '...'] }),
+        result: { output: 'Success. Updated the following files:\nA src/a.ts\nM src/b.ts\n' },
+        call_id: 'c1',
+      },
+      { type: 'FileChange', path: 'src/a.ts', diff: 'd1' },
+      { type: 'FileChange', path: 'src/b.ts', diff: 'd2' },
+      {
+        type: 'FunctionCall',
+        name: 'shell',
+        args: JSON.stringify({ command: ['apply_patch', '...'] }),
+        result: { output: 'Success. Updated the following files:\nM src/a.ts\n' },
+        call_id: 'c2',
+      },
+      { type: 'FileChange', path: 'src/a.ts', diff: 'd3' },
+    ] as any
+
+    const res = analyzeFileChanges(events)
+    expect(res.files.get('src/a.ts')?.length).toBe(2)
+    expect(res.files.get('src/b.ts')?.length).toBe(1)
+    expect(res.callToFiles.get('c1')).toEqual(['src/a.ts', 'src/b.ts'])
+    expect(res.callToFiles.get('c2')).toEqual(['src/a.ts'])
   })
 })
 
