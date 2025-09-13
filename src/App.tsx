@@ -925,7 +925,9 @@ function AppInner() {
           <p className="text-sm text-gray-500">Select or drop a .jsonl file to preview lines.</p>
         )}
       </CollapsibleCard>
-      <MetadataPanel meta={loader.state.meta} />
+      <CollapsibleCard title="Metadata" defaultOpen>
+        <MetadataPanel meta={loader.state.meta} />
+      </CollapsibleCard>
       {/* Session Library visible on welcome screen */}
       {(!loader.state.events || loader.state.events.length === 0) && (
         <CollapsibleCard title="Session Library" defaultOpen>
