@@ -1,0 +1,95 @@
+# /instructions/roles/role_registry.yaml
+version: 1
+roles:
+  - id: frontend_engineer
+    title: Frontend Engineer
+    description: Owns user-facing components and flows.
+    lifecycle: [UI/UX, Frontend, Build/CI]
+    primary_tech:
+      languages: [TypeScript]
+      frameworks: [Next.js, Tailwind]
+      tools: [ESLint, Prettier, Vitest]
+    default_globs: ["app/**", "src/components/**", "src/app/**", "pages/**"]
+    deliverables:
+      - "Route/Component maps with states"
+      - "Accessibility checklist (WCAG 2.2 AA)"
+      - "Perf budgets (Core Web Vitals)"
+  - id: backend_engineer
+    title: Backend Engineer
+    description: Provides stable data and action contracts.
+    lifecycle: [Backend, Data/DB, Security]
+    primary_tech:
+      languages: [TypeScript, Python]
+      frameworks: [Fastify, FastAPI]
+      tools: [OpenAPI, Pytest, Jest]
+    default_globs: ["src/server/**", "services/**", "api/**"]
+    deliverables:
+      - "OpenAPI contract + handler skeletons"
+      - "Error model + pagination strategy"
+  - id: data_engineer
+    title: Data Engineer
+    description: Models schemas, pipelines, and data contracts.
+    lifecycle: [Data/DB, Observability, Security]
+    primary_tech:
+      languages: [Python, SQL]
+      frameworks: [dbt]
+      tools: [Alembic, Great Expectations]
+    default_globs: ["db/**", "migrations/**", "models/**"]
+    deliverables:
+      - "DDL/migrations, retention, index plan"
+  - id: devops_engineer
+    title: DevOps/Platform Engineer
+    description: Ships safely and reversibly.
+    lifecycle: [Tooling, Build/CI, Infra/Cloud, Security, Observability]
+    primary_tech:
+      languages: [HCL, YAML]
+      frameworks: [Terraform, GitHub Actions]
+      tools: [Docker, OpenTelemetry, Prometheus, Grafana]
+    default_globs: [".github/workflows/**", "infra/**", "ops/**"]
+    deliverables:
+      - "CI matrix, cache strategy"
+      - "Release plan and rollback"
+  - id: sre
+    title: Site Reliability Engineer
+    description: Ensures reliability and rapid diagnosis.
+    lifecycle: [Observability, Security, Maintenance]
+    primary_tech:
+      languages: [YAML, JSON]
+      frameworks: []
+      tools: [Prometheus, Grafana, OpenTelemetry]
+    default_globs: ["observability/**", "dashboards/**", "alerts/**"]
+    deliverables:
+      - "SLO doc, alert rules, runbook"
+  - id: security_engineer
+    title: Security Engineer
+    description: Protects assets and identities.
+    lifecycle: [Security]
+    primary_tech:
+      languages: [TypeScript, Python]
+      frameworks: [OPA/Rego]
+      tools: [OWASP ASVS, OIDC/OAuth2]
+    default_globs: ["security/**", "policies/**"]
+    deliverables:
+      - "Threat model, RBAC matrix, auth notes"
+  - id: mobile_engineer
+    title: Mobile Engineer
+    description: Ships iOS/Android features and UI flows.
+    lifecycle: [UI/UX, Frontend, Build/CI]
+    primary_tech:
+      languages: [Swift, Kotlin, TypeScript]
+      frameworks: [SwiftUI, Jetpack, React Native]
+      tools: ["Xcode", "Gradle", "Metro"]
+    default_globs: ["ios/**", "android/**", "mobile/**", "app/**"]
+    deliverables:
+      - "Navigation map, accessibility, perf budgets"
+  - id: ml_engineer
+    title: ML Engineer
+    description: Trains/serves models; sets contracts and monitoring.
+    lifecycle: [Data/DB, Backend, Observability, Security]
+    primary_tech:
+      languages: [Python]
+      frameworks: [PyTorch, TensorFlow, FastAPI]
+      tools: [Model Card, OpenTelemetry]
+    default_globs: ["ml/**", "models/**", "serving/**"]
+    deliverables:
+      - "Model card, inference API, drift alerts"
