@@ -32,9 +32,13 @@ export function toMarkdown(meta: ParsedSession['meta'] | undefined, events: read
     const anyEv = ev as any
     lines.push('', `### ${idx + 1}. ${anyEv.type}${anyEv.at ? ` — ${anyEv.at}` : ''}`)
     switch (ev.type) {
-      case 'Message':
-        lines.push(`- role: ${ev.role}`, '```', ev.content, '```')
+      case 'Message': {
+        const content = typeof ev.content === 'string'
+          ? ev.content
+          : ev.content.map((p) => ('text' in p ? String((p as any).text) : '')).join('\n')
+        lines.push(`- role: ${ev.role}`, '```', content, '```')
         break
+      }
       case 'Reasoning':
         lines.push('```', ev.content, '```')
         break
@@ -135,10 +139,14 @@ export function toHtml(meta: ParsedSession['meta'] | undefined, events: readonly
     const at = anyEv.at ? ` — ${esc(String(anyEv.at))}` : ''
     lines.push(`<div class="event"><h3>${idx + 1}. ${esc(anyEv.type)}${at}</h3>`) 
     switch (ev.type) {
-      case 'Message':
+      case 'Message': {
+        const content = typeof ev.content === 'string'
+          ? ev.content
+          : ev.content.map((p) => ('text' in p ? String((p as any).text) : '')).join('\n')
         lines.push(`<div><span class="badge">${esc(ev.role)}</span>${ev.model ? `<span class="badge">${esc(ev.model)}</span>` : ''}</div>`)
-        lines.push(pre(ev.content))
+        lines.push(pre(content))
         break
+      }
       case 'Reasoning':
         lines.push(pre(ev.content))
         break

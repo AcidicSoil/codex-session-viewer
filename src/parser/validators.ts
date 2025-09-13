@@ -1,5 +1,6 @@
 import { z, ZodError } from 'zod'
 import { SessionMetaSchema, ResponseItemSchema, type SessionMetaParsed, type ResponseItemParsed } from './schemas'
+import type { MessagePart } from '../types/events'
 
 export type ParseFailureReason = 'invalid_json' | 'invalid_schema'
 
@@ -153,9 +154,12 @@ function toCamel<T extends Record<string, any>>(obj: T): T {
   return out as T
 }
 
-function flattenContent(content: unknown): string | undefined {
+function flattenContent(content: unknown, preserveArray = false): string | MessagePart[] | undefined {
   if (typeof content === 'string') return content
   if (Array.isArray(content)) {
+    if (preserveArray && content.every((b) => b && typeof b === 'object' && 'type' in (b as any) && 'text' in (b as any))) {
+      return content as MessagePart[]
+    }
     const parts: string[] = []
     for (const b of content) {
       if (b && typeof b === 'object' && 'text' in (b as any)) parts.push(String((b as any).text))
@@ -184,7 +188,7 @@ function extractMessageFromResponse(resp: any): string | undefined {
       const content = (seg && typeof seg === 'object' && Array.isArray((seg as any).content)) ? (seg as any).content : null
       if (content) {
         const text = flattenContent(content)
-        if (text) parts.push(text)
+        if (typeof text === 'string' && text) parts.push(text)
       }
     }
     if (parts.length) return parts.join('\n')
@@ -224,13 +228,13 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
       return { type: 'Reasoning', content, id: base.id, at: base.at, index: base.index }
     }
     case 'agent_message': {
-      const content = flattenContent((base as any).message ?? (base as any).text ?? (base as any).content)
+      const content = flattenContent((base as any).message ?? (base as any).text ?? (base as any).content, true)
       if (content == null) return null
       const model = typeof (base as any).model === 'string' ? (base as any).model : undefined
       return { type: 'Message', role: 'assistant', content, model, id: base.id, at: base.at, index: base.index }
     }
     case 'summary_text': {
-      const content = flattenContent((base as any).text ?? (base as any).content)
+      const content = flattenContent((base as any).text ?? (base as any).content, true)
       if (content == null) return null
       return { type: 'Message', role: 'assistant', content, id: base.id, at: base.at, index: base.index }
     }
@@ -260,7 +264,7 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
     }
     case 'message': {
       const role = typeof base.role === 'string' ? base.role : 'assistant'
-      const content = flattenContent((base as any).content) ?? extractMessageFromResponse((base as any).response)
+      const content = flattenContent((base as any).content, true) ?? extractMessageFromResponse((base as any).response)
       if (content == null) return null
       const model = typeof (base as any).model === 'string' ? (base as any).model : undefined
       return { type: 'Message', role, content, model, id: base.id, at: base.at, index: base.index }
@@ -272,7 +276,7 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
     case 'user':
     case 'system': {
       const role = t === 'assistant_message' || t === 'assistant' ? 'assistant' : t === 'user_message' || t === 'user' ? 'user' : 'system'
-      const content = flattenContent((base as any).content ?? (base as any).text ?? (base as any).message)
+      const content = flattenContent((base as any).content ?? (base as any).text ?? (base as any).message, true)
       if (content == null) return null
       const model = typeof (base as any).model === 'string' ? (base as any).model : undefined
       return { type: 'Message', role, content, model, id: base.id, at: base.at, index: base.index }
@@ -373,7 +377,7 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
     }
     // Message by role + content-ish
     if (typeof (base as any).role === 'string' && ((base as any).content != null || (base as any).text != null)) {
-      const content = flattenContent((base as any).content ?? (base as any).text)
+      const content = flattenContent((base as any).content ?? (base as any).text, true)
       if (content != null) return { type: 'Message', role: String((base as any).role), content, id: base.id, at: base.at, index: base.index }
     }
   } catch {}

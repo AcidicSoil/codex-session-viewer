@@ -7,7 +7,10 @@ export function normalize(q: string) {
 export function eventText(ev: ResponseItem): string {
   switch (ev.type) {
     case 'Message':
-      return [ev.role, ev.model || '', ev.content || ''].join('\n')
+      const msg = typeof ev.content === 'string'
+        ? ev.content
+        : ev.content.map((p) => ('text' in p ? String((p as any).text) : '')).join('\n')
+      return [ev.role, ev.model || '', msg].join('\n')
     case 'Reasoning':
       return ev.content || ''
     case 'LocalShellCall':

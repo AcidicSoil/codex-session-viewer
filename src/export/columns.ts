@@ -18,7 +18,11 @@ export const COLUMN_CATALOG: ColumnMeta[] = [
   { key: 'path', label: 'path', type: 'string', extractor: (ev: any) => ev.path },
   { key: 'command', label: 'command', type: 'string', extractor: (ev: any) => ev.command },
   { key: 'name', label: 'name', type: 'string', extractor: (ev: any) => ev.name },
-  { key: 'content', label: 'content', type: 'string', extractor: (ev: any) => (typeof ev.content === 'string' ? ev.content : undefined) },
+  { key: 'content', label: 'content', type: 'string', extractor: (ev: any) => (typeof ev.content === 'string'
+      ? ev.content
+      : Array.isArray(ev.content)
+        ? ev.content.map((p: any) => ('text' in p ? String(p.text) : '')).join('\n')
+        : undefined) },
   { key: 'diff', label: 'diff', type: 'string', extractor: (ev: any) => (typeof ev.diff === 'string' ? ev.diff : undefined) },
   { key: 'args', label: 'args', type: 'json', extractor: (ev: any) => ev.args },
   { key: 'result', label: 'result', type: 'json', extractor: (ev: any) => ev.result },

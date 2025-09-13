@@ -41,6 +41,9 @@ function Highlight({ text, query }: { text: string; query?: string }) {
 }
 
 function MessageEventView({ item, highlight }: { item: Extract<ResponseItem, { type: 'Message' }> ; highlight?: string }) {
+  const text = typeof item.content === 'string'
+    ? item.content
+    : item.content.map((p) => ('text' in p ? String((p as any).text) : '')).join('\n')
   return (
     <div className="space-y-2">
       <div className="text-xs text-gray-500 flex flex-wrap gap-2 items-center">
@@ -48,7 +51,7 @@ function MessageEventView({ item, highlight }: { item: Extract<ResponseItem, { t
         {item.model && <span className="text-gray-400">{item.model}</span>}
       </div>
       <pre className="whitespace-pre-wrap break-words text-sm bg-gray-50 rounded p-2 max-h-64 overflow-auto">
-        <Highlight text={item.content} query={highlight} />
+        <Highlight text={text} query={highlight} />
       </pre>
     </div>
   )

@@ -8,12 +8,21 @@ export interface BaseEvent {
 }
 
 /**
+ * Segment of a structured message content array.
+ */
+export interface MessagePart {
+  readonly type: string
+  readonly text: string
+  readonly [key: string]: unknown
+}
+
+/**
  * Message emitted by user/assistant/system.
  */
 export interface MessageEvent extends BaseEvent {
   readonly type: 'Message'
   readonly role: 'user' | 'assistant' | 'system' | string
-  readonly content: string
+  readonly content: string | ReadonlyArray<MessagePart>
   readonly model?: string
 }
 

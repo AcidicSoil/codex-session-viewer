@@ -18,7 +18,11 @@ export const defaultCsvFields: CsvField[] = [
   {
     key: 'content',
     label: 'content',
-    extractor: (ev: any) => (typeof ev.content === 'string' ? ev.content : undefined),
+    extractor: (ev: any) => (typeof ev.content === 'string'
+      ? ev.content
+      : Array.isArray(ev.content)
+        ? ev.content.map((p: any) => ('text' in p ? String(p.text) : '')).join('\n')
+        : undefined),
   },
   {
     key: 'diff',
