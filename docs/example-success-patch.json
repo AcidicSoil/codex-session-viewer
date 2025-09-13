@@ -1,0 +1,8 @@
+{
+  "type": "FunctionCall",
+  "name": "function",
+  "args": "{}",
+  "result": {
+    "metadata": { "exit_code": 0 }
+  }
+}

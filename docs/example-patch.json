@@ -1,0 +1,5 @@
+{
+  "type": "FunctionCall",
+  "name": "shell",
+  "args": "{\"command\":[\"apply_patch\",\"*** Begin Patch\\n*** Update File: src/export/columns.ts\\n@@\\n-export function toColumns(data: any[]): any[] {\\n-  return data\\n-}\\n+export function toColumns(data: any[]): ColumnMeta[] {\\n+  return data as ColumnMeta[]\\n+}\\n*** End Patch\\n\"]}"
+}
