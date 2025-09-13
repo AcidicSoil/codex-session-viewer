@@ -8,7 +8,6 @@ import DropZone from './components/DropZone'
 import MetadataPanel from './components/MetadataPanel'
 import Timeline from './components/Timeline'
 import CommandsView from './components/CommandsView'
-import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import CollapsibleCard from './components/ui/collapsible-card'
 import { Badge } from './components/ui/badge'
 import { ScrollArea } from './components/ui/scroll-area'
@@ -1025,9 +1024,7 @@ function AppInner() {
       )}
 
       {loader.state.events && loader.state.events.length > 0 && (
-        <Card key={`timeline-${sessionKey}`}>
-          <CardHeader>
-            <CardTitle>Timeline</CardTitle>
+        <CollapsibleCard key={`timeline-${sessionKey}`} title="Timeline" defaultOpen>
             {/* Sticky toolbar to keep controls visible while scrolling the page */}
             <div className="mt-2 flex flex-wrap items-center gap-2 sticky top-0 z-20 bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 border-b border-gray-800 py-2 px-1 -mx-1">
               <ErrorBoundary name="Toolbar">
@@ -1306,8 +1303,6 @@ function AppInner() {
                 </div>
               )
             })()}
-          </CardHeader>
-          <CardContent>
             <ScrollArea className="h-[60vh] md:h-[70vh]" viewportClassName="overflow-visible">
               {(() => {
                 let full: { ev: any; key: string; absIndex: number }[] = []
@@ -1347,8 +1342,7 @@ function AppInner() {
                 )
               })()}
             </ScrollArea>
-          </CardContent>
-        </Card>
+        </CollapsibleCard>
       )}
     </BackgroundBeams>
   )
