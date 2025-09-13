@@ -237,18 +237,22 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
     case 'tool_call':
     case 'functioncall':
     case 'function_call': {
+      const callId = asString((base as any).call_id) ?? asString((base as any).callId)
       return {
         type: 'FunctionCall',
         name: asString((base as any).tool) ?? asString((base as any).name) ?? 'tool',
         args: (base as any).args ?? (base as any).arguments,
         result: (base as any).output ?? (base as any).result,
-        id: base.id, at: base.at, index: base.index,
+        id: callId ?? base.id,
+        call_id: callId,
+        at: base.at, index: base.index,
       }
     }
     case 'tool_call_output':
     case 'function_call_output':
     case 'tool_result': {
       const name = asString((base as any).tool) ?? asString((base as any).name) ?? 'tool'
+      const callId = asString((base as any).call_id) ?? asString((base as any).callId)
       const raw = asString((base as any).output ?? (base as any).result)
       const parsed = tryParseJsonText(raw)
       // If parsed is array of {text}, join into string for readability
@@ -256,7 +260,7 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
       if (Array.isArray(parsed) && parsed.every((x) => x && typeof x === 'object' && 'text' in (x as any))) {
         result = (parsed as any[]).map((x) => (x as any).text).join('\n')
       }
-      return { type: 'FunctionCall', name, result, id: base.id, at: base.at, index: base.index }
+      return { type: 'FunctionCall', name, result, id: callId ?? base.id, call_id: callId, at: base.at, index: base.index }
     }
     case 'message': {
       const role = typeof base.role === 'string' ? base.role : 'assistant'
@@ -369,7 +373,17 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
     }
     // Generic function call by toolName/name + (args|result|output)
     if ((typeof (base as any).toolName === 'string' || typeof (base as any).name === 'string') && ((base as any).args != null || (base as any).result != null || (base as any).output != null)) {
-      return { type: 'FunctionCall', name: asString((base as any).toolName) ?? asString((base as any).name) ?? 'tool', args: (base as any).args, result: (base as any).result ?? (base as any).output, id: base.id, at: base.at, index: base.index }
+      const callId = asString((base as any).call_id) ?? asString((base as any).callId)
+      return {
+        type: 'FunctionCall',
+        name: asString((base as any).toolName) ?? asString((base as any).name) ?? 'tool',
+        args: (base as any).args,
+        result: (base as any).result ?? (base as any).output,
+        id: callId ?? base.id,
+        call_id: callId,
+        at: base.at,
+        index: base.index,
+      }
     }
     // Message by role + content-ish
     if (typeof (base as any).role === 'string' && ((base as any).content != null || (base as any).text != null)) {
