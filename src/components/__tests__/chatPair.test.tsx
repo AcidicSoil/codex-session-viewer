@@ -18,5 +18,34 @@ describe('ChatPair', () => {
     root.unmount()
     document.body.removeChild(container)
   })
+
+  it('renders messages from parts array', () => {
+    const user: ResponseItem = {
+      type: 'Message',
+      role: 'user',
+      content: [{ type: 'text', text: 'hi' }],
+    }
+    const assistant: ResponseItem = {
+      type: 'Message',
+      role: 'assistant',
+      content: [
+        { type: 'text', text: 'hello' },
+        { type: 'text', text: ' world' },
+      ],
+    }
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    root.render(
+      <ChatPair
+        user={user as any}
+        assistant={assistant as any}
+      />
+    )
+    expect(container.textContent).toContain('hi')
+    expect(container.textContent).toContain('hello world')
+    root.unmount()
+    document.body.removeChild(container)
+  })
 })
 
