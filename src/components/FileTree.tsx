@@ -40,16 +40,19 @@ export interface FileTreeProps {
   onSelect?: (path: string) => void
   className?: string
   // Map of path -> change type ('added' | 'modified' | 'deleted')
+  changedFiles?: Readonly<Record<string, 'added' | 'modified' | 'deleted'>>
+  /** @deprecated use changedFiles */
   changes?: Readonly<Record<string, 'added' | 'modified' | 'deleted'>>
   // Set of paths that have session log diffs
   logDiffs?: ReadonlySet<string>
 }
 
-export default function FileTree({ paths, selectedPath, onSelect, className, changes, logDiffs }: FileTreeProps) {
+export default function FileTree({ paths, selectedPath, onSelect, className, changedFiles, changes, logDiffs }: FileTreeProps) {
   const tree = React.useMemo(() => buildFileTree(Array.from(new Set(paths))), [paths])
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
   const itemRefs = React.useRef(new Map<string, HTMLDivElement | null>())
-  const changeKeys = React.useMemo(() => new Set(Object.keys(changes || {})), [changes])
+  const changeMap = changedFiles ?? changes
+  const changeKeys = React.useMemo(() => new Set(Object.keys(changeMap || {})), [changeMap])
   const logSet = React.useMemo(() => logDiffs ?? new Set<string>(), [logDiffs])
   const wrapperRef = React.useRef<HTMLDivElement | null>(null)
 
@@ -121,7 +124,7 @@ export default function FileTree({ paths, selectedPath, onSelect, className, cha
           selectedPath={selectedPath}
           onSelect={onSelect}
           itemRefs={itemRefs}
-          changes={changes}
+          changes={changeMap}
           changeKeys={changeKeys}
           logDiffs={logSet}
         />
@@ -171,16 +174,63 @@ function TreeNodes({
     return undefined
   }
 
-  function ChangeDot({ type }: { type?: 'added' | 'modified' | 'deleted' }) {
+  function ChangeIcon({ type }: { type?: 'added' | 'modified' | 'deleted' }) {
     if (!type) return null
-    const color = type === 'added' ? 'bg-green-600' : type === 'deleted' ? 'bg-red-600' : 'bg-amber-600'
-    const label = type
+    const color =
+      type === 'added'
+        ? 'text-green-600'
+        : type === 'deleted'
+          ? 'text-red-600'
+          : 'text-amber-600'
+    const common = 'ml-1 h-3 w-3'
+    if (type === 'added') {
+      return (
+        <svg
+          className={`${common} ${color}`}
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-label="added"
+        >
+          <title>added</title>
+          <path d="M10 4v12M4 10h12" />
+        </svg>
+      )
+    }
+    if (type === 'deleted') {
+      return (
+        <svg
+          className={`${common} ${color}`}
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-label="deleted"
+        >
+          <title>deleted</title>
+          <path d="M4 10h12" />
+        </svg>
+      )
+    }
     return (
-      <span
-        className={`ml-1 inline-block h-2 w-2 rounded-full ${color}`}
-        title={label}
-        aria-label={label}
-      />
+      <svg
+        className={`${common} ${color}`}
+        viewBox="0 0 20 20"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-label="modified"
+      >
+        <title>modified</title>
+        <path d="M4 13v3h3l9-9-3-3-9 9z" />
+      </svg>
     )
   }
 
@@ -238,7 +288,7 @@ function TreeNodes({
                 </button>
                 <FolderIcon />
                 <span className="font-medium">{n.name}</span>
-                <ChangeDot type={dirChangeType(n.path)} />
+                <ChangeIcon type={dirChangeType(n.path)} />
                 <LogToast show={dirHasLogDiff(n.path)} />
               </>
             ) : (
@@ -246,7 +296,7 @@ function TreeNodes({
                 <span className="w-3" />
                 <FileIcon />
                 <span className="truncate">{n.name}</span>
-                <ChangeDot type={changes?.[n.path]} />
+                <ChangeIcon type={changes?.[n.path]} />
                 <LogToast show={logDiffs.has(n.path)} />
               </>
             )}
