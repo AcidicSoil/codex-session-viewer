@@ -27,4 +27,14 @@ describe('validators', () => {
     expect(bad.success).toBe(false)
     if (!bad.success) expect(bad.reason).toBe('invalid_schema')
   })
+
+  it('parses function_call events with arguments field', () => {
+    const line = JSON.stringify({ type: 'function_call', name: 'sum', arguments: { a: 1, b: 2 } })
+    const res = parseResponseItemLine(line)
+    expect(res.success).toBe(true)
+    if (res.success) {
+      expect(res.data.type).toBe('FunctionCall')
+      expect(res.data.args).toEqual({ a: 1, b: 2 })
+    }
+  })
 })

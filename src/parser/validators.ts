@@ -240,7 +240,7 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
       return {
         type: 'FunctionCall',
         name: asString((base as any).tool) ?? asString((base as any).name) ?? 'tool',
-        args: (base as any).args,
+        args: (base as any).args ?? (base as any).arguments,
         result: (base as any).output ?? (base as any).result,
         id: base.id, at: base.at, index: base.index,
       }
