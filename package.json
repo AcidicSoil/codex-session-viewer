@@ -8,7 +8,6 @@
   },
   "types": "dist/element.d.ts",
   "scripts": {
-    "install": "npm run build",
     "dev": "vite",
     "log:server": "node tools/log-server.mjs",
     "build": "vite build && tsc -p tsconfig.element.json",
