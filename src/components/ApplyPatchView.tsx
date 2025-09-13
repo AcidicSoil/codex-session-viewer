@@ -13,7 +13,10 @@ export interface ApplyPatchViewProps {
 }
 
 export default function ApplyPatchView({ item, pairedResultMeta }: ApplyPatchViewProps) {
-  const patchText = React.useMemo(() => extractApplyPatchText(item.args), [item.args])
+  const patchText = React.useMemo(
+    () => extractApplyPatchText(item.args) ?? extractApplyPatchText((item as any).result),
+    [item.args, (item as any).result]
+  )
 
   if (!patchText) {
     return (

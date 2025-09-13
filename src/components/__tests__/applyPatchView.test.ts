@@ -11,6 +11,15 @@ function makeEventWithPatch(patch: string) {
   } as any
 }
 
+function makeEventWithPatchInResult(patch: string) {
+  return {
+    type: 'FunctionCall',
+    name: 'shell',
+    args: '{}',
+    result: { output: patch },
+  } as any
+}
+
 describe('ApplyPatchView (SSR snapshot)', () => {
   it('renders header and raw toggle for a simple update patch', () => {
     const patch = [
@@ -29,5 +38,20 @@ describe('ApplyPatchView (SSR snapshot)', () => {
     expect(html).toContain('apply_patch')
     // should include file name button or label
     expect(html).toContain('a.txt')
+  })
+
+  it('renders diff when patch text is in result.output', () => {
+    const patch = [
+      '*** Begin Patch',
+      '*** Update File: b.txt',
+      '@@',
+      '-foo',
+      '+baz',
+      '*** End Patch',
+      '',
+    ].join('\n')
+    const item = makeEventWithPatchInResult(patch)
+    const html = renderToString(React.createElement(ApplyPatchView, { item }))
+    expect(html).toContain('b.txt')
   })
 })

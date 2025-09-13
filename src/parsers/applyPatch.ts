@@ -10,18 +10,36 @@ export interface ParsedPatchOp {
   unifiedDiff: string
 }
 
-/** Try to extract the raw patch text from a FunctionCall.args payload. */
-export function extractApplyPatchText(args: unknown): string | null {
+/** Try to extract the raw patch text from args or result-like payloads. */
+export function extractApplyPatchText(payload: unknown): string | null {
   try {
-    let obj: any = args as any
+    let obj: any = payload as any
     if (obj == null) return null
-    // Many sessions serialize args as a JSON string
+    // Many sessions serialize payloads as a JSON string
     if (typeof obj === 'string') {
-      obj = JSON.parse(obj)
+      try {
+        obj = JSON.parse(obj)
+      } catch {
+        return obj.includes('*** Begin Patch') ? obj : null
+      }
     }
     if (obj && Array.isArray(obj.command) && obj.command[0] === 'apply_patch') {
       const patch = obj.command[1]
-      return typeof patch === 'string' ? patch : null
+      if (typeof patch === 'string') return patch
+    }
+    const visited = new Set<any>()
+    const stack = [obj]
+    while (stack.length) {
+      const cur = stack.pop()
+      if (cur == null || visited.has(cur)) continue
+      visited.add(cur)
+      if (typeof cur === 'string') {
+        if (cur.includes('*** Begin Patch')) return cur
+        continue
+      }
+      if (typeof cur === 'object') {
+        for (const v of Object.values(cur)) stack.push(v)
+      }
     }
     return null
   } catch {
