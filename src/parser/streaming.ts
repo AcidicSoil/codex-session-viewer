@@ -151,8 +151,43 @@ export async function* streamParseSession(
             yield { kind: 'event', line: lineNo, event: ev }
           } else if (ev.args === undefined && pendingCalls.has(callId)) {
             const prev = pendingCalls.get(callId)!
-            prev.result = ev.result
-            if (ev.durationMs !== undefined) prev.durationMs = ev.durationMs
+            if (prev.type === 'LocalShellCall' && ev.result && typeof ev.result === 'object') {
+              const r = ev.result as any
+              if (typeof r.stdout === 'string') (prev as any).stdout = r.stdout
+              if (typeof r.stderr === 'string') (prev as any).stderr = r.stderr
+              if (typeof r.exitCode === 'number') (prev as any).exitCode = r.exitCode
+              else if (typeof r.exit_code === 'number') (prev as any).exitCode = r.exit_code
+              if (typeof r.durationMs === 'number') (prev as any).durationMs = r.durationMs
+              else if (typeof r.duration_ms === 'number') (prev as any).durationMs = r.duration_ms
+              delete (prev as any).result
+            } else {
+              ;(prev as any).result = ev.result
+              if (ev.durationMs !== undefined) (prev as any).durationMs = ev.durationMs
+            }
+            pendingCalls.delete(callId)
+          } else {
+            parsed++
+            yield { kind: 'event', line: lineNo, event: ev }
+          }
+        } else {
+          parsed++
+          yield { kind: 'event', line: lineNo, event: ev }
+        }
+      } else if (ev.type === 'LocalShellCall') {
+        const callId = (ev as any).call_id as string | undefined
+        const hasOutput =
+          ev.stdout !== undefined ||
+          ev.stderr !== undefined ||
+          ev.exitCode !== undefined ||
+          ev.durationMs !== undefined
+        if (callId) {
+          if (!hasOutput) {
+            pendingCalls.set(callId, ev)
+            parsed++
+            yield { kind: 'event', line: lineNo, event: ev }
+          } else if (pendingCalls.has(callId)) {
+            const prev = pendingCalls.get(callId)!
+            Object.assign(prev, ev)
             pendingCalls.delete(callId)
           } else {
             parsed++
