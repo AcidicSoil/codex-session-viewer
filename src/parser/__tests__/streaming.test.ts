@@ -39,4 +39,16 @@ describe('streaming parser', () => {
     expect(res.errors.length).toBe(0)
     expect(res.stats?.totalLines).toBe(3)
   })
+
+  it('merges function_call_output into prior FunctionCall by call_id', async () => {
+    const call = JSON.stringify({ type: 'function_call', call_id: 'c1', name: 'tool', args: { x: 1 } })
+    const out = JSON.stringify({ type: 'function_call_output', call_id: 'c1', output: '"done"' })
+    const blob = makeBlob([meta, call, out])
+    const res = await parseSessionToArrays(blob)
+    expect(res.events.length).toBe(1)
+    const evt = res.events[0] as any
+    expect(evt.type).toBe('FunctionCall')
+    expect(evt.args).toEqual({ x: 1 })
+    expect(evt.result).toBe('done')
+  })
 })

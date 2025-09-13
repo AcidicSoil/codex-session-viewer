@@ -46,6 +46,8 @@ export async function* streamParseSession(
   let meta: SessionMetaParsed | undefined
   let version: string | number = 1
 
+  const pendingCalls = new Map<string, ResponseItemParsed>()
+
   let lineNo = 0
   for await (const line of streamTextLines(blob)) {
     lineNo++
@@ -139,8 +141,31 @@ export async function* streamParseSession(
       }
       if (failed >= maxErrors) break
     } else {
-      parsed++
-      yield { kind: 'event', line: lineNo, event: res.data }
+      const ev = res.data
+      if (ev.type === 'FunctionCall') {
+        const callId = (ev as any).call_id as string | undefined
+        if (callId) {
+          if (ev.result === undefined) {
+            pendingCalls.set(callId, ev)
+            parsed++
+            yield { kind: 'event', line: lineNo, event: ev }
+          } else if (ev.args === undefined && pendingCalls.has(callId)) {
+            const prev = pendingCalls.get(callId)!
+            prev.result = ev.result
+            if (ev.durationMs !== undefined) prev.durationMs = ev.durationMs
+            pendingCalls.delete(callId)
+          } else {
+            parsed++
+            yield { kind: 'event', line: lineNo, event: ev }
+          }
+        } else {
+          parsed++
+          yield { kind: 'event', line: lineNo, event: ev }
+        }
+      } else {
+        parsed++
+        yield { kind: 'event', line: lineNo, event: ev }
+      }
     }
   }
 
