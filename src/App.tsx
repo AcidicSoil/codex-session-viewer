@@ -20,6 +20,9 @@ import { useBookmarks } from './state/bookmarks'
 import { Button } from './components/ui/button'
 import { eventKey } from './utils/eventKey'
 import { parseHash, updateHash } from './utils/hashState'
+import { Sparkles } from './components/ui/sparkles'
+import { BackgroundBeams } from './components/ui/background-beams'
+import GithubGlobeModal from './components/GithubGlobeModal'
 import { startFileSystemScanFromHandle } from './utils/fs-scanner'
 import { listHashes, getSetting, setSetting, deleteSetting } from './utils/session-db'
 import { buildChangeSet, type ChangeSet } from './scanner/diffIndex'
@@ -103,6 +106,7 @@ function AppInner() {
   const loader = useFileLoader()
   const { has, keys, clear } = useBookmarks()
   const [showBookmarksOnly, setShowBookmarksOnly] = useState(false)
+  const [showGlobe, setShowGlobe] = useState(false)
   const hydratingRef = useRef(true)
   const [selectedFile, setSelectedFile] = useState<string | undefined>(undefined)
   const [activeDiff, setActiveDiff] = useState<
@@ -148,6 +152,15 @@ function AppInner() {
   const [sessionKey, setSessionKey] = useState(0)
   const applyPatchCount = React.useMemo(() => {
     try { return (loader.state.events ?? []).filter((e: any) => isApplyPatchFunction(e)).length } catch { return 0 }
+  }, [loader.state.events])
+  const fileChanges = React.useMemo(() => {
+    try {
+      return (loader.state.events ?? [])
+        .filter((e: any) => e.type === 'FileChange' && e.path)
+        .map((e: any) => e.path as string)
+    } catch {
+      return []
+    }
   }, [loader.state.events])
 
   function resetUIForNewSession() {
@@ -592,8 +605,18 @@ function AppInner() {
   }, [selectedFile, loader.state.events, workspace])
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Codex Session Viewer</h1>
+    <BackgroundBeams className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <Sparkles>
+        <h1 className="text-2xl font-semibold">Codex Session Viewer</h1>
+      </Sparkles>
+      {fileChanges.length > 0 && (
+        <>
+          <Button variant="outline" size="sm" onClick={() => setShowGlobe(true)}>
+            View changes
+          </Button>
+          <GithubGlobeModal open={showGlobe} onClose={() => setShowGlobe(false)} files={fileChanges} />
+        </>
+      )}
       {/* Appearance drawer with color picker */}
       <ThemeDrawer />
 
@@ -1365,6 +1388,6 @@ function AppInner() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </BackgroundBeams>
   )
 }

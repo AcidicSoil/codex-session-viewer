@@ -24,6 +24,7 @@
     "@preline/accordion": "^2.5.0",
     "@preline/file-upload": "^2.5.0",
     "@preline/tree-view": "^2.5.0",
+    "aceternity-ui": "^0.2.2",
     "idb": "^7.1.1",
     "monaco-editor": "^0.49.0",
     "react": "^18.3.1",
