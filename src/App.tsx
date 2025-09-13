@@ -924,109 +924,6 @@ function AppInner() {
           <p className="text-sm text-gray-500">Select or drop a .jsonl file to preview lines.</p>
         )}
       </CollapsibleCard>
-      <CollapsibleCard title="Metadata" defaultOpen>
-        <MetadataPanel meta={loader.state.meta} />
-      </CollapsibleCard>
-      {/* Session Library visible on welcome screen */}
-      {(!loader.state.events || loader.state.events.length === 0) && (
-        <CollapsibleCard title="Session Library" defaultOpen>
-          <ErrorBoundary name="SessionLibrary">
-            <SessionLibrary loader={loader} onWillLoad={resetUIForNewSession} />
-          </ErrorBoundary>
-        </CollapsibleCard>
-      )}
-
-      {(!loader.state.events || loader.state.events.length === 0) && (
-        <CollapsibleCard title="Two‑File Diff" defaultOpen>
-          <ErrorBoundary name="TwoFileDiff">
-            <TwoFileDiff />
-          </ErrorBoundary>
-        </CollapsibleCard>
-      )}
-
-      {(
-        (showFileTree && ((workspaceFiles.length > 0) || (loader.state.events && loader.state.events.length > 0) || projectFiles.length > 0))
-        || Boolean(selectedFile)
-      ) && (
-        <CollapsibleCard title="Files" defaultOpen>
-            <div key={`files-${sessionKey}`} className="grid grid-cols-1 md:grid-cols-12 gap-3">
-              {showFileTree && (
-                <div className="md:col-span-4">
-                  <div className="border rounded h-[30vh] md:h-[60vh] overflow-auto">
-                    <FileTree
-                      key={`tree-${sessionKey}`}
-                      paths={(() => {
-                        // Prefer actual workspace file list when available
-                        if (workspace && workspaceFiles.length > 0) return workspaceFiles
-                        const eventPaths = (loader.state.events ?? [])
-                          .filter((ev) => (ev as any).type === 'FileChange')
-                          .map((ev) => (ev as any).path as string)
-                        const all = new Set<string>(eventPaths)
-                        for (const p of projectFiles) all.add(p)
-                        return Array.from(all)
-                      })()}
-                      selectedPath={selectedFile}
-                      onSelect={(p) => setSelectedFile(p)}
-                      changedFiles={changeMap}
-                      logDiffs={logMismatchSet}
-                    />
-                  </div>
-                </div>
-              )}
-              <div className={showFileTree ? "md:col-span-8" : "md:col-span-12"}>
-                {selectedFile && (
-                  <div className="border rounded p-2 h-[30vh] md:h-[60vh] overflow-auto">
-                    <FilePreview
-                      key={`preview-${sessionKey}-${selectedFile}`}
-                      path={selectedFile}
-                      events={loader.state.events as any}
-                      onOpenDiff={({ path, diff }) => {
-                        if (!diff) {
-                          setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
-                          return
-                        }
-                        const { original, modified } = parseUnifiedDiffToSides(diff)
-                        setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-        </CollapsibleCard>
-      )}
-
-      {loader.state.events && loader.state.events.length > 0 && (
-        <CollapsibleCard title="Commands" defaultOpen>
-          <CommandsView
-            key={`cmds-${sessionKey}`}
-            events={loader.state.events as any}
-            onJumpToIndex={(idx) => {
-              setScrollToIndex(idx)
-            }}
-          />
-        </CollapsibleCard>
-      )}
-
-      {loader.state.events && loader.state.events.length > 0 && (
-        activeDiff && (
-          <CollapsibleCard
-            title="Diff Viewer"
-            headerRight={<Button variant="outline" size="sm" onClick={() => setActiveDiff(undefined)}>Close</Button>}
-            defaultOpen
-          >
-            <DiffView
-              key={`diff-${sessionKey}-${activeDiff?.path ?? ''}`}
-              path={activeDiff.path}
-              original={activeDiff.original}
-              modified={activeDiff.modified}
-              language={activeDiff.language}
-              height={"60vh"}
-            />
-          </CollapsibleCard>
-        )
-      )}
-
       {loader.state.events && loader.state.events.length > 0 && (
         <CollapsibleCard key={`timeline-${sessionKey}`} title="Timeline" defaultOpen>
             {/* Sticky toolbar to keep controls visible while scrolling the page */}
@@ -1348,6 +1245,109 @@ function AppInner() {
             </ScrollArea>
         </CollapsibleCard>
       )}
+      <CollapsibleCard title="Metadata" defaultOpen>
+        <MetadataPanel meta={loader.state.meta} />
+      </CollapsibleCard>
+      {/* Session Library visible on welcome screen */}
+      {(!loader.state.events || loader.state.events.length === 0) && (
+        <CollapsibleCard title="Session Library" defaultOpen>
+          <ErrorBoundary name="SessionLibrary">
+            <SessionLibrary loader={loader} onWillLoad={resetUIForNewSession} />
+          </ErrorBoundary>
+        </CollapsibleCard>
+      )}
+
+      {(!loader.state.events || loader.state.events.length === 0) && (
+        <CollapsibleCard title="Two‑File Diff" defaultOpen>
+          <ErrorBoundary name="TwoFileDiff">
+            <TwoFileDiff />
+          </ErrorBoundary>
+        </CollapsibleCard>
+      )}
+
+      {(
+        (showFileTree && ((workspaceFiles.length > 0) || (loader.state.events && loader.state.events.length > 0) || projectFiles.length > 0))
+        || Boolean(selectedFile)
+      ) && (
+        <CollapsibleCard title="Files" defaultOpen>
+            <div key={`files-${sessionKey}`} className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              {showFileTree && (
+                <div className="md:col-span-4">
+                  <div className="border rounded h-[30vh] md:h-[60vh] overflow-auto">
+                    <FileTree
+                      key={`tree-${sessionKey}`}
+                      paths={(() => {
+                        // Prefer actual workspace file list when available
+                        if (workspace && workspaceFiles.length > 0) return workspaceFiles
+                        const eventPaths = (loader.state.events ?? [])
+                          .filter((ev) => (ev as any).type === 'FileChange')
+                          .map((ev) => (ev as any).path as string)
+                        const all = new Set<string>(eventPaths)
+                        for (const p of projectFiles) all.add(p)
+                        return Array.from(all)
+                      })()}
+                      selectedPath={selectedFile}
+                      onSelect={(p) => setSelectedFile(p)}
+                      changedFiles={changeMap}
+                      logDiffs={logMismatchSet}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className={showFileTree ? "md:col-span-8" : "md:col-span-12"}>
+                {selectedFile && (
+                  <div className="border rounded p-2 h-[30vh] md:h-[60vh] overflow-auto">
+                    <FilePreview
+                      key={`preview-${sessionKey}-${selectedFile}`}
+                      path={selectedFile}
+                      events={loader.state.events as any}
+                      onOpenDiff={({ path, diff }) => {
+                        if (!diff) {
+                          setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
+                          return
+                        }
+                        const { original, modified } = parseUnifiedDiffToSides(diff)
+                        setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+        </CollapsibleCard>
+      )}
+
+      {loader.state.events && loader.state.events.length > 0 && (
+        <CollapsibleCard title="Commands" defaultOpen>
+          <CommandsView
+            key={`cmds-${sessionKey}`}
+            events={loader.state.events as any}
+            onJumpToIndex={(idx) => {
+              setScrollToIndex(idx)
+            }}
+          />
+        </CollapsibleCard>
+      )}
+
+      {loader.state.events && loader.state.events.length > 0 && (
+        activeDiff && (
+          <CollapsibleCard
+            title="Diff Viewer"
+            headerRight={<Button variant="outline" size="sm" onClick={() => setActiveDiff(undefined)}>Close</Button>}
+            defaultOpen
+          >
+            <DiffView
+              key={`diff-${sessionKey}-${activeDiff?.path ?? ''}`}
+              path={activeDiff.path}
+              original={activeDiff.original}
+              modified={activeDiff.modified}
+              language={activeDiff.language}
+              height={"60vh"}
+            />
+          </CollapsibleCard>
+        )
+      )}
+
     </BackgroundBeams>
   )
 }
