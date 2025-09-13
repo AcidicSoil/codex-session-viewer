@@ -93,6 +93,7 @@ function AppInner() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('All')
   const [roleFilter, setRoleFilter] = useState<'All' | 'user' | 'assistant' | 'system'>('All')
   const [scrollToIndex, setScrollToIndex] = useState<number | null>(null)
+  const commandIndexMapRef = React.useRef<Map<number, number>>(new Map())
   const [showOther, setShowOther] = useState(false)
   // Dynamic FunctionCall name filter (e.g., 'shell', 'web.run', plus special 'apply_patch')
   const [fnFilter, setFnFilter] = useState<string[]>([])
@@ -136,6 +137,13 @@ function AppInner() {
       return []
     }
   }, [loader.state.events])
+
+  useEffect(() => {
+    if (scrollToIndex != null) {
+      const t = setTimeout(() => setScrollToIndex(null), 0)
+      return () => clearTimeout(t)
+    }
+  }, [scrollToIndex])
 
   function resetUIForNewSession() {
     try { clear() } catch {}
@@ -1216,6 +1224,10 @@ function AppInner() {
 
                 let filtered = full
                 try { filtered = getFilteredItems(full) } catch (e) { console.warn('getFilteredItems failed', e); filtered = full }
+                commandIndexMapRef.current = new Map()
+                filtered.forEach((it, idx) => {
+                  try { if ((it.ev as any).type === 'LocalShellCall') commandIndexMapRef.current.set(it.absIndex, idx) } catch {}
+                })
                 return (
                   <ErrorBoundary name="Timeline">
                     <Timeline
@@ -1323,7 +1335,8 @@ function AppInner() {
             key={`cmds-${sessionKey}`}
             events={loader.state.events as any}
             onJumpToIndex={(idx) => {
-              setScrollToIndex(idx)
+              const mapped = commandIndexMapRef.current.get(idx)
+              if (mapped != null) setScrollToIndex(mapped)
             }}
           />
         </CollapsibleCard>
