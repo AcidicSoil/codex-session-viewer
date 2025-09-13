@@ -8,6 +8,10 @@ import { useBookmarks } from '../state/bookmarks'
 import { eventKey as computeEventKey } from '../utils/eventKey'
 import { containsApplyPatchAnywhere } from '../utils/applyPatchHints'
 import ApplyPatchView from './ApplyPatchView'
+import DiffView from './DiffView'
+import { parseUnifiedDiffToSides } from '../utils/diff'
+import { parseApplyPatch, extractApplyPatchFromCommand } from '../parsers/applyPatch'
+import { getLanguageForPath } from '../utils/language'
 
 function formatAt(at?: string | number) {
   if (!at) return undefined
@@ -56,6 +60,9 @@ function MessageEventView({ item, highlight }: { item: Extract<ResponseItem, { t
 }
 
 function LocalShellCallView({ item, highlight }: { item: Extract<ResponseItem, { type: 'LocalShellCall' }>; highlight?: string }) {
+  const patchText = React.useMemo(() => extractApplyPatchFromCommand(item.command), [item.command])
+  const patchOps = React.useMemo(() => (patchText ? parseApplyPatch(patchText) : []), [patchText])
+
   return (
     <div className="space-y-2">
       <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
@@ -82,6 +89,29 @@ function LocalShellCallView({ item, highlight }: { item: Extract<ResponseItem, {
           <pre className="text-xs bg-red-50 rounded p-2 max-h-48 overflow-auto whitespace-pre-wrap">
             <Highlight text={item.stderr} query={highlight} />
           </pre>
+        </div>
+      )}
+
+      {patchOps.length > 0 && (
+        <div className="space-y-2">
+          <Badge variant="secondary">apply_patch</Badge>
+          {patchOps.map((op, i) => {
+            const sides = parseUnifiedDiffToSides(op.unifiedDiff)
+            return (
+              <div key={i} className="space-y-1">
+                <div className="text-xs text-gray-500 flex items-center gap-2">
+                  <Badge variant="outline">{op.op}</Badge>
+                  <code className="bg-gray-100 px-1.5 py-0.5 rounded">{op.path}</code>
+                </div>
+                <DiffView
+                  path={op.path}
+                  original={sides.original}
+                  modified={sides.modified}
+                  language={getLanguageForPath(op.path)}
+                />
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
