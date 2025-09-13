@@ -237,12 +237,49 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
     case 'tool_call':
     case 'functioncall':
     case 'function_call': {
+      const name = asString((base as any).tool) ?? asString((base as any).name) ?? 'tool'
+      const rawArgs = (base as any).args ?? (base as any).arguments
+      const rawResult = (base as any).output ?? (base as any).result
+      if (name.toLowerCase() === 'shell') {
+        let argsObj = typeof rawArgs === 'string' ? tryParseJsonText(rawArgs) : rawArgs
+        if (!isRecord(argsObj)) argsObj = {}
+        let resultObj = typeof rawResult === 'string' ? tryParseJsonText(rawResult) : rawResult
+        if (!isRecord(resultObj)) resultObj = {}
+        const exitCode =
+          typeof (resultObj as any).exitCode === 'number'
+            ? (resultObj as any).exitCode
+            : typeof (resultObj as any).code === 'number'
+              ? (resultObj as any).code
+              : typeof (resultObj as any).exit_code === 'number'
+                ? (resultObj as any).exit_code
+                : undefined
+        const durationMs =
+          typeof (resultObj as any).durationMs === 'number'
+            ? (resultObj as any).durationMs
+            : typeof (resultObj as any).duration_ms === 'number'
+              ? (resultObj as any).duration_ms
+              : undefined
+        return {
+          type: 'LocalShellCall',
+          command: String((argsObj as any).command ?? (argsObj as any).cmd ?? ''),
+          cwd: asString((argsObj as any).cwd),
+          exitCode,
+          stdout: asString((resultObj as any).stdout ?? (resultObj as any).out),
+          stderr: asString((resultObj as any).stderr ?? (resultObj as any).error),
+          durationMs,
+          id: base.id,
+          at: base.at,
+          index: base.index,
+        }
+      }
       return {
         type: 'FunctionCall',
-        name: asString((base as any).tool) ?? asString((base as any).name) ?? 'tool',
-        args: (base as any).args,
-        result: (base as any).output ?? (base as any).result,
-        id: base.id, at: base.at, index: base.index,
+        name,
+        args: rawArgs,
+        result: rawResult,
+        id: base.id,
+        at: base.at,
+        index: base.index,
       }
     }
     case 'tool_call_output':

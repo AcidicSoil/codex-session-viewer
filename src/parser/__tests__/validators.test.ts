@@ -27,4 +27,24 @@ describe('validators', () => {
     expect(bad.success).toBe(false)
     if (!bad.success) expect(bad.reason).toBe('invalid_schema')
   })
+
+  it('converts shell function call to LocalShellCall and parses output', () => {
+    const line = JSON.stringify({
+      type: 'FunctionCall',
+      name: 'shell',
+      args: JSON.stringify({ command: 'echo 1', cwd: '/tmp' }),
+      result: JSON.stringify({ stdout: '1', stderr: '', exitCode: 0, durationMs: 5 }),
+    })
+    const res = parseResponseItemLine(line)
+    expect(res.success).toBe(true)
+    if (res.success) {
+      expect(res.data.type).toBe('LocalShellCall')
+      expect(res.data.command).toBe('echo 1')
+      expect(res.data.cwd).toBe('/tmp')
+      expect(res.data.stdout).toBe('1')
+      expect(res.data.stderr).toBe('')
+      expect(res.data.exitCode).toBe(0)
+      expect(res.data.durationMs).toBe(5)
+    }
+  })
 })
