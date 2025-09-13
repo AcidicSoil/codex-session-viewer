@@ -968,7 +968,7 @@ function AppInner() {
                       })()}
                       selectedPath={selectedFile}
                       onSelect={(p) => setSelectedFile(p)}
-                      changes={changeMap}
+                      changedFiles={changeMap}
                       logDiffs={logMismatchSet}
                     />
                   </div>
