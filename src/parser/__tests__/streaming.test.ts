@@ -51,4 +51,25 @@ describe('streaming parser', () => {
     expect(evt.args).toEqual({ x: 1 })
     expect(evt.result).toBe('done')
   })
+
+  it('merges LocalShellCall output into prior event by call_id', async () => {
+    const call = JSON.stringify({
+      type: 'function_call',
+      name: 'shell',
+      call_id: 'c1',
+      arguments: '{"command":"echo 1"}',
+    })
+    const out = JSON.stringify({
+      type: 'function_call_output',
+      call_id: 'c1',
+      output: '{"stdout":"1","stderr":"","exit_code":0}',
+    })
+    const blob = makeBlob([meta, call, out])
+    const res = await parseSessionToArrays(blob)
+    expect(res.events.length).toBe(1)
+    const evt = res.events[0] as any
+    expect(evt.type).toBe('LocalShellCall')
+    expect(evt.stdout).toBe('1')
+    expect(evt.exitCode).toBe(0)
+  })
 })
