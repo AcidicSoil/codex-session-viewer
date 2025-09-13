@@ -251,14 +251,33 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
     case 'functioncall':
     case 'function_call': {
       const callId = asString((base as any).call_id) ?? asString((base as any).callId)
+      const name = asString((base as any).tool) ?? asString((base as any).name) ?? 'tool'
+      // Special-case: a "shell" function call represents a local shell command.
+      if (name === 'shell') {
+        const argsRaw = (base as any).arguments ?? (base as any).args
+        const parsed = typeof argsRaw === 'string' ? tryParseJsonText(argsRaw) : argsRaw
+        const argObj = isRecord(parsed) ? parsed : undefined
+        const command = asString(argObj?.command) ?? ''
+        const cwd = asString(argObj?.cwd)
+        return {
+          type: 'LocalShellCall',
+          command,
+          cwd,
+          id: callId ?? base.id,
+          call_id: callId,
+          at: base.at,
+          index: base.index,
+        }
+      }
       return {
         type: 'FunctionCall',
-        name: asString((base as any).tool) ?? asString((base as any).name) ?? 'tool',
+        name,
         args: (base as any).args ?? (base as any).arguments,
         result: (base as any).output ?? (base as any).result,
         id: callId ?? base.id,
         call_id: callId,
-        at: base.at, index: base.index,
+        at: base.at,
+        index: base.index,
       }
     }
     case 'tool_call_output':
@@ -266,7 +285,36 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
     case 'tool_result': {
       const name = asString((base as any).tool) ?? asString((base as any).name) ?? 'tool'
       const callId = asString((base as any).call_id) ?? asString((base as any).callId)
-      const raw = asString((base as any).output ?? (base as any).result)
+      const rawVal = (base as any).output ?? (base as any).result
+      // Shell tools typically return JSON with stdout/stderr/exit codes
+      if (name === 'shell') {
+        const parsed = typeof rawVal === 'string' ? tryParseJsonText(rawVal) : rawVal
+        const out = isRecord(parsed) ? parsed : { stdout: parsed }
+        const exitCode = typeof (out as any).exitCode === 'number'
+          ? (out as any).exitCode
+          : typeof (out as any).exit_code === 'number'
+          ? (out as any).exit_code
+          : undefined
+        const durationMs = typeof (out as any).durationMs === 'number'
+          ? (out as any).durationMs
+          : typeof (out as any).duration_ms === 'number'
+          ? (out as any).duration_ms
+          : undefined
+        return {
+          type: 'LocalShellCall',
+          command: asString((out as any).command) ?? '',
+          cwd: asString((out as any).cwd),
+          stdout: asString((out as any).stdout),
+          stderr: asString((out as any).stderr),
+          exitCode,
+          durationMs,
+          id: callId ?? base.id,
+          call_id: callId,
+          at: base.at,
+          index: base.index,
+        }
+      }
+      const raw = asString(rawVal)
       const parsed = tryParseJsonText(raw)
       // If parsed is array of {text}, join into string for readability
       let result: unknown = parsed

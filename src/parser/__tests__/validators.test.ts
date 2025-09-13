@@ -28,6 +28,7 @@ describe('validators', () => {
     if (!bad.success) expect(bad.reason).toBe('invalid_schema')
   })
 
+  // Generic function calls remain FunctionCall events
   it('parses function_call events with arguments field', () => {
     const line = JSON.stringify({ type: 'function_call', name: 'sum', arguments: { a: 1, b: 2 } })
     const res = parseResponseItemLine(line)
@@ -35,6 +36,31 @@ describe('validators', () => {
     if (res.success) {
       expect(res.data.type).toBe('FunctionCall')
       expect(res.data.args).toEqual({ a: 1, b: 2 })
+    }
+  })
+
+  // A function_call named "shell" is transformed into a LocalShellCall
+  it('converts shell function_call to LocalShellCall', () => {
+    const line = JSON.stringify({ type: 'function_call', name: 'shell', arguments: '{"command":"echo hi","cwd":"/tmp"}' })
+    const res = parseResponseItemLine(line)
+    expect(res.success).toBe(true)
+    if (res.success) {
+      expect(res.data.type).toBe('LocalShellCall')
+      expect(res.data.command).toBe('echo hi')
+      expect(res.data.cwd).toBe('/tmp')
+    }
+  })
+
+  // Corresponding output events are also mapped to LocalShellCall with stdout/stderr
+  it('parses shell function_call_output with stdout/stderr', () => {
+    const line = JSON.stringify({ type: 'function_call_output', name: 'shell', output: '{"stdout":"ok","stderr":"err","exit_code":1}' })
+    const res = parseResponseItemLine(line)
+    expect(res.success).toBe(true)
+    if (res.success) {
+      expect(res.data.type).toBe('LocalShellCall')
+      expect(res.data.stdout).toBe('ok')
+      expect(res.data.stderr).toBe('err')
+      expect(res.data.exitCode).toBe(1)
     }
   })
 })
