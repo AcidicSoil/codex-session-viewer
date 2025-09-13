@@ -10,7 +10,7 @@ import { containsApplyPatchAnywhere } from '../utils/applyPatchHints'
 import ApplyPatchView from './ApplyPatchView'
 import DiffView from './DiffView'
 import { parseUnifiedDiffToSides } from '../utils/diff'
-import { parseApplyPatch, extractApplyPatchFromCommand } from '../parsers/applyPatch'
+import { parseApplyPatch, extractApplyPatchFromCommand, extractApplyPatchText } from '../parsers/applyPatch'
 import { getLanguageForPath } from '../utils/language'
 
 function formatAt(at?: string | number) {
@@ -188,16 +188,17 @@ function JsonBlock({ value, maxChars = 4000 }: { value: unknown; maxChars?: numb
 }
 
 function FunctionCallView({ item }: { item: Extract<ResponseItem, { type: 'FunctionCall' }> }) {
-  const isApplyPatch = item.name === 'shell' && typeof (item as any).args !== 'undefined' && (() => {
-    try {
-      const a: any = (item as any).args
-      const parsed = typeof a === 'string' ? JSON.parse(a) : a
-      return parsed && Array.isArray(parsed.command) && parsed.command[0] === 'apply_patch'
-    } catch { return false }
-  })()
+  const patchText =
+    extractApplyPatchText(item.args) ?? extractApplyPatchText((item as any).result)
+  const isApplyPatch = item.name === 'shell' && !!patchText
 
   if (isApplyPatch) {
-    return <ApplyPatchView item={item} pairedResultMeta={(arguments as any)[0]?.applyPatchResultMeta ?? undefined} />
+    return (
+      <ApplyPatchView
+        item={item}
+        pairedResultMeta={(arguments as any)[0]?.applyPatchResultMeta ?? undefined}
+      />
+    )
   }
 
   return (

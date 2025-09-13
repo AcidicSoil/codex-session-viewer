@@ -15,6 +15,13 @@ describe('applyPatch parser', () => {
     expect(patchText.includes('*** Update File: src/export/columns.ts')).toBe(true)
   })
 
+  it('extracts patch text from result.output field', () => {
+    const patch = ['*** Begin Patch', '*** Update File: a.txt', '@@', '-foo', '+bar', '*** End Patch', ''].join('\n')
+    const res = { output: patch }
+    const extracted = extractApplyPatchText(res)
+    expect(extracted?.trim()).toBe(patch.trim())
+  })
+
   it('extracts patch text from shell command here-doc', () => {
     const raw = fs.readFileSync('docs/example-patch.json', 'utf8')
     const event = JSON.parse(raw)
