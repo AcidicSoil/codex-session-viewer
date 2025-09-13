@@ -996,13 +996,15 @@ function AppInner() {
       )}
 
       {loader.state.events && loader.state.events.length > 0 && (
-        <CommandsView
-          key={`cmds-${sessionKey}`}
-          events={loader.state.events as any}
-          onJumpToIndex={(idx) => {
-            setScrollToIndex(idx)
-          }}
-        />
+        <CollapsibleCard title="Commands" defaultOpen>
+          <CommandsView
+            key={`cmds-${sessionKey}`}
+            events={loader.state.events as any}
+            onJumpToIndex={(idx) => {
+              setScrollToIndex(idx)
+            }}
+          />
+        </CollapsibleCard>
       )}
 
       {loader.state.events && loader.state.events.length > 0 && (
