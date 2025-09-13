@@ -3,6 +3,14 @@ import { parseSessionMetaLine, parseResponseItemLine } from '../../parser/valida
 
 const metaOk = JSON.stringify({ id: 's1', timestamp: '2025-01-01T00:00:00Z', version: 1 })
 const msgOk = JSON.stringify({ type: 'Message', role: 'user', content: 'hi' })
+const msgArrOk = JSON.stringify({
+  type: 'Message',
+  role: 'user',
+  content: [
+    { type: 'text', text: 'hello' },
+    { type: 'text', text: 'world' },
+  ],
+})
 
 describe('validators', () => {
   it('parses valid meta', () => {
@@ -26,6 +34,25 @@ describe('validators', () => {
     const bad = parseResponseItemLine(JSON.stringify({ type: 'Message', role: 'user' }))
     expect(bad.success).toBe(false)
     if (!bad.success) expect(bad.reason).toBe('invalid_schema')
+  })
+
+  it('parses message content as string or array', () => {
+    const strRes = parseResponseItemLine(msgOk)
+    expect(strRes.success).toBe(true)
+    if (strRes.success) {
+      expect(strRes.data.type).toBe('Message')
+      expect(strRes.data.content).toBe('hi')
+    }
+
+    const arrRes = parseResponseItemLine(msgArrOk)
+    expect(arrRes.success).toBe(true)
+    if (arrRes.success) {
+      expect(arrRes.data.type).toBe('Message')
+      expect(arrRes.data.content).toEqual([
+        { type: 'text', text: 'hello' },
+        { type: 'text', text: 'world' },
+      ])
+    }
   })
 
   // Generic function calls remain FunctionCall events

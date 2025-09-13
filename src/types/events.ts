@@ -8,12 +8,21 @@ export interface BaseEvent {
 }
 
 /**
+ * Structured segments that make up a message. Currently only plain text parts
+ * are supported, but the shape is future proof for richer content.
+ */
+export interface MessagePart {
+  readonly type: 'text'
+  readonly text: string
+}
+
+/**
  * Message emitted by user/assistant/system.
  */
 export interface MessageEvent extends BaseEvent {
   readonly type: 'Message'
   readonly role: 'user' | 'assistant' | 'system' | string
-  readonly content: string
+  readonly content: string | ReadonlyArray<MessagePart>
   readonly model?: string
 }
 

@@ -1,7 +1,12 @@
 import type { ParsedSession } from '../types/session'
 import type { ResponseItem } from '../types'
+import type { MessagePart } from '../types/events'
 import { downloadText } from './download'
 import { toCSV } from '../export/csv'
+
+function asText(content: string | ReadonlyArray<MessagePart>): string {
+  return Array.isArray(content) ? content.map((p) => p.text).join('\n') : (content as string)
+}
 
 export function toJson(meta: ParsedSession['meta'] | undefined, events: readonly ResponseItem[]) {
   return JSON.stringify({ meta, events }, null, 2)
@@ -33,7 +38,7 @@ export function toMarkdown(meta: ParsedSession['meta'] | undefined, events: read
     lines.push('', `### ${idx + 1}. ${anyEv.type}${anyEv.at ? ` — ${anyEv.at}` : ''}`)
     switch (ev.type) {
       case 'Message':
-        lines.push(`- role: ${ev.role}`, '```', ev.content, '```')
+        lines.push(`- role: ${ev.role}`, '```', asText(ev.content), '```')
         break
       case 'Reasoning':
         lines.push('```', ev.content, '```')
@@ -137,7 +142,7 @@ export function toHtml(meta: ParsedSession['meta'] | undefined, events: readonly
     switch (ev.type) {
       case 'Message':
         lines.push(`<div><span class="badge">${esc(ev.role)}</span>${ev.model ? `<span class="badge">${esc(ev.model)}</span>` : ''}</div>`)
-        lines.push(pre(ev.content))
+        lines.push(pre(asText(ev.content)))
         break
       case 'Reasoning':
         lines.push(pre(ev.content))

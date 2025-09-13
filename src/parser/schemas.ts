@@ -25,10 +25,15 @@ const BaseEvent = z.object({
   index: z.number().int().optional(),
 }).passthrough()
 
+const MessagePartSchema = z.object({
+  type: z.literal('text'),
+  text: z.string(),
+}).passthrough()
+
 const MessageEventSchema = BaseEvent.extend({
   type: z.literal('Message'),
   role: z.string(),
-  content: z.string(),
+  content: z.union([z.string(), z.array(MessagePartSchema)]),
   model: z.string().optional(),
 })
 

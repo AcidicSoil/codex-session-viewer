@@ -72,7 +72,9 @@ describe('foreign wrappers and blanks', () => {
     if (r.success) {
       expect((r.data as any).type).toBe('Message')
       expect((r.data as any).role).toBe('user')
-      expect((r.data as any).content).toContain('hello world')
+      expect((r.data as any).content).toEqual([
+        { type: 'text', text: 'hello world' },
+      ])
     }
   })
 
