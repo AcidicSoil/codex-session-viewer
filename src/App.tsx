@@ -6,9 +6,8 @@ import { useFileLoader } from './hooks/useFileLoader'
 import FileInputButton from './components/FileInputButton'
 import DropZone from './components/DropZone'
 import MetadataPanel from './components/MetadataPanel'
-import TimelineView from './components/TimelineView'
+import Timeline from './components/Timeline'
 import CommandsView from './components/CommandsView'
-import EventCard from './components/EventCard'
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card'
 import CollapsibleCard from './components/ui/collapsible-card'
 import { Badge } from './components/ui/badge'
@@ -71,30 +70,6 @@ export default function App() {
       </ErrorBoundary>
     </BookmarksProvider>
   )
-}
-
-function pairApplyPatchResultMeta(events: readonly any[], startIndex: number) {
-  const start = events[startIndex]
-  if (!start || (start as any).type !== 'FunctionCall') return null
-  try {
-    const args = (start as any).args
-    const parsed = typeof args === 'string' ? JSON.parse(args) : args
-    const isApply = parsed && Array.isArray(parsed.command) && parsed.command[0] === 'apply_patch'
-    if (!isApply) return null
-  } catch { return null }
-
-  // Prefer status on the same event
-  const metaSame = (start as any)?.result?.metadata ?? (start as any)?.result?.meta
-  if (metaSame) return metaSame
-
-  // Heuristic: look ahead a few events for a result-like FunctionCall with metadata
-  for (let i = startIndex + 1; i < Math.min(events.length, startIndex + 6); i++) {
-    const ev = events[i]
-    if (!ev || ev.type !== 'FunctionCall') continue
-    const meta = (ev as any)?.result?.metadata ?? (ev as any)?.result?.meta
-    if (meta && (meta.exit_code != null || meta.exitCode != null)) return meta
-  }
-  return null
 }
 
 function AppInner() {
@@ -1324,39 +1299,26 @@ function AppInner() {
                 try { filtered = getFilteredItems(full) } catch (e) { console.warn('getFilteredItems failed', e); filtered = full }
                 return (
                   <ErrorBoundary name="Timeline">
-                    <TimelineView
+                    <Timeline
                       items={filtered}
                       height={500}
                       estimateItemHeight={120}
-                      keyForIndex={(it) => it.key}
                       scrollToIndex={scrollToIndex}
-                      renderItem={(it) => (
-                        <div className="mb-2">
-                          <ErrorBoundary name="EventCard">
-                            <EventCard
-                              item={it.ev as any}
-                              index={it.absIndex}
-                              bookmarkKey={it.key}
-                              onRevealFile={(p) => setSelectedFile(p)}
-                              highlight={search}
-                              applyPatchResultMeta={pairApplyPatchResultMeta(loader.state.events as any, it.absIndex)}
-                              onOpenDiff={({ path, diff }) => {
-                                try {
-                                  if (!diff) {
-                                    setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
-                                    return
-                                  }
-                                  const { original, modified } = parseUnifiedDiffToSides(diff)
-                                  setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
-                                } catch (e) {
-                                  console.warn('openDiff failed', e)
-                                  setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
-                                }
-                              }}
-                            />
-                          </ErrorBoundary>
-                        </div>
-                      )}
+                      highlight={search}
+                      onRevealFile={(p) => setSelectedFile(p)}
+                      onOpenDiff={({ path, diff }) => {
+                        try {
+                          if (!diff) {
+                            setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
+                            return
+                          }
+                          const { original, modified } = parseUnifiedDiffToSides(diff)
+                          setActiveDiff({ path, original, modified, language: getLanguageForPath(path) })
+                        } catch (e) {
+                          console.warn('openDiff failed', e)
+                          setActiveDiff({ path, original: '', modified: '', language: getLanguageForPath(path) })
+                        }
+                      }}
                     />
                   </ErrorBoundary>
                 )
