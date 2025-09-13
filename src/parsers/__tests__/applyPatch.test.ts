@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractApplyPatchText, parseApplyPatch } from '../applyPatch'
+import { extractApplyPatchText, parseApplyPatch, extractApplyPatchFromCommand } from '../applyPatch'
 import * as fs from 'node:fs'
 
 describe('applyPatch parser', () => {
@@ -13,6 +13,15 @@ describe('applyPatch parser', () => {
     if (!patchText) return
     expect(patchText.startsWith('*** Begin Patch')).toBe(true)
     expect(patchText.includes('*** Update File: src/export/columns.ts')).toBe(true)
+  })
+
+  it('extracts patch text from shell command here-doc', () => {
+    const raw = fs.readFileSync('docs/example-patch.json', 'utf8')
+    const event = JSON.parse(raw)
+    const patchText = extractApplyPatchText(event.args)!
+    const cmd = `apply_patch <<'PATCH'\n${patchText}\nPATCH`
+    const extracted = extractApplyPatchFromCommand(cmd)
+    expect(extracted?.trim()).toBe(patchText.trim())
   })
 
   it('parses Update File ops into minimal unified diffs', () => {

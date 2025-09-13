@@ -29,6 +29,24 @@ export function extractApplyPatchText(args: unknown): string | null {
   }
 }
 
+/** Try to extract the raw patch text from a shell command here-doc. */
+export function extractApplyPatchFromCommand(command: string): string | null {
+  try {
+    if (!command) return null
+    const m = /apply_patch\s+<<['"]?([A-Za-z0-9_-]+)['"]?\n([\s\S]*)/.exec(command)
+    if (!m) return null
+    const marker = m[1]
+    const rest = m[2] ?? ''
+    const endMarker = `\n${marker}`
+    const idx = rest.indexOf(endMarker)
+    if (idx === -1) return null
+    const patch = rest.slice(0, idx)
+    return patch || null
+  } catch {
+    return null
+  }
+}
+
 /**
  * Parse an apply_patch envelope (*** Begin Patch ... *** End Patch) into file-level ops.
  * Produces minimal unified diffs so existing utilities can render both sides.
