@@ -27,7 +27,7 @@ import { exportJson, exportMarkdown, exportHtml, exportCsv, buildFilename } from
 import type { ResponseItem } from './types'
 import FileTree from './components/FileTree'
 import FilePreview from './components/FilePreview'
-import DiffViewer from './components/DiffViewer'
+import DiffView from './components/DiffView'
 import TwoFileDiff from './components/TwoFileDiff'
 import { extractApplyPatchText } from './parsers/applyPatch'
 import { parseUnifiedDiffToSides } from './utils/diff'
@@ -1014,7 +1014,7 @@ function AppInner() {
             headerRight={<Button variant="outline" size="sm" onClick={() => setActiveDiff(undefined)}>Close</Button>}
             defaultOpen
           >
-            <DiffViewer
+            <DiffView
               key={`diff-${sessionKey}-${activeDiff?.path ?? ''}`}
               path={activeDiff.path}
               original={activeDiff.original}

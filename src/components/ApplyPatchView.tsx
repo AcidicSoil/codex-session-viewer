@@ -1,6 +1,6 @@
 import * as React from 'react'
 import type { ResponseItem } from '../types'
-import DiffViewer from './DiffViewer'
+import DiffView from './DiffView'
 import { parseUnifiedDiffToSides } from '../utils/diff'
 import { extractApplyPatchText, parseApplyPatch } from '../parsers/applyPatch'
 import { Badge } from './ui/badge'
@@ -84,7 +84,7 @@ export default function ApplyPatchView({ item, pairedResultMeta }: ApplyPatchVie
 {current.unifiedDiff}
           </pre>
         ) : (
-          <DiffViewer
+          <DiffView
             path={current.path}
             original={sides.original}
             modified={sides.modified}
