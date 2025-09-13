@@ -19,6 +19,8 @@ export interface MessageEvent extends BaseEvent {
 
 /**
  * Model reasoning trace (if available). Content is plain text/markdown.
+ * If `content` is empty, a flattened `summary` is used instead.
+ * When only encrypted content is present, the placeholder `[encrypted]` is surfaced.
  */
 export interface ReasoningEvent extends BaseEvent {
   readonly type: 'Reasoning'

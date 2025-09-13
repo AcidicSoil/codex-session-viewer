@@ -166,6 +166,15 @@ function flattenContent(content: unknown): string | undefined {
   return asString(content)
 }
 
+function extractReasoningContent(src: Record<string, any>): string | null {
+  let content = flattenContent(src.content)
+  if (typeof content === 'string' && content.trim() !== '') return content
+  const summary = flattenContent(src.summary)
+  if (typeof summary === 'string' && summary.trim() !== '') return summary
+  if ('encryptedContent' in src) return '[encrypted]'
+  return null
+}
+
 function tryParseJsonText(s?: string): unknown {
   if (!s) return undefined
   try { return JSON.parse(s) } catch { return s }
@@ -219,8 +228,12 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
   switch (t) {
     // Codex CLI event_msg subtypes
     case 'agent_reasoning': {
-      const content = flattenContent((base as any).text ?? (base as any).content)
-      if (content === undefined) return null
+      const content = extractReasoningContent({
+        content: (base as any).text ?? (base as any).content,
+        summary: (base as any).summary,
+        encryptedContent: (base as any).encryptedContent,
+      })
+      if (content == null) return null
       return { type: 'Reasoning', content, id: base.id, at: base.at, index: base.index }
     }
     case 'agent_message': {
@@ -282,8 +295,8 @@ function normalizeForeignEventShape(data: Record<string, unknown>): Record<strin
       return { type: 'Message', role, content, model, id: base.id, at: base.at, index: base.index }
     }
     case 'reasoning': {
-      const content = flattenContent((base as any).content)
-      if (content === undefined) return null
+      const content = extractReasoningContent(base as any)
+      if (content == null) return null
       return { type: 'Reasoning', content, id: base.id, at: base.at, index: base.index }
     }
     // Removed duplicate function_call / function_call_output cases (handled above)
