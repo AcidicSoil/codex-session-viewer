@@ -8,6 +8,7 @@ const swatches: Record<string, string> = {
   rose: '#f43f5e',
   indigo: '#4f46e5',
 }
+const themes = Object.keys(swatches) as string[]
 
 function parseRGBTriplet(s: string): [number, number, number] | null {
   const parts = s.trim().split(/\s+/).map((n) => parseFloat(n))
@@ -107,17 +108,20 @@ export default function ThemePicker() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {Object.entries(swatches).map(([name, value]) => (
-                  <button
-                    key={name}
-                    type="button"
-                    className="h-6 w-6 rounded border ring-0"
-                    style={{ backgroundColor: value }}
-                    title={name}
-                    onClick={() => { setTheme(name as any); setCustomPrimary(null) }}
-                    aria-label={`Set ${name} theme`}
-                  />
-                ))}
+                <span className="text-xs">Theme</span>
+                <select
+                  className="border rounded px-2 py-1 text-sm bg-background text-foreground"
+                  value={themes.includes(theme) ? theme : 'custom'}
+                  onChange={(e) => { setTheme(e.target.value as any); setCustomPrimary(null) }}
+                  aria-label="Theme select"
+                >
+                  {themes.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                  <option value="custom" disabled>custom</option>
+                </select>
                 <button
                   type="button"
                   className="ml-1 text-xs underline"
