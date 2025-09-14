@@ -34,4 +34,14 @@ describe('ThemePicker', () => {
     fireEvent.click(screen.getByTitle('Reset background'))
     expect(root.style.getPropertyValue('--background')).toBe('')
   })
+
+  it('changes theme via select', () => {
+    const root = document.documentElement
+    render(<ThemePicker />)
+    const select = screen.getByLabelText('Theme select')
+    fireEvent.change(select, { target: { value: 'rose' } })
+    expect(root.getAttribute('data-theme')).toBe('rose')
+    const hexInput = screen.getByLabelText('Primary color hex') as HTMLInputElement
+    expect(hexInput.value).toBe('f43f5e')
+  })
 })

@@ -2,7 +2,6 @@ import * as React from 'react'
 import { Dialog } from '@headlessui/react'
 import ThemePicker from './ThemePicker'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
 
 export default function ThemeDrawer() {
   const [open, setOpen] = React.useState(false)
@@ -31,16 +30,6 @@ export default function ThemeDrawer() {
               <section>
                 <h3 className="text-sm font-medium mb-2">Theme</h3>
                 <ThemePicker />
-              </section>
-              <section>
-                <h3 className="text-sm font-medium mb-2">Preview</h3>
-                <div className="flex flex-wrap gap-2 items-center">
-                  <Button>Primary Button</Button>
-                  <Button variant="outline">Outline Button</Button>
-                  <Button variant="link">Link Button</Button>
-                  <Badge>Badge</Badge>
-                  <Badge variant="outline">Outline Badge</Badge>
-                </div>
               </section>
             </div>
           </Dialog.Panel>
