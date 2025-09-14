@@ -9,10 +9,10 @@ const base =
 
 const variants: Record<Variant, string> = {
   default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
-  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700',
+  secondary: 'bg-background text-foreground hover:bg-background/80',
   destructive: 'bg-red-600 text-white hover:bg-red-500',
-  outline: 'border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800',
-  ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100',
+  outline: 'border border-foreground/20 bg-background text-foreground hover:bg-background/80',
+  ghost: 'bg-transparent hover:bg-background/80 text-foreground',
   link: 'bg-transparent text-primary underline-offset-4 hover:underline'
 }
 
