@@ -33,18 +33,33 @@ function contrastRatio(a: [number, number, number], b: [number, number, number])
 }
 
 export default function ThemePicker() {
-  const { theme, mode, setTheme, setMode, customPrimary, setCustomPrimary } = useTheme()
+  const {
+    theme,
+    mode,
+    setTheme,
+    setMode,
+    customPrimary,
+    setCustomPrimary,
+    customBackground,
+    setCustomBackground,
+  } = useTheme()
   const [hex, setHex] = useState<string>(customPrimary ?? swatches[theme] ?? '#0d9488')
+  const [bgHex, setBgHex] = useState<string>(customBackground ?? '#ffffff')
   const [contrastWarn, setContrastWarn] = useState<string | null>(null)
 
   // Sync local input with store
   useEffect(() => {
     setHex(customPrimary ?? swatches[theme] ?? '#0d9488')
-  }, [customPrimary, theme])
+    setBgHex(customBackground ?? '#ffffff')
+  }, [customPrimary, customBackground, theme])
 
   useEffect(() => {
     setCustomPrimary(hex)
   }, [hex, setCustomPrimary])
+
+  useEffect(() => {
+    setCustomBackground(bgHex)
+  }, [bgHex, setCustomBackground])
 
   const computeContrast = useMemo(() => () => {
     try {
@@ -66,10 +81,10 @@ export default function ThemePicker() {
 
   useEffect(() => {
     setContrastWarn(computeContrast())
-  }, [theme, mode, customPrimary, computeContrast])
+  }, [theme, mode, customPrimary, customBackground, computeContrast])
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-start gap-4">
       <div className="flex items-center gap-3">
         <div className="flex flex-col gap-2">
           <div className="text-sm font-medium">Primary Color</div>
@@ -104,6 +119,32 @@ export default function ThemePicker() {
                   title="Reset to theme defaults"
                 >Reset</button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2">
+          <div className="text-sm font-medium">Background</div>
+          <div className="flex items-center gap-3">
+            <div className="w-40">
+              <HexColorPicker color={bgHex} onChange={setBgHex} className="h-28 w-40" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs">Hex</span>
+                <div className="flex items-center gap-1 border rounded px-2 py-1 bg-background text-foreground">
+                  <span className="text-xs">#</span>
+                  <HexColorInput color={bgHex} onChange={setBgHex} prefixed={false} className="text-sm w-24 outline-none bg-transparent" aria-label="Background color hex" />
+                </div>
+              </div>
+              <button
+                type="button"
+                className="ml-1 text-xs underline self-start"
+                onClick={() => setCustomBackground(null)}
+                title="Reset background"
+              >Reset</button>
             </div>
           </div>
         </div>

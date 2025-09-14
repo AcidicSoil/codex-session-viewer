@@ -12,8 +12,8 @@ export default function ThemeDrawer() {
       <Dialog open={open} onClose={() => setOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-stretch justify-end">
-          <Dialog.Panel className="h-full w-full max-w-md bg-white shadow-xl flex flex-col outline-none">
-            <div className="p-4 border-b flex items-center justify-between">
+          <Dialog.Panel className="h-full w-full max-w-md bg-background text-foreground border-l border-foreground/20 shadow-xl flex flex-col outline-none">
+            <div className="p-4 border-b border-foreground/20 flex items-center justify-between">
               <Dialog.Title className="text-base font-semibold">Appearance</Dialog.Title>
               <Button variant="ghost" size="sm" aria-label="Close" onClick={() => setOpen(false)}>Close</Button>
             </div>

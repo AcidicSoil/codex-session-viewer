@@ -40,9 +40,9 @@ export default function DiffView({ path, original, modified, language, height = 
 
   if (isBinary) {
     return (
-      <div className="border rounded">
-        <div className="px-2 py-1 text-xs text-gray-600 border-b bg-gray-50">{path || 'Diff'}</div>
-        <div className="p-3 text-sm text-gray-600">Binary file – cannot display diff</div>
+      <div className="border rounded border-foreground/20 bg-background text-foreground">
+        <div className="px-2 py-1 text-xs text-foreground/70 border-b border-foreground/20 bg-background/80">{path || 'Diff'}</div>
+        <div className="p-3 text-sm text-foreground/70">Binary file – cannot display diff</div>
       </div>
     )
   }
@@ -60,9 +60,9 @@ export default function DiffView({ path, original, modified, language, height = 
       }
     }, [original, modified])
     return (
-      <div className="border rounded">
-        <div className="px-2 py-1 text-xs text-gray-600 border-b bg-gray-50">{path || 'Diff'}</div>
-        <div className="p-3 text-sm text-gray-600">
+      <div className="border rounded border-foreground/20 bg-background text-foreground">
+        <div className="px-2 py-1 text-xs text-foreground/70 border-b border-foreground/20 bg-background/80">{path || 'Diff'}</div>
+        <div className="p-3 text-sm text-foreground/70">
           <p className="mb-2">
             Diff too large to display. Showing first {previewLines} lines.{' '}
             <a href={downloadUrl} download="diff.txt" className="text-blue-600 hover:underline">
@@ -70,10 +70,10 @@ export default function DiffView({ path, original, modified, language, height = 
             </a>
           </p>
           <div className="grid grid-cols-2 gap-2">
-            <pre className="bg-gray-50 p-2 rounded overflow-auto max-h-[420px]" aria-label="Original">
+            <pre className="bg-background/80 p-2 rounded overflow-auto max-h-[420px]" aria-label="Original">
               {safeTruncate(previewOriginal, 20_000)}
             </pre>
-            <pre className="bg-gray-50 p-2 rounded overflow-auto max-h-[420px]" aria-label="Modified">
+            <pre className="bg-background/80 p-2 rounded overflow-auto max-h-[420px]" aria-label="Modified">
               {safeTruncate(previewModified, 20_000)}
             </pre>
           </div>
@@ -95,14 +95,14 @@ export default function DiffView({ path, original, modified, language, height = 
   )
 
   return (
-    <div className="border rounded">
-      <div className="px-2 py-1 text-xs text-gray-600 border-b bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/75 sticky top-0 z-10 flex items-center justify-between">
+    <div className="border rounded border-foreground/20 bg-background text-foreground">
+      <div className="px-2 py-1 text-xs text-foreground/70 border-b border-foreground/20 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 flex items-center justify-between">
         <span className="truncate" title={path}>{path || 'Diff'}</span>
         <div className="flex items-center gap-2">
           <label className="sr-only">Editor theme</label>
           <select
             aria-label="Editor theme"
-            className="border rounded px-1 py-0.5 bg-white text-gray-700"
+            className="border border-foreground/20 rounded px-1 py-0.5 bg-background text-foreground"
             value={editorThemePref}
             onChange={(e) => setEditorThemePref(e.target.value as any)}
             title="Editor theme"
@@ -111,28 +111,28 @@ export default function DiffView({ path, original, modified, language, height = 
             <option value="light">light</option>
             <option value="dark">dark</option>
           </select>
-          <button className="text-gray-500 hover:text-gray-700" onClick={() => setWrap((w) => !w)} title="Toggle wrap">
+          <button className="text-foreground/70 hover:text-foreground" onClick={() => setWrap((w) => !w)} title="Toggle wrap">
             {wrap ? 'Wrap' : 'No wrap'}
           </button>
           <button
-            className="text-gray-500 hover:text-gray-700"
+            className="text-foreground/70 hover:text-foreground"
             onClick={() => setSideBySide((s) => !s)}
             title="Toggle view"
           >
             {sideBySide ? 'Split' : 'Inline'}
           </button>
-          <span className="text-gray-400">{lang}</span>
+          <span className="text-foreground/50">{lang}</span>
         </div>
       </div>
       <React.Suspense
         fallback={
-          <div className="p-3 text-sm text-gray-600">
+          <div className="p-3 text-sm text-foreground/70">
             <p className="mb-2">Loading Monaco DiffEditor…</p>
             <div className="grid grid-cols-2 gap-2">
-              <pre className="bg-gray-50 p-2 rounded overflow-auto max-h-[420px]" aria-label="Original">
+              <pre className="bg-background/80 p-2 rounded overflow-auto max-h-[420px]" aria-label="Original">
                 {original}
               </pre>
-              <pre className="bg-gray-50 p-2 rounded overflow-auto max-h-[420px]" aria-label="Modified">
+              <pre className="bg-background/80 p-2 rounded overflow-auto max-h-[420px]" aria-label="Modified">
                 {modified}
               </pre>
             </div>

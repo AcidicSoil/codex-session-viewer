@@ -31,5 +31,13 @@ describe('theme store', () => {
     useTheme.getState().setMode('light')
     expect(root.classList.contains('dark')).toBe(false)
   })
+
+  it('applies custom background and foreground', () => {
+    const root = document.documentElement
+    useTheme.getState().setCustomBackground('#ff0000')
+    expect(root.style.getPropertyValue('--background').trim()).toBe('255 0 0')
+    expect(root.style.getPropertyValue('--foreground').trim()).toBe('255 255 255')
+    useTheme.getState().setCustomBackground(null)
+  })
 })
 

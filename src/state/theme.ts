@@ -12,6 +12,9 @@ interface ThemeState {
   // When set, overrides --primary regardless of `theme`
   customPrimary: string | null
   setCustomPrimary: (hex: string | null) => void
+  // When set, overrides --background and adjusts --foreground
+  customBackground: string | null
+  setCustomBackground: (hex: string | null) => void
 }
 
 const applyTheme = (theme: Theme) => {
@@ -35,6 +38,7 @@ export const useTheme = create<ThemeState>()(
       theme: 'teal',
       mode: 'system',
       customPrimary: null,
+      customBackground: null,
       setTheme: (theme) => {
         applyTheme(theme)
         set({ theme })
@@ -46,6 +50,10 @@ export const useTheme = create<ThemeState>()(
       setCustomPrimary: (hex) => {
         applyCustomPrimary(hex)
         set({ customPrimary: hex, theme: hex ? 'custom' : useTheme.getState().theme })
+      },
+      setCustomBackground: (hex) => {
+        applyCustomBackground(hex)
+        set({ customBackground: hex })
       }
     }),
     {
@@ -55,6 +63,7 @@ export const useTheme = create<ThemeState>()(
           applyTheme(state.theme)
           applyMode(state.mode)
           applyCustomPrimary(state.customPrimary ?? null)
+          applyCustomBackground(state.customBackground ?? null)
         }
       }
     }
@@ -66,6 +75,7 @@ if (typeof document !== 'undefined') {
   applyTheme(useTheme.getState().theme)
   applyMode(useTheme.getState().mode)
   applyCustomPrimary(useTheme.getState().customPrimary)
+  applyCustomBackground(useTheme.getState().customBackground)
 }
 
 // React to system preference changes when in system mode
@@ -93,6 +103,24 @@ function applyCustomPrimary(hex: string | null | undefined) {
     const lum = relativeLuminance(rgb)
     const fg = lum > 0.5 ? '0 0 0' : '255 255 255'
     root.style.setProperty('--primary-foreground', fg)
+  }
+}
+
+function applyCustomBackground(hex: string | null | undefined) {
+  if (typeof document === 'undefined') return
+  const root = document.documentElement as HTMLElement
+  if (!hex) {
+    root.style.removeProperty('--background')
+    root.style.removeProperty('--foreground')
+    return
+  }
+  const rgb = hexToRgb(hex)
+  if (rgb) {
+    const value = `${rgb.r} ${rgb.g} ${rgb.b}`
+    root.style.setProperty('--background', value)
+    const lum = relativeLuminance(rgb)
+    const fg = lum > 0.5 ? '0 0 0' : '255 255 255'
+    root.style.setProperty('--foreground', fg)
   }
 }
 

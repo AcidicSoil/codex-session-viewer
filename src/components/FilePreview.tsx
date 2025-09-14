@@ -83,14 +83,14 @@ export default function FilePreview({ path, events, onOpenDiff, maxChars = 200_0
 
   return (
     <div className="space-y-2">
-      <div className="text-xs text-gray-500 flex items-center justify-between gap-2">
+      <div className="text-xs text-foreground/70 flex items-center justify-between gap-2">
         <div className="truncate" title={path}>{path}</div>
-        <div className="flex items-center gap-2"><span className="text-gray-400">{lang}</span></div>
+        <div className="flex items-center gap-2"><span className="text-foreground/50">{lang}</span></div>
       </div>
-      <pre className="text-xs bg-gray-50 rounded p-2 max-h-64 overflow-auto whitespace-pre-wrap" aria-label="File preview">
+      <pre className="text-xs bg-background/80 rounded p-2 max-h-64 overflow-auto whitespace-pre-wrap" aria-label="File preview">
 {display || 'No preview content.'}
       </pre>
-      <div className="text-xs text-gray-500 flex items-center justify-between">
+      <div className="text-xs text-foreground/70 flex items-center justify-between">
         <span>{info}{clipped && ' Large file truncated.'}</span>
         {onOpenDiff && unifiedForOpen && (
           <Button size="sm" variant="outline" onClick={() => onOpenDiff({ path, diff: unifiedForOpen! })}>Open diff</Button>

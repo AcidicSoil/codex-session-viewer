@@ -9,7 +9,7 @@ const variants: Record<Variant, string> = {
   // Active chip: filled accent (primary)
   default: 'border-transparent bg-primary text-primary-foreground',
   // Neutral chip: subtle border only
-  secondary: 'border-gray-600 text-gray-200',
+  secondary: 'border-foreground/20 text-foreground',
   destructive: 'border-transparent bg-red-600 text-white',
   outline: 'border-primary text-primary'
 }
