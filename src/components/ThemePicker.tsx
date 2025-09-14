@@ -53,13 +53,9 @@ export default function ThemePicker() {
     setBgHex(customBackground ?? '#ffffff')
   }, [customPrimary, customBackground, theme])
 
-  useEffect(() => {
-    setCustomPrimary(hex)
-  }, [hex, setCustomPrimary])
-
-  useEffect(() => {
-    setCustomBackground(bgHex)
-  }, [bgHex, setCustomBackground])
+  // Apply custom colors only when user edits them to avoid overriding
+  // the stock theme values on initial mount.
+  // Directly update the store from the change handlers below.
 
   const computeContrast = useMemo(() => () => {
     try {
@@ -84,20 +80,30 @@ export default function ThemePicker() {
   }, [theme, mode, customPrimary, customBackground, computeContrast])
 
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
         <div className="flex flex-col gap-2">
           <div className="text-sm font-medium">Primary Color</div>
           <div className="flex items-center gap-3">
             <div className="w-40">
-              <HexColorPicker color={hex} onChange={setHex} className="h-28 w-40" />
+              <HexColorPicker
+                color={hex}
+                onChange={(c) => { setHex(c); setCustomPrimary(c) }}
+                className="h-28 w-40"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs">Hex</span>
                 <div className="flex items-center gap-1 border rounded px-2 py-1 bg-background text-foreground">
                   <span className="text-xs">#</span>
-                  <HexColorInput color={hex} onChange={setHex} prefixed={false} className="text-sm w-24 outline-none bg-transparent" aria-label="Primary color hex" />
+                  <HexColorInput
+                    color={hex}
+                    onChange={(c) => { setHex(c); setCustomPrimary(c) }}
+                    prefixed={false}
+                    className="text-sm w-24 outline-none bg-transparent"
+                    aria-label="Primary color hex"
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -108,7 +114,7 @@ export default function ThemePicker() {
                     className="h-6 w-6 rounded border ring-0"
                     style={{ backgroundColor: value }}
                     title={name}
-                    onClick={() => { setTheme(name as any); setCustomPrimary(value) }}
+                    onClick={() => { setTheme(name as any); setCustomPrimary(null) }}
                     aria-label={`Set ${name} theme`}
                   />
                 ))}
@@ -129,14 +135,24 @@ export default function ThemePicker() {
           <div className="text-sm font-medium">Background</div>
           <div className="flex items-center gap-3">
             <div className="w-40">
-              <HexColorPicker color={bgHex} onChange={setBgHex} className="h-28 w-40" />
+              <HexColorPicker
+                color={bgHex}
+                onChange={(c) => { setBgHex(c); setCustomBackground(c) }}
+                className="h-28 w-40"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs">Hex</span>
                 <div className="flex items-center gap-1 border rounded px-2 py-1 bg-background text-foreground">
                   <span className="text-xs">#</span>
-                  <HexColorInput color={bgHex} onChange={setBgHex} prefixed={false} className="text-sm w-24 outline-none bg-transparent" aria-label="Background color hex" />
+                  <HexColorInput
+                    color={bgHex}
+                    onChange={(c) => { setBgHex(c); setCustomBackground(c) }}
+                    prefixed={false}
+                    className="text-sm w-24 outline-none bg-transparent"
+                    aria-label="Background color hex"
+                  />
                 </div>
               </div>
               <button

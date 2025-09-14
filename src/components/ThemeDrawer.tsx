@@ -8,7 +8,17 @@ export default function ThemeDrawer() {
   const [open, setOpen] = React.useState(false)
   return (
     <>
-      <Button variant="outline" size="sm" aria-label="Open appearance settings" onClick={() => setOpen(true)}>Appearance</Button>
+      {!open && (
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label="Open appearance settings"
+          onClick={() => setOpen(true)}
+          className="fixed bottom-4 right-4 z-40"
+        >
+          Appearance
+        </Button>
+      )}
       <Dialog open={open} onClose={() => setOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-stretch justify-end">
