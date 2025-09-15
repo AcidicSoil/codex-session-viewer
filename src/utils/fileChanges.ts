@@ -24,9 +24,9 @@ export function getFileHistory(events: readonly ResponseItem[], filePath: string
     }
   }
   history.sort((a, b) => {
-    const ta = a.at ? Date.parse(a.at as string) : undefined
-    const tb = b.at ? Date.parse(b.at as string) : undefined
-    if (ta !== undefined && tb !== undefined && ta !== tb) return ta - tb
+    const ta = a.at ? Date.parse(a.at) : Number.NaN
+    const tb = b.at ? Date.parse(b.at) : Number.NaN
+    if (!Number.isNaN(ta) && !Number.isNaN(tb) && ta !== tb) return ta - tb
     const ia = a.index ?? 0
     const ib = b.index ?? 0
     return ia - ib

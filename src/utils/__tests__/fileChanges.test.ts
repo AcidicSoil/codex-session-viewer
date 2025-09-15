@@ -15,6 +15,26 @@ describe('getFileHistory', () => {
     expect(hist[0]!.diff).toBe('diff1')
     expect(hist[1]!.diff).toBe('diff3')
   })
+
+  it('falls back to index when timestamps are invalid', () => {
+    const events: ResponseItem[] = [
+      { type: 'FileChange', path: 'src/a.ts', diff: 'd0', at: '2024-01-01T00:00:00Z', index: 1 },
+      { type: 'FileChange', path: 'src/a.ts', diff: 'd1', at: 'not-a-date', index: 2 },
+      { type: 'FileChange', path: 'src/a.ts', diff: 'd2', at: '2024-01-01T00:02:00Z', index: 3 },
+    ] as any
+    const hist = getFileHistory(events, 'src/a.ts')
+    expect(hist.map((h) => h.diff)).toEqual(['d0', 'd1', 'd2'])
+  })
+
+  it('falls back to index when timestamps are missing', () => {
+    const events: ResponseItem[] = [
+      { type: 'FileChange', path: 'src/a.ts', diff: 'd0', at: '2024-01-01T00:00:00Z', index: 1 },
+      { type: 'FileChange', path: 'src/a.ts', diff: 'd1', index: 2 },
+      { type: 'FileChange', path: 'src/a.ts', diff: 'd2', index: 3 },
+    ] as any
+    const hist = getFileHistory(events, 'src/a.ts')
+    expect(hist.map((h) => h.diff)).toEqual(['d0', 'd1', 'd2'])
+  })
 })
 
 describe('analyzeFileChanges', () => {
