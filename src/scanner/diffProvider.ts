@@ -17,7 +17,7 @@ export async function getWorkspaceDiff(
   const target = normalize(path)
 
   let modified = ''
-  try { modified = await readFileText(root, path) } catch {}
+  try { modified = await readFileText(root, normalize(path)) } catch {}
 
   // Try to find a recent FileChange with a diff for baseline
   let original = ''
