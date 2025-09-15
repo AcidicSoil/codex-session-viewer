@@ -74,7 +74,15 @@ function extractPathsFromResult(res: unknown): string[] {
   if (!txt) return []
   const out: string[] = []
   for (const line of String(txt).split(/\r?\n/)) {
-    const m = /^\s*[AMD]\s+(.+)$/.exec(line)
+    // handle rename/copy lines like "R old.ts -> new.ts" or "C a.ts => b.ts"
+    const rename = /^\s*[RC]\s+(.+?)\s+(?:->|=>)\s+(.+)$/.exec(line)
+    if (rename && rename[1] && rename[2]) {
+      out.push(normalizePath(rename[1]))
+      out.push(normalizePath(rename[2]))
+      continue
+    }
+
+    const m = /^\s*[A-Z]\s+(.+)$/.exec(line)
     if (m && m[1]) out.push(normalizePath(m[1]))
   }
   return out

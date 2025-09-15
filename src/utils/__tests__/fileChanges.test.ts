@@ -45,5 +45,20 @@ describe('analyzeFileChanges', () => {
     expect(res.callToFiles.get('c1')).toEqual(['src/a.ts', 'src/b.ts'])
     expect(res.callToFiles.get('c2')).toEqual(['src/a.ts'])
   })
+
+  it('includes old and new paths for rename outputs', () => {
+    const events: ResponseItem[] = [
+      {
+        type: 'FunctionCall',
+        name: 'shell',
+        args: JSON.stringify({ command: ['apply_patch', '...'] }),
+        result: { output: 'Success. Updated the following files:\nR src/old.ts -> src/new.ts\n' },
+        call_id: 'c1',
+      },
+    ] as any
+
+    const res = analyzeFileChanges(events)
+    expect(res.callToFiles.get('c1')).toEqual(['src/old.ts', 'src/new.ts'])
+  })
 })
 
