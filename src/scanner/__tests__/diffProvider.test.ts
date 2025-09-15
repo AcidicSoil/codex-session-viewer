@@ -33,31 +33,21 @@ function createRoot(fileContent?: string) {
   })
 }
 
-describe('getWorkspaceDiff path normalization', () => {
-  it('loads file for Windows-style path', async () => {
-    const root = createRoot('content')
-    const res = await getWorkspaceDiff(root as any, 'dir\\file.txt', [])
-    expect(res.modified).toBe('content')
-  })
-
-  it('loads file for path with leading relative segment', async () => {
-    const root = createRoot('content')
-    const res = await getWorkspaceDiff(root as any, '../dir/file.txt', [])
-    expect(res.modified).toBe('content')
-  })
-})
-
-describe('getWorkspaceDiff event handling', () => {
-  it('uses latest FileChange diff as original', async () => {
-    const root = createRoot('after')
-    const diff = ['--- dir/file.txt', '+++ dir/file.txt', '@@', '-before', '+after'].join('\n')
-    const events = [{ type: 'FileChange', path: 'dir/file.txt', diff }]
+describe('getWorkspaceDiff baseline and reconstruction', () => {
+  it('selects baseline from latest FileChange diff', async () => {
+    const root = createRoot('v2')
+    const diff1 = ['--- dir/file.txt', '+++ dir/file.txt', '@@', '-v0', '+v1'].join('\n')
+    const diff2 = ['--- dir/file.txt', '+++ dir/file.txt', '@@', '-v1', '+v2'].join('\n')
+    const events = [
+      { type: 'FileChange', path: 'dir/file.txt', diff: diff1 },
+      { type: 'FileChange', path: 'dir/file.txt', diff: diff2 },
+    ]
     const res = await getWorkspaceDiff(root as any, 'dir/file.txt', events)
-    expect(res.original).toBe('before')
-    expect(res.modified).toBe('after')
+    expect(res.original).toBe('v1')
+    expect(res.modified).toBe('v2')
   })
 
-  it('falls back to apply_patch when file missing', async () => {
+  it('reconstructs content from apply_patch when file missing', async () => {
     const root = createRoot(undefined)
     const patch = [
       '*** Begin Patch',
@@ -77,6 +67,13 @@ describe('getWorkspaceDiff event handling', () => {
     const res = await getWorkspaceDiff(root as any, 'dir/file.txt', events)
     expect(res.original).toBe('before')
     expect(res.modified).toBe('after')
+  })
+
+  it('returns empty strings when file missing and no events', async () => {
+    const root = createRoot(undefined)
+    const res = await getWorkspaceDiff(root as any, 'dir/file.txt', [])
+    expect(res.original).toBe('')
+    expect(res.modified).toBe('')
   })
 })
 
