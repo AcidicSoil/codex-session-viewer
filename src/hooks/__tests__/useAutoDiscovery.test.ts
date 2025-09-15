@@ -12,6 +12,7 @@ function TestComp() {
     null,
     React.createElement('div', { id: 'loading' }, String(isLoading)),
     React.createElement('div', { id: 'filesCount' }, String(projectFiles.length)),
+    React.createElement('div', { id: 'filesJson' }, JSON.stringify(projectFiles)),
     React.createElement('div', { id: 'sessionsCount' }, String(sessionAssets.length)),
     React.createElement('button', { id: 'reload', onClick: () => reload() }, 'reload'),
   )
@@ -30,8 +31,13 @@ describe('useAutoDiscovery', () => {
 
     const loadingEl = container.querySelector('#loading')!
     const filesEl = container.querySelector('#filesCount')!
+    const filesJsonEl = container.querySelector('#filesJson')!
     expect(loadingEl.textContent).toBe('false')
     expect(Number(filesEl.textContent || '0')).toBeGreaterThan(0)
+
+    const files = JSON.parse(filesJsonEl.textContent || '[]') as string[]
+    expect(files.some((p) => p.includes('__tests__'))).toBe(false)
+    expect(files.some((p) => /\.test\.[^.]+$/i.test(p))).toBe(false)
 
     const reloadBtn = container.querySelector('#reload') as HTMLButtonElement
     await act(async () => { reloadBtn.click() })

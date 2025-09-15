@@ -30,12 +30,22 @@ export function useAutoDiscovery() {
         '/public/**/*',
         '/package.json',
         '/tsconfig.json',
+        '!/src/**/__tests__/**',
+        '!/src/**/__mocks__/**',
+        '!/src/**/*.test.{ts,tsx,js,jsx}',
+        '!/src/**/*.spec.{ts,tsx,js,jsx}',
+        '!/src/**/*.stories.{ts,tsx,js,jsx}',
       ]) as Record<string, () => Promise<unknown>>
 
       const docAssets = import.meta.glob([
         '/README*',
         '/AGENTS.md',
       ], { eager: true, query: '?url', import: 'default' }) as Record<string, string>
+
+      const isIgnoredPath = (p: string) => (
+        /\/(?:__tests__|__mocks__)\//.test(p)
+        || /\.(?:test|spec|stories)\.[a-z0-9]+$/i.test(p)
+      )
 
       const raw = [
         ...Object.keys(codeGlobs),
@@ -46,6 +56,7 @@ export function useAutoDiscovery() {
           .filter((p) => /\.[a-z0-9]+$/i.test(p))
           .filter((p) => !p.endsWith('.map'))
           .filter((p) => !p.endsWith('.d.ts'))
+          .filter((p) => !isIgnoredPath(p))
           .map((p) => p.replace(/^\//, ''))
       )).sort()
       setProjectFiles(files)
