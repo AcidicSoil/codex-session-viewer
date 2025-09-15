@@ -17,44 +17,58 @@ export async function getWorkspaceDiff(
   const target = normalize(path)
 
   let modified = ''
-  try { modified = await readFileText(root, path) } catch {}
+  try {
+    modified = await readFileText(root, path)
+  } catch (err) {
+    if (!(err instanceof DOMException)) throw err
+  }
 
   // Try to find a recent FileChange with a diff for baseline
   let original = ''
-  try {
-    for (let i = events.length - 1; i >= 0; i--) {
-      const ev = events[i] as any
-      if (ev && ev.type === 'FileChange' && normalize(ev.path) === target && ev.diff) {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const ev = events[i] as any
+    if (ev && ev.type === 'FileChange' && normalize(ev.path) === target && ev.diff) {
+      try {
         const sides = parseUnifiedDiffToSides(ev.diff)
         original = sides.original
         break
+      } catch (err) {
+        if (err instanceof SyntaxError) continue
+        throw err
       }
     }
-  } catch {}
+  }
 
   // Fallback: inspect recent apply_patch payloads for this path
   if (!original) {
-    try {
-      for (let i = events.length - 1; i >= 0; i--) {
-        const ev = events[i] as any
-        if (!isApplyPatchFunction(ev)) continue
-        const patchText = extractApplyPatchText(ev.args)
-        if (!patchText) continue
-        const ops = parseApplyPatch(patchText)
-        for (const op of ops) {
-          const opOld = normalize(op.path)
-          const opNew = op.newPath ? normalize(op.newPath) : undefined
-          if (opOld === target || opNew === target) {
+    outer: for (let i = events.length - 1; i >= 0; i--) {
+      const ev = events[i] as any
+      if (!isApplyPatchFunction(ev)) continue
+      const patchText = extractApplyPatchText(ev.args)
+      if (!patchText) continue
+      let ops
+      try {
+        ops = parseApplyPatch(patchText)
+      } catch (err) {
+        if (err instanceof SyntaxError) continue
+        throw err
+      }
+      for (const op of ops) {
+        const opOld = normalize(op.path)
+        const opNew = op.newPath ? normalize(op.newPath) : undefined
+        if (opOld === target || opNew === target) {
+          try {
             const sides = parseUnifiedDiffToSides(op.unifiedDiff)
             original = sides.original
             // If we still don't have modified content (e.g., file no longer present), leave modified as-is
             if (!modified) modified = sides.modified
-            throw new Error('found')
+            break outer
+          } catch (err) {
+            if (err instanceof SyntaxError) continue
+            throw err
           }
         }
       }
-    } catch (e) {
-      // swallow control exception used to break nested loops
     }
   }
 
