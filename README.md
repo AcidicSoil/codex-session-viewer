@@ -104,6 +104,30 @@ Filters
 - When `Message` is selected, a secondary role filter appears (`user`, `assistant`, `system`) with counts.
 - Clear filters resets search, type, role, and bookmarks-only toggle.
 
+Ignoring files during scan
+--------------------------
+
+When scanning a workspace, the viewer now honours Git-style ignore rules and a custom project ignore file.
+
+- `.gitignore` files are read automatically (respect toggle enabled by default).
+- `.codexignore` (or a custom name) can be added at the workspace root and inside sub-directories to extend or override Git rules.
+- Include and exclude globs from the UI provide quick overrides—include patterns win over all other ignore sources.
+- Built-ins such as `.git/`, `node_modules/`, `.DS_Store`, `Thumbs.db`, `~$*`, and `*.swp` are ignored unless force-included.
+
+Example `.codexignore`:
+
+```
+# Build artifacts
+dist/
+build/
+# Large assets
+*.mp4
+# Re-include schema
+!src/schema/*.json
+```
+
+The workspace panel shows the number of scanned and ignored entries plus the top ignored roots so you can confirm that rules behaved as expected. Browser permission is required to read ignore files; if access is revoked, re-run the scan after granting permission again.
+
 Commands View
 -------------
 

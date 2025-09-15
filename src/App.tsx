@@ -21,7 +21,7 @@ import { parseHash, updateHash } from './utils/hashState'
 import { Sparkles } from './components/ui/sparkles'
 import { BackgroundBeams } from './components/ui/background-beams'
 import GithubGlobeModal from './components/GithubGlobeModal'
-import { startFileSystemScanFromHandle } from './utils/fs-scanner'
+import { startFileSystemScanFromHandle, type ScanStats } from './utils/fs-scanner'
 import { listHashes, getSetting, setSetting, deleteSetting } from './utils/session-db'
 import { buildChangeSet, type ChangeSet } from './scanner/diffIndex'
 import { exportJson, exportMarkdown, exportHtml, exportCsv, buildFilename } from './utils/exporters'
@@ -110,6 +110,11 @@ function AppInner() {
   const [workspace, setWorkspace] = useState<FileSystemDirectoryHandle | null>(null)
   const [scanning, setScanning] = useState(false)
   const [progressPath, setProgressPath] = useState<string | null>(null)
+  const [respectGitignore, setRespectGitignore] = useState(true)
+  const [ignoreFileName, setIgnoreFileName] = useState('.codexignore')
+  const [includeGlobsInput, setIncludeGlobsInput] = useState('')
+  const [excludeGlobsInput, setExcludeGlobsInput] = useState('')
+  const [scanStats, setScanStats] = useState<ScanStats | null>(null)
   const [changeSet, setChangeSet] = useState<ChangeSet | null>(null)
   const [sessionsHandle, setSessionsHandle] = useState<FileSystemDirectoryHandle | null>(null)
   const [sessionsList, setSessionsList] = useState<FileEntryInfo[]>([])
@@ -181,17 +186,37 @@ function AppInner() {
     } catch {}
   }
 
+  function parseGlobInput(value: string): string[] {
+    return value
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+  }
+
+  function getScanOptions() {
+    const name = ignoreFileName.trim() || '.codexignore'
+    return {
+      respectGitignore,
+      ignoreFileName: name,
+      includeGlobs: parseGlobInput(includeGlobsInput),
+      excludeGlobs: parseGlobInput(excludeGlobsInput),
+    }
+  }
+
   async function rescan() {
     if (!workspace) return
     const before = await listHashes()
-    const runner = startFileSystemScanFromHandle(workspace)
+    const runner = startFileSystemScanFromHandle(workspace, getScanOptions())
     setScanning(true)
+    setScanStats(null)
     const off = runner.onProgress((p) => setProgressPath(p))
+    const offStats = runner.onStats((stats) => setScanStats(stats))
     await new Promise<void>((resolve) => {
       const onMsg = (e: MessageEvent<any>) => {
         if (e.data === 'done' || e.data === 'aborted') {
           runner.worker.removeEventListener('message', onMsg as any)
           off()
+          offStats()
           resolve()
         }
       }
@@ -254,11 +279,13 @@ function AppInner() {
       running = true
       try {
         const before = await listHashes()
-        const runner = startFileSystemScanFromHandle(workspace!)
+        const runner = startFileSystemScanFromHandle(workspace!, getScanOptions())
+        const offStats = runner.onStats((stats) => setScanStats(stats))
         await new Promise<void>((resolve) => {
           const onMsg = (e: MessageEvent<any>) => {
             if (e.data === 'done' || e.data === 'aborted') {
               runner.worker.removeEventListener('message', onMsg as any)
+              offStats()
               resolve()
             }
           }
@@ -621,6 +648,7 @@ function AppInner() {
                 setWorkspaceFiles([])
                 setWorkspace(null)
                 setChangeSet(null)
+                setScanStats(null)
                 try { await setSetting('ui.showFileTree', false) } catch {}
                 try { await deleteSetting('workspaceHandle') } catch {}
               }}
@@ -648,6 +676,67 @@ function AppInner() {
             </Button>
           )}
         </div>
+        <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={respectGitignore}
+              onChange={(e) => setRespectGitignore(e.target.checked)}
+            />
+            <span>Respect .gitignore</span>
+          </label>
+          <input
+            className="border rounded px-2 py-1"
+            placeholder=".codexignore"
+            value={ignoreFileName}
+            onChange={(e) => setIgnoreFileName(e.target.value)}
+            title="Custom ignore file name"
+          />
+          <input
+            className="border rounded px-2 py-1"
+            placeholder="Include globs (comma-separated)"
+            value={includeGlobsInput}
+            onChange={(e) => setIncludeGlobsInput(e.target.value)}
+            title="Force-include patterns"
+          />
+          <input
+            className="border rounded px-2 py-1"
+            placeholder="Exclude globs (comma-separated)"
+            value={excludeGlobsInput}
+            onChange={(e) => setExcludeGlobsInput(e.target.value)}
+            title="Exclude patterns before ignore files"
+          />
+        </div>
+        {scanStats && (
+          <div className="mt-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">Scanned {scanStats.scanned}</Badge>
+              <Badge variant="secondary">Ignored {scanStats.ignored}</Badge>
+              {scanStats.aborted && <span className="text-amber-600">Scan stopped early</span>}
+            </div>
+            {scanStats.topIgnored.length > 0 && (
+              <Disclosure>
+                {({ open }) => (
+                  <div className="mt-1">
+                    <Disclosure.Button className="text-blue-600 underline">
+                      {open ? 'Hide ignored roots' : 'Show ignored roots'}
+                    </Disclosure.Button>
+                    <Disclosure.Panel>
+                      <ul className="mt-1 space-y-1">
+                        {scanStats.topIgnored.map((item) => (
+                          <li key={item.pattern} className="flex items-center justify-between gap-2">
+                            <span className="font-mono">{item.pattern}</span>
+                            <span className="opacity-70">{item.count}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </Disclosure.Panel>
+                  </div>
+                )}
+              </Disclosure>
+            )}
+          </div>
+        )}
         <div className="text-sm">
       {changeSet ? (
         <div className="mt-2">
