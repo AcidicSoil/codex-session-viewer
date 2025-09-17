@@ -9,13 +9,3 @@
   --background: 15 23 42;
   --foreground: 255 255 255;
 }
-
-[data-theme='teal'] {
-  --primary: 13 148 136;
-}
-[data-theme='rose'] {
-  --primary: 244 63 94;
-}
-[data-theme='indigo'] {
-  --primary: 79 70 229;
-}

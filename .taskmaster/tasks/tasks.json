@@ -1306,11 +1306,22 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 66,
+        "title": "Fix include/exclude glob sanitization",
+        "description": "Correct the glob pattern sanitization logic to properly handle path normalization and directory matching, ensuring include/exclude rules work as expected in the workspace scanner.",
+        "details": "The `sanitizePatterns` function in `src/utils/ignore-utils.ts` currently only trims strings before passing them to `micromatch`. This causes patterns like `/dist/`, `dist/`, or `./src/**/*.ts` to fail because they are not properly normalized. The fix involves updating `sanitizePatterns` to perform more robust processing.\n\nImplementation Steps:\n1.  **Modify `src/utils/ignore-utils.ts`:**\n    *   Update the `sanitizePatterns` function to process each pattern in the input array.\n    *   For each pattern, perform the following steps in sequence:\n        a. Trim leading/trailing whitespace.\n        b. Convert backslashes to forward slashes for POSIX compatibility.\n        c. Remove any leading `./` prefix.\n        d. If the pattern ends with a `/`, append `**` to it to ensure it matches all files and subdirectories within that directory (e.g., `dist/` becomes `dist/**`).\n    *   After processing all patterns, use a `Set` to collect the results, which will automatically handle the elimination of any duplicates created during sanitization (e.g., if both `dist/` and `dist/**` were in the original input).\n    *   Return the unique, sanitized patterns as an array.\n2.  **Verification:** Confirm that `src/workers/fs-scanner.ts` uses this utility for both its `include` and `exclude` patterns. No changes should be required in `fs-scanner.ts` itself, as the fix is contained within the utility function it calls.",
+        "testStrategy": "The primary verification will be through unit tests for the updated utility function.\n\n1.  **Create/Update Unit Tests for `ignore-utils.ts`:**\n    *   Add a test suite for the `sanitizePatterns` function.\n    *   **Test Case: Directory Expansion:** Assert that an input of `[' /dist/ ', 'node_modules/']` produces the output `['dist/**', 'node_modules/**']`.\n    *   **Test Case: Path Normalization:** Assert that `['./src/**/*.ts', 'test\\\\run.js']` produces `['src/**/*.ts', 'test/run.js']`.\n    *   **Test Case: Deduplication:** Assert that `['build/', 'build/**', ' build/ ']` produces a single entry: `['build/**']`.\n    *   **Test Case: Edge Cases:** Test with an empty array, an array with empty strings, and patterns without any special characters.\n2.  **Update `globMatch` Tests:**\n    *   Ensure tests for `globMatch` (or the equivalent function that uses `micromatch`) are updated to use unsanitized, realistic patterns as input to prove the end-to-end logic works.\n    *   Test that `globMatch` correctly identifies a file like `src/components/button.tsx` when given the pattern `./src/**/*.tsx`.\n    *   Test that `globMatch` correctly excludes a file like `dist/assets/index.js` when given the exclusion pattern `dist/`.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-08T17:44:30.733Z",
-      "updated": "2025-09-11T23:02:08Z",
+      "updated": "2025-09-16T22:15:39.733Z",
       "description": "Tasks for master context"
     }
   }
