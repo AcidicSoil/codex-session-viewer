@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { cn } from '../../utils/cn'
 
-type Variant = 'default' | 'secondary' | 'destructive' | 'outline'
+type Variant = 'default' | 'secondary' | 'destructive' | 'outline' | 'muted'
 
 const base = 'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium'
 
@@ -10,6 +10,8 @@ const variants: Record<Variant, string> = {
   default: 'border-transparent bg-primary text-primary-foreground',
   // Neutral chip: subtle border only
   secondary: 'border-foreground/20 text-foreground',
+  // GitHub-style tint: soft background with matching border
+  muted: 'border-foreground/10 bg-foreground/5 text-foreground dark:border-foreground/20 dark:bg-foreground/15',
   destructive: 'border-transparent bg-red-600 text-white',
   outline: 'border-primary text-primary'
 }

@@ -37,10 +37,10 @@ export default function ApplyPatchView({ item, pairedResultMeta }: ApplyPatchVie
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
-        <Badge variant="secondary">apply_patch</Badge>
+        <Badge variant="muted">apply_patch</Badge>
         {typeof item.durationMs === 'number' && <span className="text-gray-400">{item.durationMs} ms</span>}
         {status && (
-          <Badge variant={status.exitCode === 0 ? 'secondary' : 'destructive'}>
+          <Badge variant={status.exitCode === 0 ? 'muted' : 'destructive'}>
             {status.exitCode === 0 ? 'success' : `exit ${status.exitCode}`} {status.duration != null && `• ${status.duration}s`}
           </Badge>
         )}

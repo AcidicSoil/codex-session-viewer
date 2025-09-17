@@ -361,7 +361,7 @@ function Row({
               tags?.map((tag) => (
                 <Badge
                   key={tag}
-                  variant="secondary"
+                  variant="muted"
                   title={tag}
                   className="max-w-[16rem] overflow-hidden text-ellipsis whitespace-nowrap"
                 >
