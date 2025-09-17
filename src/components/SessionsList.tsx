@@ -348,29 +348,32 @@ function Row({
   return (
     <div className="py-2 flex items-center gap-2 justify-between">
       <div className="min-w-0 flex-1">
-        <div className="text-sm truncate" title={s.path}>
-          {s.path} {mark && <span title="Content match" className="ml-1 text-emerald-600">●</span>}
+        <div className="flex min-w-0 items-center flex-wrap gap-1">
+          <span className="min-w-0 truncate text-sm" title={s.path}>
+            {s.path}
+          </span>
+          {mark && <span title="Content match" className="text-emerald-600">●</span>}
+          {(tagsLoading || tagsErrored || hasTags) && (
+            <div className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-gray-500">
+              {tagsLoading ? (
+                <span>Loading tags…</span>
+              ) : tagsErrored ? (
+                <span className="text-red-500">Tags unavailable</span>
+              ) : (
+                tags?.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    title={tag}
+                    className="max-w-[16rem] overflow-hidden text-ellipsis whitespace-nowrap"
+                  >
+                    {tag}
+                  </Badge>
+                ))
+              )}
+            </div>
+          )}
         </div>
-        {(tagsLoading || tagsErrored || hasTags) && (
-          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-500">
-            {tagsLoading ? (
-              <span>Loading tags…</span>
-            ) : tagsErrored ? (
-              <span className="text-red-500">Tags unavailable</span>
-            ) : (
-              tags?.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  title={tag}
-                  className="max-w-[16rem] overflow-hidden text-ellipsis whitespace-nowrap"
-                >
-                  {tag}
-                </Badge>
-              ))
-            )}
-          </div>
-        )}
       </div>
       <div className="flex gap-2 shrink-0">
         {/* Removed: Copy path / Raw buttons */}
