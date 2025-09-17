@@ -348,24 +348,28 @@ function Row({
   return (
     <div className="py-2 flex items-center gap-2 justify-between">
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center flex-wrap gap-1">
-          <span className="min-w-0 truncate text-sm" title={s.path}>
+        <div className="flex min-w-0 flex-wrap items-center gap-1">
+          <span className="min-w-0 flex-1 truncate text-sm" title={s.path}>
             {s.path}
           </span>
-          {mark && <span title="Content match" className="text-emerald-600">●</span>}
+          {mark && (
+            <span title="Content match" className="shrink-0 text-emerald-600">
+              ●
+            </span>
+          )}
           {(tagsLoading || tagsErrored || hasTags) && (
-            <div className="flex min-w-0 flex-wrap items-center gap-1 text-xs text-gray-500">
+            <div className="flex flex-wrap items-center gap-1 text-xs text-gray-500">
               {tagsLoading ? (
-                <span>Loading tags…</span>
+                <span className="shrink-0">Loading tags…</span>
               ) : tagsErrored ? (
-                <span className="text-red-500">Tags unavailable</span>
+                <span className="shrink-0 text-red-500">Tags unavailable</span>
               ) : (
                 tags?.map((tag) => (
                   <Badge
                     key={tag}
                     variant="secondary"
                     title={tag}
-                    className="max-w-[16rem] overflow-hidden text-ellipsis whitespace-nowrap"
+                    className="max-w-[16rem] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap"
                   >
                     {tag}
                   </Badge>
