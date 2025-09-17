@@ -2,7 +2,9 @@ import * as React from 'react'
 import type { DiscoveredSessionAsset } from '../hooks/useAutoDiscovery'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
+import { Badge } from './ui/badge'
 import { parseTimestampFromPath } from '../utils/timestamp'
+import { fetchCwdTagsFromUrl } from '../utils/session-tags'
 
 export interface SessionsListProps {
   sessions: ReadonlyArray<DiscoveredSessionAsset>
@@ -21,6 +23,105 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
   const [marks, setMarks] = React.useState<Record<string, boolean>>({})
   const [scanning, setScanning] = React.useState(false)
   const [progress, setProgress] = React.useState(0)
+  const [tagMap, setTagMap] = React.useState<Record<string, readonly string[]>>({})
+  const [tagErrors, setTagErrors] = React.useState<Record<string, boolean>>({})
+  const [loadingTags, setLoadingTags] = React.useState<Record<string, boolean>>({})
+
+  const tagMapRef = React.useRef(tagMap)
+  const tagErrorRef = React.useRef(tagErrors)
+  const loadingTagsRef = React.useRef(loadingTags)
+
+  React.useEffect(() => { tagMapRef.current = tagMap }, [tagMap])
+  React.useEffect(() => { tagErrorRef.current = tagErrors }, [tagErrors])
+  React.useEffect(() => { loadingTagsRef.current = loadingTags }, [loadingTags])
+
+  React.useEffect(() => {
+    if (sessions.length === 0) return
+    const next: Record<string, readonly string[]> = {}
+    for (const item of sessions) {
+      if (Array.isArray(item.tags)) {
+        next[item.path] = item.tags
+      }
+    }
+    if (Object.keys(next).length === 0) return
+    setTagMap((prev) => {
+      const merged = { ...prev }
+      let changed = false
+      for (const [path, tags] of Object.entries(next)) {
+        if (!merged[path]) {
+          merged[path] = tags
+          changed = true
+        }
+      }
+      if (!changed) return prev
+      return merged
+    })
+  }, [sessions])
+
+  React.useEffect(() => {
+    let active = true
+    const controllers: AbortController[] = []
+    const pending = sessions.filter((s) => !tagMapRef.current[s.path] && !loadingTagsRef.current[s.path])
+    if (pending.length === 0) return
+
+    ;(async () => {
+      for (const asset of pending) {
+        if (!active) break
+        const controller = new AbortController()
+        controllers.push(controller)
+        setLoadingTags((prev) => {
+          if (!active) return prev
+          const next = { ...prev, [asset.path]: true }
+          loadingTagsRef.current = next
+          return next
+        })
+        try {
+          const tags = await fetchCwdTagsFromUrl(asset.url, { signal: controller.signal })
+          if (!active || controller.signal.aborted) continue
+          setTagErrors((prev) => {
+            if (!active || !prev[asset.path]) return prev
+            const next = { ...prev }
+            delete next[asset.path]
+            tagErrorRef.current = next
+            return next
+          })
+          setTagMap((prev) => {
+            if (!active) return prev
+            const next = { ...prev, [asset.path]: tags }
+            tagMapRef.current = next
+            return next
+          })
+        } catch (error) {
+          if (!active || controller.signal.aborted) continue
+          setTagErrors((prev) => {
+            if (!active) return prev
+            const next = { ...prev, [asset.path]: true }
+            tagErrorRef.current = next
+            return next
+          })
+          setTagMap((prev) => {
+            if (!active) return prev
+            const next = { ...prev, [asset.path]: [] }
+            tagMapRef.current = next
+            return next
+          })
+        } finally {
+          setLoadingTags((prev) => {
+            if (!active) return prev
+            const next = { ...prev }
+            delete next[asset.path]
+            loadingTagsRef.current = next
+            return next
+          })
+        }
+      }
+    })()
+
+    return () => {
+      active = false
+      for (const controller of controllers) controller.abort()
+    }
+  }, [sessions])
 
   const filtered = React.useMemo(() => {
     const t = q.trim().toLowerCase()
@@ -162,7 +263,16 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
             return (
               <div className="max-h-[50vh] overflow-auto divide-y">
                 {filtered.map((s) => (
-                  <Row key={s.path} s={s} mark={Boolean(marks[s.path])} busy={busy} onLoad={handleLoad} />
+                  <Row
+                    key={s.path}
+                    s={s}
+                    mark={Boolean(marks[s.path])}
+                    busy={busy}
+                    onLoad={handleLoad}
+                    tags={tagMap[s.path]}
+                    tagsLoading={Boolean(loadingTags[s.path])}
+                    tagsErrored={Boolean(tagErrors[s.path])}
+                  />
                 ))}
               </div>
             )
@@ -176,7 +286,16 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
                   <div className="px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 sticky top-0">Matches ({matches.length})</div>
                   <div className="divide-y">
                     {matches.map((s) => (
-                      <Row key={s.path} s={s} mark={true} busy={busy} onLoad={handleLoad} />
+                      <Row
+                        key={s.path}
+                        s={s}
+                        mark={true}
+                        busy={busy}
+                        onLoad={handleLoad}
+                        tags={tagMap[s.path]}
+                        tagsLoading={Boolean(loadingTags[s.path])}
+                        tagsErrored={Boolean(tagErrors[s.path])}
+                      />
                     ))}
                   </div>
                 </div>
@@ -186,7 +305,16 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
                   <div className="px-2 py-1 text-xs font-semibold text-gray-600 bg-gray-50 sticky top-0">Others ({others.length})</div>
                   <div className="divide-y">
                     {others.map((s) => (
-                      <Row key={s.path} s={s} mark={false} busy={busy} onLoad={handleLoad} />
+                      <Row
+                        key={s.path}
+                        s={s}
+                        mark={false}
+                        busy={busy}
+                        onLoad={handleLoad}
+                        tags={tagMap[s.path]}
+                        tagsLoading={Boolean(loadingTags[s.path])}
+                        tagsErrored={Boolean(tagErrors[s.path])}
+                      />
                     ))}
                   </div>
                 </div>
@@ -199,13 +327,50 @@ export default function SessionsList({ sessions, onSelect, onClose, onReload, lo
   )
 }
 
-function Row({ s, mark, busy, onLoad }: { s: DiscoveredSessionAsset; mark: boolean; busy: string | null; onLoad: (s: DiscoveredSessionAsset) => void }) {
+function Row({
+  s,
+  mark,
+  busy,
+  onLoad,
+  tags,
+  tagsLoading,
+  tagsErrored,
+}: {
+  s: DiscoveredSessionAsset
+  mark: boolean
+  busy: string | null
+  onLoad: (s: DiscoveredSessionAsset) => void
+  tags?: readonly string[]
+  tagsLoading: boolean
+  tagsErrored: boolean
+}) {
+  const hasTags = Boolean(tags && tags.length > 0)
   return (
     <div className="py-2 flex items-center gap-2 justify-between">
       <div className="min-w-0 flex-1">
         <div className="text-sm truncate" title={s.path}>
           {s.path} {mark && <span title="Content match" className="ml-1 text-emerald-600">●</span>}
         </div>
+        {(tagsLoading || tagsErrored || hasTags) && (
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-500">
+            {tagsLoading ? (
+              <span>Loading tags…</span>
+            ) : tagsErrored ? (
+              <span className="text-red-500">Tags unavailable</span>
+            ) : (
+              tags?.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  title={tag}
+                  className="max-w-[16rem] overflow-hidden text-ellipsis whitespace-nowrap"
+                >
+                  {tag}
+                </Badge>
+              ))
+            )}
+          </div>
+        )}
       </div>
       <div className="flex gap-2 shrink-0">
         {/* Removed: Copy path / Raw buttons */}

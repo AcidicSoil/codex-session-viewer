@@ -4,6 +4,7 @@ export interface DiscoveredSessionAsset {
   path: string
   url: string
   sortKey?: number
+  tags?: readonly string[]
 }
 
 /**
