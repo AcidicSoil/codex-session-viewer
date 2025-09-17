@@ -49,7 +49,7 @@ function MessageEventView({ item, highlight }: { item: Extract<ResponseItem, { t
   return (
     <div className="space-y-2">
       <div className="text-xs text-gray-500 flex flex-wrap gap-2 items-center">
-        <Badge variant="secondary">{item.role}</Badge>
+        <Badge variant="muted">{item.role}</Badge>
         {item.model && <span className="text-gray-400">{item.model}</span>}
       </div>
       <pre className="whitespace-pre-wrap break-words text-sm bg-gray-50 rounded p-2 max-h-64 overflow-auto">
@@ -69,7 +69,7 @@ function LocalShellCallView({ item, highlight }: { item: Extract<ResponseItem, {
         <code className="bg-gray-100 px-1.5 py-0.5 rounded"><Highlight text={item.command} query={highlight} /></code>
         {item.cwd && <span className="text-gray-400">cwd: {item.cwd}</span>}
         {typeof item.exitCode === 'number' && (
-          <Badge variant={item.exitCode === 0 ? 'secondary' : 'destructive'}>
+          <Badge variant={item.exitCode === 0 ? 'muted' : 'destructive'}>
             exit {item.exitCode}
           </Badge>
         )}
@@ -94,7 +94,7 @@ function LocalShellCallView({ item, highlight }: { item: Extract<ResponseItem, {
 
       {patchOps.length > 0 && (
         <div className="space-y-2">
-          <Badge variant="secondary">apply_patch</Badge>
+          <Badge variant="muted">apply_patch</Badge>
           {patchOps.map((op, i) => {
             const sides = parseUnifiedDiffToSides(op.unifiedDiff)
             return (
@@ -204,7 +204,7 @@ function FunctionCallView({ item }: { item: Extract<ResponseItem, { type: 'Funct
   return (
     <div className="space-y-2">
       <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
-        <Badge variant="secondary">{item.name}</Badge>
+        <Badge variant="muted">{item.name}</Badge>
         {typeof item.durationMs === 'number' && <span className="text-gray-400">{item.durationMs} ms</span>}
       </div>
       {item.args !== undefined && (
@@ -229,7 +229,7 @@ function WebSearchCallView({ item }: { item: Extract<ResponseItem, { type: 'WebS
       <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
         <span>query:</span>
         <code className="bg-gray-100 px-1.5 py-0.5 rounded">{item.query}</code>
-        {item.provider && <Badge variant="secondary">{item.provider}</Badge>}
+        {item.provider && <Badge variant="muted">{item.provider}</Badge>}
       </div>
       {item.results && item.results.length > 0 ? (
         <ul className="list-disc pl-5 space-y-1">
@@ -257,7 +257,7 @@ function CustomToolCallView({ item }: { item: Extract<ResponseItem, { type: 'Cus
   return (
     <div className="space-y-2">
       <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
-        <Badge variant="secondary">{item.toolName}</Badge>
+        <Badge variant="muted">{item.toolName}</Badge>
       </div>
       {item.input !== undefined && (
         <div>
@@ -290,7 +290,7 @@ export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOp
         <Badge>{(item as any).type ?? 'Event'}</Badge>
         {typeof index === 'number' && <div className="text-xs text-gray-500">#{index + 1}</div>}
         {at && <div className="text-xs text-gray-500">{formatAt(at)}</div>}
-        {has(key) && <Badge variant="secondary">Bookmarked</Badge>}
+        {has(key) && <Badge variant="muted">Bookmarked</Badge>}
         {containsApplyPatchAnywhere(item) && <Badge variant="outline" title="This event references apply_patch">✚ apply_patch</Badge>}
       </CardHeader>
       <CardContent>

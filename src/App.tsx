@@ -710,8 +710,8 @@ function AppInner() {
         {scanStats && (
           <div className="mt-2 text-xs">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">Scanned {scanStats.scanned}</Badge>
-              <Badge variant="secondary">Ignored {scanStats.ignored}</Badge>
+              <Badge variant="muted">Scanned {scanStats.scanned}</Badge>
+              <Badge variant="muted">Ignored {scanStats.ignored}</Badge>
               {scanStats.aborted && <span className="text-amber-600">Scan stopped early</span>}
             </div>
             {scanStats.topIgnored.length > 0 && (

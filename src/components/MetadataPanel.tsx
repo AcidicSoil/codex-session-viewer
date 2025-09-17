@@ -58,7 +58,7 @@ export default function MetadataPanel({ meta }: MetadataPanelProps) {
           {git.dirty !== undefined && (
             <Row
               label="Dirty"
-              value={<Badge variant={git.dirty ? 'destructive' : 'secondary'}>{String(git.dirty)}</Badge>}
+              value={<Badge variant={git.dirty ? 'destructive' : 'muted'}>{String(git.dirty)}</Badge>}
             />
           )}
         </div>
