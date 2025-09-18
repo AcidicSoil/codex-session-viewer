@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:forks": "vitest run --pool=forks",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@ark-ui/react": "^4.6.0",
@@ -43,6 +45,7 @@
     "@types/node": "^20.19.13",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
+    "@playwright/test": "^1.47.2",
     "@testing-library/react": "^14.2.1",
     "@vitejs/plugin-react-swc": "^3.6.0",
     "jsdom": "^26.1.0",

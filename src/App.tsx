@@ -1211,14 +1211,17 @@ function AppInner() {
                 </details>
               </div>
               <Button
+                data-testid="bookmark-filter-toggle"
                 variant={showBookmarksOnly ? 'secondary' : 'outline'}
                 size="default"
+                aria-pressed={showBookmarksOnly}
                 onClick={() => setShowBookmarksOnly((v) => !v)}
               >
                 {showBookmarksOnly ? 'Showing bookmarks' : `Bookmarks (${keys.length})`}
               </Button>
               {/* Front-facing apply_patch FunctionCall filter */}
               <Button
+                data-testid="filter-apply-patch"
                 variant={fnFilter.includes('apply_patch') ? 'secondary' : 'outline'}
                 size="default"
                 onClick={() => setFnFilter((prev) => { const exists = prev.includes('apply_patch'); if (!exists) setTypeFilter('FunctionCall'); return exists ? prev.filter((v) => v !== 'apply_patch') : [...prev, 'apply_patch']; })}
@@ -1228,6 +1231,7 @@ function AppInner() {
               </Button>
               {/* Removed: apply_patch-anywhere content filter button */}
               <Button
+                data-testid="filters-reset"
                 variant="outline"
                 size="default"
                 onClick={() => { setSearch(''); setPathFilter(''); setTypeFilter('All'); setRoleFilter('All'); setShowBookmarksOnly(false) }}
@@ -1235,7 +1239,9 @@ function AppInner() {
                 Clear filters
               </Button>
               {keys.length > 0 && (
-                <Button variant="outline" size="default" onClick={() => clear()}>Clear</Button>
+                <Button data-testid="bookmarks-clear" variant="outline" size="default" onClick={() => clear()}>
+                  Clear
+                </Button>
               )}
               <div className="relative">
                 <details className="[&_summary::-webkit-details-marker]:hidden">
@@ -1279,10 +1285,16 @@ function AppInner() {
               return (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {chips.map((c) => (
-                    <Badge key={c.key} variant="default" className="flex items-center gap-1">
+                    <Badge
+                      key={c.key}
+                      data-testid={`filter-chip-${c.key}`}
+                      variant="default"
+                      className="flex items-center gap-1"
+                    >
                       <span>{c.label}</span>
                       <button
                         type="button"
+                        data-testid={`filter-chip-${c.key}-clear`}
                         className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full hover:bg-gray-200"
                         aria-label={`Clear ${c.key}`}
                         onClick={c.onClear}
@@ -1292,6 +1304,7 @@ function AppInner() {
                     </Badge>
                   ))}
                   <Button
+                    data-testid="filters-clear-all"
                     variant="outline"
                     size="default"
                     onClick={() => { setTypeFilter('All'); setRoleFilter('All'); setSearch(''); setPathFilter(''); setShowBookmarksOnly(false) }}

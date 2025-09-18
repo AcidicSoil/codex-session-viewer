@@ -1,0 +1,11 @@
+
+> codex-session-viewer@0.1.0 e2e
+> playwright test
+
+
+Running 2 tests using 2 workers
+
+  ✓  2 [chromium] › e2e/session-viewer.spec.ts:13:3 › Codex Session Viewer E2E › loads a session and filters the timeline (1.5s)
+  ✓  1 [chromium] › e2e/session-viewer.spec.ts:35:3 › Codex Session Viewer E2E › focuses apply_patch events and manages bookmarks (1.5s)
+
+  2 passed (2.3s)

@@ -9,8 +9,9 @@ export interface MetadataPanelProps {
 
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === undefined || value === null || value === '') return null
+  const testId = `metadata-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
   return (
-    <div className="flex gap-3 text-sm">
+    <div className="flex gap-3 text-sm" data-testid={testId}>
       <div className="w-28 text-gray-500 shrink-0">{label}</div>
       <div className="text-gray-900 break-words flex-1 min-w-0">{value}</div>
     </div>

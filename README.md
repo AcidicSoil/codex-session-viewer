@@ -42,6 +42,23 @@ Usage
 - All Sessions: click “View all (N)” to see every detected session with search, copy path, raw open, and Load actions.
 - Files panel: shows paths from both `FileChange` events and auto‑discovered project files (see below). Select a file to preview its latest change and open a full diff.
 
+End-to-End Tests
+----------------
+
+- Install browsers once: `npx playwright install --with-deps`.
+- Run the headless suite locally: `npm run e2e`.
+- Open the Playwright UI while debugging flows: `npm run e2e:ui`.
+- CI example:
+
+  ```bash
+  npm ci
+  npx playwright install --with-deps
+  npm run build
+  npm run e2e -- --reporter=junit
+  ```
+
+- The tests live in `e2e/` and rely on fixtures under `e2e/fixtures/`.
+
 Diff Viewer
 -----------
 

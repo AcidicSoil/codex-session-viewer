@@ -1,0 +1,5 @@
+{"id":"e2e-session-001","timestamp":"2025-09-15T12:00:00.000Z","instructions":"E2E session fixture for Playwright.","git":{"repo":"codex/session-viewer","branch":"main"}}
+{"type":"Message","role":"user","content":"Open the timeline and review file changes."}
+{"type":"Message","role":"assistant","content":"Here is what I found in the session log."}
+{"type":"FunctionCall","name":"shell","args":{"command":["bash","-lc","apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: src/App.tsx\n@@\n-const legacy = true;\n+const modernized = true;\n*** End Patch\nPATCH\n"]},"result":{"ok":true,"metadata":{"exit_code":0,"duration_seconds":0.4}}}
+{"type":"FileChange","path":"src/App.tsx","diff":"--- a/src/App.tsx\n+++ b/src/App.tsx\n@@\n-const legacy = true;\n+const modernized = true;\n"}

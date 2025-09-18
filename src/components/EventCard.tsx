@@ -284,8 +284,10 @@ export default function EventCard({ item, index, bookmarkKey, onRevealFile, onOp
   const { toggle, has } = useBookmarks()
   const key = bookmarkKey ?? computeEventKey(item, typeof index === 'number' ? index : 0)
   const at = 'at' in item ? (item as any).at : undefined
+  const eventTestId = `event-${String((item as any)?.type ?? 'unknown').toLowerCase()}`
+
   return (
-    <Card>
+    <Card data-testid={eventTestId}>
       <CardHeader className="flex-row items-center gap-3">
         <Badge>{(item as any).type ?? 'Event'}</Badge>
         {typeof index === 'number' && <div className="text-xs text-gray-500">#{index + 1}</div>}
