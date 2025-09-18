@@ -1,0 +1,12 @@
+[
+  {
+    "key": "ctrl+alt+shift+p",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Fix Markdown (Windows dir prompt)"
+  },
+  {
+    "key": "ctrl+alt+shift+w",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Fix Markdown (WSL dir prompt)"
+  }
+]

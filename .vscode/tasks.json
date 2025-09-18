@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Fix Markdown (Windows dir prompt)",
+      "type": "shell",
+      "command": "npx",
+      "args": ["markdownlint-cli2", "**/*.md", "--fix"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "windows": {
+        "command": "npx"
+      }
+    },
+    {
+      "label": "Fix Markdown (WSL dir prompt)",
+      "type": "process",
+      "command": "wsl.exe",
+      "args": [
+        "-d",
+        "${input:wslDistro}",
+        "bash",
+        "-lc",
+        "cd ${input:linuxDir} && npx markdownlint-cli2 \"**/*.md\" --fix"
+      ],
+      "problemMatcher": [],
+      "windows": {
+        "command": "wsl.exe"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "winDir",
+      "type": "promptString",
+      "description": "Windows path to lint",
+      "default": "${workspaceFolder}"
+    },
+    {
+      "id": "wslDistro",
+      "type": "promptString",
+      "description": "WSL distro name",
+      "default": "Ubuntu-24.04"
+    },
+    {
+      "id": "linuxDir",
+      "type": "promptString",
+      "description": "Linux path inside WSL (e.g. /home/user/)",
+      "default": "/home/user"
+    }
+  ]
+}
