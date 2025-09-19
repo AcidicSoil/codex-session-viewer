@@ -7,8 +7,13 @@ import { renderToString } from 'react-dom/server'
 import TwoFileDiff, { exportDiff } from '../TwoFileDiff'
 
 const downloadTextMock = vi.fn()
+const diff2HtmlMock = vi.fn(() => '<div class="d2h-wrapper"></div>')
 
 vi.mock('../../utils/download', () => ({ downloadText: downloadTextMock }))
+
+vi.mock('diff2html', () => ({
+  html: diff2HtmlMock,
+}))
 
 vi.mock('@monaco-editor/react', () => ({
   DiffEditor: () => React.createElement('div', { 'data-testid': 'monaco-diff' }),
@@ -50,6 +55,7 @@ if (typeof window !== 'undefined') {
 
 beforeEach(() => {
   downloadTextMock.mockClear()
+  diff2HtmlMock.mockClear()
 })
 
 describe('TwoFileDiffViewer', () => {
@@ -137,9 +143,18 @@ describe('TwoFileDiffViewer', () => {
       includeMetadata: true,
       theme: 'light',
     })
+    expect(diff2HtmlMock).toHaveBeenCalledTimes(1)
+    const [diffString, options] = diff2HtmlMock.mock.calls[0]!
+    expect(diffString).toContain('@@')
+    expect(options).toMatchObject({
+      inputFormat: 'diff',
+      outputFormat: 'side-by-side',
+      drawFileList: false,
+    })
     expect(result.extension).toBe('html')
     expect(result.content).toContain('<!doctype html>')
     expect(result.content).toContain('Diff metadata')
+    expect(result.content).toContain('d2h-wrapper')
   })
 })
 

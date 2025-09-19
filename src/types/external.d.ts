@@ -27,8 +27,6 @@ declare module 'diff' {
 }
 
 declare module 'diff2html' {
-  export const Diff2Html: {
-    getPrettyHtml(diff: string, options?: Record<string, unknown>): string
-  }
+  export function html(diff: string, options?: Record<string, unknown>): string
 }
 
