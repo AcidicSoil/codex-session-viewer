@@ -30,6 +30,7 @@ import FileTree from './components/FileTree'
 import FilePreview from './components/FilePreview'
 import DiffView from './components/DiffView'
 import TwoFileDiff from './components/TwoFileDiff'
+import TwoFileDiffViewerDemo from './components/TwoFileDiffViewerDemo'
 import { extractApplyPatchText } from './parsers/applyPatch'
 import { parseUnifiedDiffToSides } from './utils/diff'
 import { isApplyPatchFunction, passesFunctionNameFilter, sanitizeFnFilterList } from './utils/functionFilters'
@@ -65,6 +66,11 @@ function DevButtons({ onGenerate }: { onGenerate: () => void }) {
 }
 
 export default function App() {
+  const isDiffDemo = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('demo') === 'two-file-diff'
+  if (isDiffDemo) {
+    return <TwoFileDiffViewerDemo />
+  }
   return (
     <BookmarksProvider>
       <ErrorBoundary name="App">

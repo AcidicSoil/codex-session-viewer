@@ -152,6 +152,7 @@ export default function DiffView({ path, original, modified, language, height = 
             wordWrap: wrap ? 'on' : 'off',
             minimap: { enabled: false },
             diffAlgorithm: 'smart',
+            automaticLayout: true,
           }}
         />
       </React.Suspense>

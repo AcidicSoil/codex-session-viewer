@@ -14,3 +14,21 @@ declare module '@monaco-editor/react' {
   export default Editor
 }
 
+declare module 'diff' {
+  export function createTwoFilesPatch(
+    oldFileName: string,
+    newFileName: string,
+    oldStr: string,
+    newStr: string,
+    oldHeader?: string,
+    newHeader?: string,
+    options?: { context?: number }
+  ): string
+}
+
+declare module 'diff2html' {
+  export const Diff2Html: {
+    getPrettyHtml(diff: string, options?: Record<string, unknown>): string
+  }
+}
+
