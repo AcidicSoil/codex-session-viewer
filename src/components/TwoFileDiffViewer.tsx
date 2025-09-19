@@ -348,6 +348,10 @@ export default function TwoFileDiffViewer({
     return `${sanitizeFilenameSegment(leftFile.name)}-vs-${sanitizeFilenameSegment(rightFile.name)}`
   }, [leftFile, rightFile])
 
+  const baselineSide = isBaselineLeft ? leftFile : rightFile
+  const comparisonSide = isBaselineLeft ? rightFile : leftFile
+  const diffPath = comparisonSide?.name ?? baselineSide?.name ?? 'diff'
+
   const handleFiles = React.useCallback(
     async (list: FileList | null, explicitTarget?: 'left' | 'right') => {
       if (!list || list.length === 0) {
@@ -663,9 +667,9 @@ export default function TwoFileDiffViewer({
                     <Panel defaultSize={68} minSize={35} className="h-full">
                       <div ref={diffPanelRef} className="flex h-full flex-col overflow-hidden">
                         <DiffView
-                          path={rightFile?.name || leftFile?.name || 'diff'}
-                          original={leftFile?.content ?? ''}
-                          modified={rightFile?.content ?? ''}
+                          path={diffPath}
+                          original={baselineSide?.content ?? ''}
+                          modified={comparisonSide?.content ?? ''}
                           height="100%"
                         />
                       </div>
