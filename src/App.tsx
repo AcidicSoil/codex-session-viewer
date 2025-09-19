@@ -1463,7 +1463,6 @@ function AppInner() {
               original={activeDiff.original}
               modified={activeDiff.modified}
               language={activeDiff.language}
-              height={"60vh"}
             />
           </CollapsibleCard>
         )
