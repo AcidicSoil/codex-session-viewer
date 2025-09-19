@@ -117,13 +117,9 @@ export default function TwoFileDiffViewerDemo() {
           />
         </section>
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">3. Expanded workspace</h2>
-          <p className="text-sm text-slate-300">The viewer boots in expanded mode for long edits.</p>
-          <TwoFileDiffViewer
-            initialLeftFile={compactBaseline}
-            initialRightFile={compactProposed}
-            defaultExpanded
-          />
+          <h2 className="text-xl font-semibold">3. Auto-sized workspace</h2>
+          <p className="text-sm text-slate-300">The viewer grows to fit long edits without manual toggles.</p>
+          <TwoFileDiffViewer initialLeftFile={compactBaseline} initialRightFile={compactProposed} />
         </section>
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">4. Minimized start</h2>
@@ -147,7 +143,6 @@ export default function TwoFileDiffViewerDemo() {
             initialRightFile={exportSampleNew}
             leftLabel="Main branch"
             rightLabel="Feature branch"
-            defaultExpanded
           />
         </section>
       </main>

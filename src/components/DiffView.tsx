@@ -2,6 +2,7 @@ import * as React from 'react'
 import { analyzeText, safeTruncate } from '../utils/guards'
 import { useTheme } from '../state/theme'
 import { getLanguageForPath } from '../utils/language'
+import useResizeObserver from '../hooks/useResizeObserver'
 
 // Lazy-load Monaco to keep baseline bundle light and to avoid hard failure
 // if the dependency isn't installed yet. We also provide a graceful fallback.
@@ -22,7 +23,13 @@ export interface DiffViewProps {
   original: string
   modified: string
   language?: string
-  height?: number | string
+  /**
+   * Explicit height to use for the diff viewport. When omitted the component
+   * auto-sizes to the tallest editor content height and reports the measured
+   * value via `onHeightChange`.
+   */
+  height?: number
+  onHeightChange?: (height: number) => void
 }
 
 export function computeMonacoTheme(appMode: string, pref: 'auto'|'light'|'dark', dataMode: string | null): 'vs'|'vs-dark' {
@@ -32,15 +39,88 @@ export function computeMonacoTheme(appMode: string, pref: 'auto'|'light'|'dark',
   return finalMode === 'dark' ? 'vs-dark' : 'vs'
 }
 
-export default function DiffView({ path, original, modified, language, height = 420 }: DiffViewProps) {
+type Monaco = typeof import('monaco-editor')
+
+const MIN_EDITOR_HEIGHT = 200
+
+export default function DiffView({
+  path,
+  original,
+  modified,
+  language,
+  height,
+  onHeightChange,
+}: DiffViewProps) {
   const lang = language ?? getLanguageForPath(path)
   const stats = React.useMemo(() => analyzeText(`${original}\n${modified}`), [original, modified])
   const isBinary = stats.binary
   const isLarge = stats.bytes > LARGE_DIFF_THRESHOLD || stats.lines > 20_000
 
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const diffEditorRef = React.useRef<Monaco.editor.IDiffEditor | null>(null)
+  const disposablesRef = React.useRef<Monaco.IDisposable[]>([])
+  const [autoHeight, setAutoHeight] = React.useState<number>(height ?? Math.max(stats.lines * 20, MIN_EDITOR_HEIGHT))
+
+  const finalHeight = React.useMemo(() => {
+    if (typeof height === 'number') {
+      return height
+    }
+    return Math.max(autoHeight, MIN_EDITOR_HEIGHT)
+  }, [autoHeight, height])
+
+  const measureHeight = React.useCallback(
+    (editor?: Monaco.editor.IDiffEditor | null) => {
+      const instance = editor ?? diffEditorRef.current
+      if (!instance) return
+      const originalEditor = instance.getOriginalEditor()
+      const modifiedEditor = instance.getModifiedEditor()
+      const originalHeight = originalEditor.getContentHeight()
+      const modifiedHeight = modifiedEditor.getContentHeight()
+      const nextHeight = Math.max(originalHeight, modifiedHeight, MIN_EDITOR_HEIGHT)
+      setAutoHeight((prev) => {
+        if (Math.abs(prev - nextHeight) <= 1) {
+          return prev
+        }
+        return nextHeight
+      })
+      if (onHeightChange) {
+        onHeightChange(nextHeight)
+      }
+    },
+    [onHeightChange]
+  )
+
+  const layoutEditor = React.useCallback(
+    (editor?: Monaco.editor.IDiffEditor | null) => {
+      const instance = editor ?? diffEditorRef.current
+      const node = containerRef.current
+      if (!instance || !node) return
+      const width = node.clientWidth
+      if (width <= 0) return
+      instance.layout({ width, height: finalHeight })
+    },
+    [finalHeight]
+  )
+
+  const cleanupDisposables = React.useCallback(() => {
+    for (const disposable of disposablesRef.current) {
+      try {
+        disposable.dispose()
+      } catch {
+        // ignore disposal errors
+      }
+    }
+    disposablesRef.current = []
+  }, [])
+
+  useResizeObserver(containerRef, {
+    debounceMs: 60,
+    onResize: () => layoutEditor(),
+  })
+
   if (isBinary) {
     return (
-      <div className="border rounded border-foreground/20 bg-background text-foreground">
+      <div className="border rounded border-foreground/20 bg-background text-foreground" ref={containerRef}>
         <div className="px-2 py-1 text-xs text-foreground/70 border-b border-foreground/20 bg-background/80">{path || 'Diff'}</div>
         <div className="p-3 text-sm text-foreground/70">Binary file – cannot display diff</div>
       </div>
@@ -60,7 +140,7 @@ export default function DiffView({ path, original, modified, language, height = 
       }
     }, [original, modified])
     return (
-      <div className="border rounded border-foreground/20 bg-background text-foreground">
+      <div className="border rounded border-foreground/20 bg-background text-foreground" ref={containerRef}>
         <div className="px-2 py-1 text-xs text-foreground/70 border-b border-foreground/20 bg-background/80">{path || 'Diff'}</div>
         <div className="p-3 text-sm text-foreground/70">
           <p className="mb-2">
@@ -94,8 +174,72 @@ export default function DiffView({ path, original, modified, language, height = 
     [mode, editorThemePref, rootDataMode]
   )
 
+  const handleDiffMount = React.useCallback(
+    (editor: Monaco.editor.IDiffEditor) => {
+      cleanupDisposables()
+      diffEditorRef.current = editor
+      const originalEditor = editor.getOriginalEditor()
+      const modifiedEditor = editor.getModifiedEditor()
+      editor.updateOptions({
+        scrollBeyondLastLine: false,
+      })
+      originalEditor.updateOptions({
+        scrollBeyondLastLine: false,
+        scrollbar: { vertical: 'hidden' as const },
+      })
+      modifiedEditor.updateOptions({
+        scrollBeyondLastLine: false,
+        scrollbar: { vertical: 'hidden' as const },
+      })
+      disposablesRef.current = [
+        originalEditor.onDidContentSizeChange(() => {
+          measureHeight(editor)
+          layoutEditor(editor)
+        }),
+        modifiedEditor.onDidContentSizeChange(() => {
+          measureHeight(editor)
+          layoutEditor(editor)
+        }),
+        editor.onDidUpdateDiff(() => {
+          measureHeight(editor)
+          layoutEditor(editor)
+        }),
+        editor.onDidDispose(() => {
+          cleanupDisposables()
+          diffEditorRef.current = null
+        }),
+      ]
+      // ensure initial measurements once models are ready
+      setTimeout(() => {
+        measureHeight(editor)
+        layoutEditor(editor)
+      }, 0)
+    },
+    [cleanupDisposables, layoutEditor, measureHeight]
+  )
+
+  React.useEffect(() => {
+    return () => {
+      cleanupDisposables()
+      diffEditorRef.current = null
+    }
+  }, [cleanupDisposables])
+
+  React.useEffect(() => {
+    measureHeight()
+    layoutEditor()
+  }, [measureHeight, layoutEditor, original, modified])
+
+  React.useEffect(() => {
+    layoutEditor()
+  }, [layoutEditor, finalHeight])
+
   return (
-    <div className="border rounded border-foreground/20 bg-background text-foreground">
+    <div
+      className="border rounded border-foreground/20 bg-background text-foreground"
+      ref={containerRef}
+      style={{ height: `${finalHeight}px` }}
+    >
       <div className="px-2 py-1 text-xs text-foreground/70 border-b border-foreground/20 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10 flex items-center justify-between">
         <span className="truncate" title={path}>{path || 'Diff'}</span>
         <div className="flex items-center gap-2">
@@ -141,7 +285,7 @@ export default function DiffView({ path, original, modified, language, height = 
       >
         {/* @ts-ignore - DiffEditor types are available when the package is installed */}
         <MonacoDiff
-          height={typeof height === 'number' ? `${height}px` : height}
+          height={`${finalHeight}px`}
           original={original}
           modified={modified}
           language={lang}
@@ -152,8 +296,11 @@ export default function DiffView({ path, original, modified, language, height = 
             wordWrap: wrap ? 'on' : 'off',
             minimap: { enabled: false },
             diffAlgorithm: 'smart',
-            automaticLayout: true,
+            automaticLayout: false,
+            scrollBeyondLastLine: false,
+            scrollbar: { vertical: 'hidden' },
           }}
+          onMount={handleDiffMount}
         />
       </React.Suspense>
     </div>

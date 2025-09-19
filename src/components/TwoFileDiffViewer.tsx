@@ -41,8 +41,6 @@ export interface TwoFileDiffViewerProps {
   initialLeftFile?: DiffSide | null
   /** Provide initial file for the right side (comparison). */
   initialRightFile?: DiffSide | null
-  /** Whether the viewer should start expanded. */
-  defaultExpanded?: boolean
   /** Whether the viewer should start minimized. */
   defaultMinimized?: boolean
   /** Optional href used by the order notice learn-more link. */
@@ -267,7 +265,6 @@ export default function TwoFileDiffViewer({
   leftToRight = true,
   initialLeftFile = null,
   initialRightFile = null,
-  defaultExpanded = false,
   defaultMinimized = false,
   orderNoticeHref = ORDER_NOTICE_LINK,
 }: TwoFileDiffViewerProps) {
@@ -275,7 +272,6 @@ export default function TwoFileDiffViewer({
   const [rightFile, setRightFile] = React.useState<DiffSide | null>(initialRightFile)
   const [isBaselineLeft, setIsBaselineLeft] = React.useState(leftToRight)
   const [showOrderNotice, setShowOrderNotice] = React.useState(true)
-  const [isExpanded, setIsExpanded] = React.useState(defaultExpanded)
   const [isMinimized, setIsMinimized] = React.useState(defaultMinimized)
   const [isDraggingOver, setIsDraggingOver] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -284,6 +280,13 @@ export default function TwoFileDiffViewer({
   const [exportTheme, setExportTheme] = React.useState<'light' | 'dark'>(() => getInitialTheme())
   const [layoutAnnouncement, setLayoutAnnouncement] = React.useState('')
   const [panelSizes, setPanelSizes] = React.useState<[number, number]>([68, 32])
+  const [diffContentHeight, setDiffContentHeight] = React.useState<number | null>(null)
+  const [maxViewportHeight, setMaxViewportHeight] = React.useState(() => {
+    if (typeof window === 'undefined') {
+      return 720
+    }
+    return Math.max(560, Math.round(window.innerHeight * 0.85))
+  })
 
   const dropRef = React.useRef<HTMLDivElement>(null)
   const leftInputRef = React.useRef<HTMLInputElement>(null)
@@ -320,10 +323,15 @@ export default function TwoFileDiffViewer({
   }, [exportMenuOpen])
 
   React.useEffect(() => {
-    if (isMinimized && isExpanded) {
-      setIsExpanded(false)
+    if (typeof window === 'undefined') return
+    const handleResize = () => {
+      setMaxViewportHeight(Math.max(560, Math.round(window.innerHeight * 0.85)))
     }
-  }, [isMinimized, isExpanded])
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
 
   React.useEffect(() => {
     setIsBaselineLeft(leftToRight)
@@ -338,6 +346,15 @@ export default function TwoFileDiffViewer({
   }, [initialRightFile])
 
   const hasDiff = Boolean(leftFile && rightFile)
+
+  React.useEffect(() => {
+    if (!hasDiff) {
+      setDiffContentHeight(null)
+    }
+  }, [hasDiff])
+  const DEFAULT_DIFF_HEIGHT = 480
+  const viewerHeight = Math.min(diffContentHeight ?? DEFAULT_DIFF_HEIGHT, maxViewportHeight)
+  const diffOverflow = diffContentHeight != null && diffContentHeight > maxViewportHeight
   const orientationLabel = isBaselineLeft ? `${leftLabel} → ${rightLabel}` : `${rightLabel} → ${leftLabel}`
 
   const leftStats = React.useMemo(() => analyzeText(leftFile?.content ?? ''), [leftFile?.content])
@@ -347,6 +364,10 @@ export default function TwoFileDiffViewer({
     if (!leftFile || !rightFile) return 'diff'
     return `${sanitizeFilenameSegment(leftFile.name)}-vs-${sanitizeFilenameSegment(rightFile.name)}`
   }, [leftFile, rightFile])
+
+  const baselineSide = isBaselineLeft ? leftFile : rightFile
+  const comparisonSide = isBaselineLeft ? rightFile : leftFile
+  const diffPath = comparisonSide?.name ?? baselineSide?.name ?? 'diff'
 
   const handleFiles = React.useCallback(
     async (list: FileList | null, explicitTarget?: 'left' | 'right') => {
@@ -461,7 +482,7 @@ export default function TwoFileDiffViewer({
       <div
         className={cn(
           'flex flex-col overflow-hidden rounded-lg border border-foreground/20 bg-background text-foreground shadow-sm transition-all',
-          isExpanded && !isMinimized ? 'ring-2 ring-primary/70' : ''
+          hasDiff && !isMinimized ? 'ring-2 ring-primary/70' : ''
         )}
       >
         <header className="flex items-start justify-between gap-3 border-b border-foreground/10 px-4 py-3">
@@ -529,15 +550,6 @@ export default function TwoFileDiffViewer({
                 </div>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded((value) => !value)}
-              aria-pressed={isExpanded}
-              aria-label={isExpanded ? 'Collapse diff viewer height' : 'Expand diff viewer height'}
-            >
-              {isExpanded ? 'Collapse' : 'Expand'}
-            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -644,13 +656,14 @@ export default function TwoFileDiffViewer({
             <div className="border-t border-foreground/10 bg-foreground/[0.02] px-4 py-3">
               {hasDiff ? (
                 <div
-                  className="h-full min-h-[320px]"
-                  style={{ height: isExpanded ? '70vh' : '54vh' }}
+                  ref={diffPanelRef}
+                  className={cn('relative min-h-[320px]', diffOverflow ? 'overflow-y-auto' : 'overflow-visible')}
+                  style={{ maxHeight: `${maxViewportHeight}px` }}
                   aria-label="Diff workspace"
                 >
                   <PanelGroup
                     direction="horizontal"
-                    className="h-full rounded-md border border-foreground/20 bg-background"
+                    className="rounded-md border border-foreground/20 bg-background"
                     onLayout={(sizes) => {
                       setPanelSizes([sizes[0] ?? 0, sizes[1] ?? 0])
                       setLayoutAnnouncement(
@@ -660,15 +673,14 @@ export default function TwoFileDiffViewer({
                       )
                     }}
                   >
-                    <Panel defaultSize={68} minSize={35} className="h-full">
-                      <div ref={diffPanelRef} className="flex h-full flex-col overflow-hidden">
-                        <DiffView
-                          path={rightFile?.name || leftFile?.name || 'diff'}
-                          original={leftFile?.content ?? ''}
-                          modified={rightFile?.content ?? ''}
-                          height="100%"
-                        />
-                      </div>
+                    <Panel defaultSize={68} minSize={35} className="flex flex-col">
+                      <DiffView
+                        path={diffPath}
+                        original={baselineSide?.content ?? ''}
+                        modified={comparisonSide?.content ?? ''}
+                        height={viewerHeight}
+                        onHeightChange={setDiffContentHeight}
+                      />
                     </Panel>
                     <PanelResizeHandle
                       className="group relative flex w-3 cursor-col-resize items-center justify-center px-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
@@ -676,8 +688,8 @@ export default function TwoFileDiffViewer({
                     >
                       <span className="pointer-events-none h-12 w-[2px] rounded-full bg-foreground/20 transition group-hover:bg-primary" />
                     </PanelResizeHandle>
-                    <Panel defaultSize={32} minSize={20} className="h-full overflow-hidden">
-                      <div className="flex h-full flex-col gap-3 overflow-auto p-4 text-sm">
+                    <Panel defaultSize={32} minSize={20} className="min-h-0 overflow-hidden">
+                      <div className="flex min-h-0 flex-col gap-3 overflow-auto p-4 text-sm">
                         <h3 className="text-sm font-semibold text-foreground/80">Diff details</h3>
                         <dl className="grid grid-cols-1 gap-2 text-xs">
                           <div className="flex flex-col gap-1 rounded-md border border-foreground/10 bg-foreground/5 p-2">

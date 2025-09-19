@@ -25,7 +25,9 @@ explicit file ordering, export tooling, and an accessible resizable layout.
 
 ## Window controls
 
-- **Expand** toggles a taller workspace (`54vh` → `70vh`).
+- The diff viewport auto-sizes to the taller editor content and grows as files
+  change. Extremely tall diffs clamp to ~85% of the viewport height and enable
+  outer scrolling.
 - **Minimize** collapses the body to the header so the viewer can be tucked
   away in crowded layouts. Restoring re-opens the last layout.
 
@@ -62,7 +64,7 @@ Run the Vite dev server (`npm run dev`) and open
 
 1. Default drop flow and notice
 2. Swapped orientation
-3. Expanded layout
+3. Auto-sized layout
 4. Resizable metadata panel
 5. Export presets
 

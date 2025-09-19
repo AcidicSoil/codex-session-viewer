@@ -1,13 +1,14 @@
 /* @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import TwoFileDiff, { exportDiff } from '../TwoFileDiff'
 
 const downloadTextMock = vi.fn()
 const diff2HtmlMock = vi.fn(() => '<div class="d2h-wrapper"></div>')
+const diffViewMock = vi.fn((props: any) => React.createElement('div', { 'data-testid': 'mock-diff-view' }))
 
 vi.mock('../../utils/download', () => ({ downloadText: downloadTextMock }))
 
@@ -17,6 +18,11 @@ vi.mock('diff2html', () => ({
 
 vi.mock('@monaco-editor/react', () => ({
   DiffEditor: () => React.createElement('div', { 'data-testid': 'monaco-diff' }),
+}))
+
+vi.mock('../DiffView', () => ({
+  __esModule: true,
+  default: (props: any) => diffViewMock(props),
 }))
 
 vi.mock('react-resizable-panels', () => {
@@ -56,6 +62,11 @@ if (typeof window !== 'undefined') {
 beforeEach(() => {
   downloadTextMock.mockClear()
   diff2HtmlMock.mockClear()
+  diffViewMock.mockClear()
+})
+
+afterEach(() => {
+  cleanup()
 })
 
 describe('TwoFileDiffViewer', () => {
@@ -122,17 +133,69 @@ describe('TwoFileDiffViewer', () => {
     })
   })
 
-  it('toggle expand/minimize updates aria-pressed state', async () => {
-    render(React.createElement(TwoFileDiff))
-    const expand = await screen.findByRole('button', { name: /expand diff viewer height/i })
-    fireEvent.click(expand)
-    expect(expand).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(expand)
-    expect(expand).toHaveAttribute('aria-pressed', 'false')
+  it('auto sizes the workspace and applies overflow when the diff grows taller than the viewport', async () => {
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 600, configurable: true })
 
-    const minimize = screen.getByRole('button', { name: /minimize diff viewer/i })
+    try {
+      render(React.createElement(TwoFileDiff))
+      const dropZone = await screen.findByTestId('twofile-drop')
+      const transfer = new DataTransfer()
+      transfer.items.add(new File(['foo'], 'a.ts', { type: 'text/plain' }))
+      transfer.items.add(new File(['bar'], 'b.ts', { type: 'text/plain' }))
+      fireEvent.drop(dropZone, { dataTransfer: transfer })
+
+      await screen.findByText(/a\.ts/i)
+      const initialProps = diffViewMock.mock.calls.at(-1)?.[0]
+      expect(initialProps?.height).toBe(480)
+      expect(typeof initialProps?.onHeightChange).toBe('function')
+
+      initialProps?.onHeightChange?.(1200)
+
+      await waitFor(() => {
+        const updatedProps = diffViewMock.mock.calls.at(-1)?.[0]
+        expect(updatedProps?.height).toBe(560)
+      })
+
+      const workspace = await screen.findByLabelText('Diff workspace')
+      expect(workspace).toHaveClass('overflow-y-auto')
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
+    }
+  })
+
+  it('toggle minimize updates aria-pressed state', async () => {
+    render(React.createElement(TwoFileDiff))
+    const minimize = await screen.findByRole('button', { name: /minimize diff viewer/i })
     fireEvent.click(minimize)
     expect(minimize).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(minimize)
+    expect(minimize).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('sends baseline content to DiffView when baseline is on the left', () => {
+    render(
+      React.createElement(TwoFileDiff, {
+        initialLeftFile: { name: 'left.txt', content: 'baseline content' },
+        initialRightFile: { name: 'right.txt', content: 'proposed content' },
+      })
+    )
+    const call = diffViewMock.mock.calls.at(-1)?.[0]
+    expect(call?.original).toBe('baseline content')
+    expect(call?.modified).toBe('proposed content')
+  })
+
+  it('sends baseline content to DiffView when baseline is on the right', () => {
+    render(
+      React.createElement(TwoFileDiff, {
+        initialLeftFile: { name: 'left.txt', content: 'baseline content' },
+        initialRightFile: { name: 'right.txt', content: 'proposed content' },
+        leftToRight: false,
+      })
+    )
+    const call = diffViewMock.mock.calls.at(-1)?.[0]
+    expect(call?.original).toBe('proposed content')
+    expect(call?.modified).toBe('baseline content')
   })
 
   it('exportDiff helper generates html diff', () => {
