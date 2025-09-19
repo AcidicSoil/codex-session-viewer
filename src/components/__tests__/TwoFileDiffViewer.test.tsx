@@ -106,6 +106,9 @@ describe('TwoFileDiffViewer', () => {
     await waitFor(() => {
       expect(screen.getByText(/Orientation/i).nextSibling?.textContent).toMatch(/Proposed change → Baseline/i)
     })
+    const call = diffViewMock.mock.calls.at(-1)?.[0]
+    expect(call?.original).toBe('bar')
+    expect(call?.modified).toBe('foo')
   })
 
   it('exports unified diff via download helper', async () => {

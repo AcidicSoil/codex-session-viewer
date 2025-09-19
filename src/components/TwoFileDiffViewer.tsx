@@ -361,6 +361,8 @@ export default function TwoFileDiffViewer({
 
   const baselineSide = isBaselineLeft ? leftFile : rightFile
   const comparisonSide = isBaselineLeft ? rightFile : leftFile
+  const baselineStats = isBaselineLeft ? leftStats : rightStats
+  const comparisonStats = isBaselineLeft ? rightStats : leftStats
   const diffPath = comparisonSide?.name ?? baselineSide?.name ?? 'diff'
 
   const handleFiles = React.useCallback(
@@ -428,8 +430,6 @@ export default function TwoFileDiffViewer({
 
   const handleSwap = () => {
     if (!leftFile || !rightFile) return
-    setLeftFile(rightFile)
-    setRightFile(leftFile)
     setIsBaselineLeft((prev) => !prev)
   }
 
@@ -484,7 +484,7 @@ export default function TwoFileDiffViewer({
             <span className="text-sm font-semibold">Two-file diff viewer</span>
             <span className="truncate text-xs text-foreground/60" title={diffPanelSummary}>
               {hasDiff
-                ? `${leftFile?.name ?? 'Left'} ↔ ${rightFile?.name ?? 'Right'} (${orientationLabel})`
+                ? `${baselineSide?.name ?? leftLabel} ↔ ${comparisonSide?.name ?? rightLabel} (${orientationLabel})`
                 : 'Drop or pick files to compare changes'}
             </span>
           </div>
@@ -617,18 +617,26 @@ export default function TwoFileDiffViewer({
                 >
                   <p className="font-medium text-foreground">Drop files or browse to compare</p>
                   <p className="mt-1 text-xs text-foreground/60">
-                    Left slot: <strong>{leftFile?.name ?? 'empty'}</strong> — Right slot:{' '}
-                    <strong>{rightFile?.name ?? 'empty'}</strong>
+                    Left slot: <strong>{baselineSide?.name ?? 'empty'}</strong> — Right slot:{' '}
+                    <strong>{comparisonSide?.name ?? 'empty'}</strong>
                   </p>
                   <p className="mt-2 text-xs text-foreground/50">
                     Tip: drop two files to fill both slots. Drop one file to replace the next open slot.
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => triggerFilePicker('left')}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => triggerFilePicker(isBaselineLeft ? 'left' : 'right')}
+                  >
                     Choose {leftLabel}
                   </Button>
-                  <Button variant="secondary" size="sm" onClick={() => triggerFilePicker('right')}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => triggerFilePicker(isBaselineLeft ? 'right' : 'left')}
+                  >
                     Choose {rightLabel}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={handleClear} disabled={!leftFile && !rightFile}>
@@ -696,16 +704,16 @@ export default function TwoFileDiffViewer({
                         <dl className="grid grid-cols-1 gap-2 text-xs">
                           <div className="flex flex-col gap-1 rounded-md border border-foreground/10 bg-foreground/5 p-2">
                             <dt className="text-foreground/70">{leftLabel}</dt>
-                            <dd className="text-foreground">{leftFile?.name ?? 'empty'}</dd>
+                            <dd className="text-foreground">{baselineSide?.name ?? 'empty'}</dd>
                             <dd className="text-foreground/60">
-                              {formatLines(leftStats.lines)} · {formatBytes(leftStats.bytes)}
+                              {formatLines(baselineStats.lines)} · {formatBytes(baselineStats.bytes)}
                             </dd>
                           </div>
                           <div className="flex flex-col gap-1 rounded-md border border-foreground/10 bg-foreground/5 p-2">
                             <dt className="text-foreground/70">{rightLabel}</dt>
-                            <dd className="text-foreground">{rightFile?.name ?? 'empty'}</dd>
+                            <dd className="text-foreground">{comparisonSide?.name ?? 'empty'}</dd>
                             <dd className="text-foreground/60">
-                              {formatLines(rightStats.lines)} · {formatBytes(rightStats.bytes)}
+                              {formatLines(comparisonStats.lines)} · {formatBytes(comparisonStats.bytes)}
                             </dd>
                           </div>
                           <div className="flex flex-col gap-1 rounded-md border border-foreground/10 bg-foreground/5 p-2">
