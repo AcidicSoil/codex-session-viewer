@@ -1,0 +1,1 @@
+Run tests and linters for every code change but not when changing code comments or documentation. If no tests are implemented for new code you change, ensure proper tests are written to cover and test the code changes.

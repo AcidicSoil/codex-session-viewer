@@ -166,16 +166,15 @@ When discovery/confirmation is used, add:
 
 **Primary/Fallback Order (consolidated):**
 
-1. **sourcebot** (primary) **or** **docfork** (if configured for direct retrieval)
-2. **contex7-mcp** (fallback if the primary fails)
-3. **gitmcp** (last-resort fallback if both above fail)
+1. **contex7-mcp** (primary)
+2. **gitmcp** (fallback)
 
 **What to do:**
 
 - For every task that could touch code, configuration, APIs, tooling, or libraries:
 
-  - Call **sourcebot** **or** **docfork** to fetch the latest documentation or guides.
-  - If the chosen primary call **fails**, immediately retry with the other primary (**docfork** ⇄ **sourcebot**); if that also **fails**, retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
+  - Call **contex7-mcp** to fetch the latest documentation or guides.
+  - If the **primary** call **fails**, retry with **gitmcp**.
 - Each successful call **MUST** capture:
 
   - Tool name, query/topic, retrieval timestamp (UTC), and source refs/URLs (or repo refs/commits).
@@ -263,7 +262,7 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 - **Use consolidated docs-first flow** before touching any files or finalizing:
 
-  - Try **sourcebot** → **docfork** (if configured) → **contex7-mcp** → **gitmcp**.
+  - Try **contex7-mcp** → **gitmcp**.
   - Record results in `DocFetchReport`.
 
 ## 1) Startup memory bootstrap (memory)
@@ -402,7 +401,7 @@ npm run -s build --dry-run || exit 1
 
 # Python (use uv; do NOT activate any existing venv)
 # Pure unit tests only; no network, no DB, no writes outside ./artifacts
-uv run -q python -c "import sys; sys.exit(0)" || exit 1  # sanity check
+uv run -q python -c "import sys; sys.exit(0)" || exit 1
 uv run -q ruff check . || exit 1
 uv run -q pyright || exit 1
 uv run -q pytest -q tests/unit -k "not integration" || exit 1
@@ -440,7 +439,7 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 - When a task or a user requires **code**, **setup/config**, or **library/API documentation**:
 
-  - **MUST** run the **Preflight** (§A) using the consolidated order (**sourcebot | docfork → contex7-mcp → gitmcp**).
+  - **MUST** run the **Preflight** (§A) using the consolidated order (**contex7-mcp → gitmcp**).
   - Only proceed to produce diffs or create files after `DocFetchReport.status == "OK"`.
 
 ---
@@ -449,7 +448,7 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 - Apply §A Preflight for the **current** stack and language(s).
 - Prefer official documentation and repositories resolved in §A.1.
-- If coverage is weak after **sourcebot → docfork → contex7-mcp → gitmcp**, fall back to targeted web search and record gaps.
+- If coverage is weak after **contex7-mcp → gitmcp**, fall back to targeted web search and record gaps.
 
 ---
 
@@ -650,10 +649,9 @@ Each layer defines role, task, context, reasoning, output format, and stop condi
 
 ## 7) Library docs retrieval (topic-focused)
 
-- Use **sourcebot** first to fetch current docs before code changes. If configured and suitable for your workflow, **docfork** may be used to assemble or snapshot the retrieved docs.
+- Use **contex7-mcp** first to fetch current docs before code changes.
 - UI components: call shadcn-ui-mcp-server to retrieve component recipes and scaffolds before writing code; then generate. Log under DocFetchReport.tools\_called\[].
-- If the primary retrieval tool fails, use **contex7-mcp**.
-- If **contex7-mcp** also fails, use **gitmcp** (repo docs/source) to retrieve equivalents.
+- If **contex7-mcp** fails, use **gitmcp** (repo docs/source) to retrieve equivalents.
 - Summarize key guidance inline in `DocFetchReport.key_guidance` and map each planned change to a guidance line.
 - Always note in the task preamble that docs were fetched and which topics/IDs were used.
 
@@ -715,7 +713,7 @@ Each layer defines role, task, context, reasoning, output format, and stop condi
 ```markdown
 SYSTEM: You operate under a blocking docs-first policy.
 1) Preflight (§A):
-   - Call sourcebot → docfork (if configured) → contex7-mcp → gitmcp as needed.
+   - Call contex7-mcp → gitmcp as needed.
    - Build DocFetchReport (status must be OK).
 2) Planning:
    - Map each planned change to key_guidance items in DocFetchReport.
@@ -731,6 +729,111 @@ SYSTEM: You operate under a blocking docs-first policy.
    - Verify all subtasks done, then set status **done** on success; otherwise **blocked** or **needs-local-tests**.
    - Attach DocFetchReport and write completion memory (§2).
 ```
+
+---
+
+## Prompt Registry & Precedence
+
+- **Baseline:** AGENTS.md is always authoritative. Prompts in `~/.codex/prompts` are available but inert until manually invoked.
+- **Engagement:** Prompts run only when the user explicitly types the slash command or pastes the body. The assistant must not auto-run them.
+- **Precedence:** Behavior extensions and rule-packs follow later-wins. Prompts never override baseline unless pasted inline.
+- **Recording:** When invoked, the assistant must echo which prompt was used and log it in `DocFetchReport.approved_instructions[]` as `{source: "~/.codex/prompts", command: "/<name>"}`.
+
+---
+
+## Prompt Discovery & Namespacing
+
+- **Discovery:** `/foo` resolves to `~/.codex/prompts/foo.md`. No auto-run.
+- **Reserved namespace:** `/vibe-*` for YC-style playbooks and planning flows.
+- **Default shortlist:** Recommended safe manual commands:
+
+  - `/planning-process`, `/scope-control`, `/integration-test`, `/regression-guard`, `/review`, `/release-notes`, `/reset-strategy`, `/compare-outputs`.
+  - Newly available and supported: `/scaffold-fullstack`, `/api-contract`, `/openapi-generate`, `/db-bootstrap`, `/migration-plan`, `/auth-scaffold`, `/e2e-runner-setup`, `/env-setup`, `/secrets-manager-setup`, `/iac-bootstrap`, `/monitoring-setup`, `/slo-setup`, `/feature-flags`.
+
+---
+
+## Prompt→Gate Router
+
+-
+- **Scope Gate:** `/scope-control`, `/plan`, `/planning-process`
+- **Test Gate:** `/integration-test`, `/regression-guard`, `/coverage-guide`
+- **Review Gate:** `/review`, `/review-branch`, `/pr-desc`, `/owners`
+- **Release Gate:** `/release-notes`, `/version-proposal`
+- **Reset path:** `/reset-strategy`
+- **Model tactics:** `/compare-outputs`, `/switch-model`, `/model-strengths`
+
+---
+
+## Prompt Safety & Proof Hooks
+
+-
+- Prompts cannot bypass Preflight (§A) or Decision Gate (§B).
+- If a prompt suggests stateful changes, require Safety Gate review first.
+- Before acting on prompt output, confirm `DocFetchReport.status == "OK"`.
+- Append invoked prompts to `DocFetchReport.tools_called[]` as `{tool: "prompt", name: "/<cmd>", path: "~/.codex/prompts/<file>.md", time_utc}`.
+
+---
+
+## Prompt Non-Goals
+
+-
+- No auto-invocation of prompts.
+- Prompts must not redefine baseline gates, safety policies, or precedence.
+- If a command is unrecognized, check `~/.codex/prompts/<name>.md` and restart Codex if missing.
+
+---
+
+## Install & Availability Note
+
+-
+- Place your prompt catalog at `~/.codex/prompts` so slash commands like `/foo` resolve to `~/.codex/prompts/foo.md`.
+- Restart your Codex client if new prompts are not discovered. Hot‑reload is not guaranteed.
+- File naming must match the command exactly, use `.md` extension, and avoid hidden files or directories prefixed with `_`.
+- On Windows + WSL2, store prompts in the Linux home directory and, if needed, symlink from Windows paths to keep a single source of truth.
+
+---
+
+## Gemini→Codex Mapper (optional)
+
+If you maintain mapper templates, you may expose a manual command like `/gemini-map <template>` that maps Gemini‑style request blocks into Codex‑style tasks. Group mapper templates under Architecture, Debug, Review, and Quality. Treat all mapper runs as manual accelerators that never bypass gates (§A, §B).
+
+---
+
+## Troubleshooting
+
+-
+- **Slash not recognized:** Verify `~/.codex/prompts/<name>.md` exists and the filename matches the command. Restart the client.
+- **Prompt not applied:** Prompts are inert until manually invoked. Ensure you typed the slash command or pasted the prompt body.
+- **Discovery issues:** Avoid directories starting with `_` or filenames containing `.archive.` which are ignored by design.
+
+---
+
+## Version Pinning (optional)
+
+For reproducibility, pin the prompt catalog to a specific commit SHA. Record the SHA in project docs or a local dotfile so teams share the same prompt semantics across runs.
+
+---
+
+## Workflow Expansion Example
+
+To demonstrate prompts in practice, a full-stack app workflow includes:
+
+1. **Preflight Docs** → ensure latest docs. Block if `status != OK`.
+2. **Planning** → `/planning-process`, `/scope-control`, `/stack-evaluation`.
+3. **Scaffold** → `/scaffold-fullstack`, `/api-contract`, `/openapi-generate`.
+4. **Data/Auth** → `/db-bootstrap`, `/migration-plan`, `/auth-scaffold`.
+5. **Frontend** → `/modular-architecture`, `/ui-screenshots`, `/design-assets`.
+6. **Testing** → `/e2e-runner-setup`, `/integration-test`, `/coverage-guide`, `/regression-guard`.
+7. **CI/CD** → `/version-control-guide`, `/devops-automation`, `/env-setup`, `/secrets-manager-setup`, `/iac-bootstrap`.
+8. **Release** → `/owners`, `/review`, `/review-branch`, `/pr-desc`, `/release-notes`, `/version-proposal`.
+9. **Ops** → `/monitoring-setup`, `/slo-setup`, `/logging-strategy`, `/audit`.
+10. **Post-release** → `/error-analysis`, `/fix`, `/refactor-suggestions`, `/file-modularity`, `/dead-code-scan`, `/cleanup-branches`, `/feature-flags`.
+11. **Model tactics** → `/model-strengths`, `/model-evaluation`, `/compare-outputs`, `/switch-model`.
+
+**Prompt catalog status:** All prompts referenced in this workflow are present in `~/.codex/prompts` and can be invoked as shown. To verify, run a discovery pass and confirm the resolver paths match the command names.
+
+- Discovery check: ensure files exist at `~/.codex/prompts/<name>.md` for every command listed above.
+- If any command is not recognized, restart the client and re-check filename casing and extension.
 
 ---
 
