@@ -300,6 +300,17 @@ export default function TwoFileDiffViewer({
     },
   })
 
+  const diffWorkspaceStyle = React.useMemo<React.CSSProperties | undefined>(
+    () =>
+      isExpanded
+        ? undefined
+        : {
+            maxHeight: '54vh',
+            overflowY: 'auto',
+          },
+    [isExpanded]
+  )
+
   React.useEffect(() => {
     if (!exportMenuOpen || typeof document === 'undefined') return
     const handleClick = (event: MouseEvent) => {
@@ -648,13 +659,13 @@ export default function TwoFileDiffViewer({
             <div className="border-t border-foreground/10 bg-foreground/[0.02] px-4 py-3">
               {hasDiff ? (
                 <div
-                  className="h-full min-h-[320px]"
-                  style={{ height: isExpanded ? '70vh' : '54vh' }}
+                  className="flex flex-1 min-h-0 flex-col"
+                  style={diffWorkspaceStyle}
                   aria-label="Diff workspace"
                 >
                   <PanelGroup
                     direction="horizontal"
-                    className="h-full rounded-md border border-foreground/20 bg-background"
+                    className="flex flex-1 min-h-[320px] rounded-md border border-foreground/20 bg-background"
                     onLayout={(sizes) => {
                       setPanelSizes([sizes[0] ?? 0, sizes[1] ?? 0])
                       setLayoutAnnouncement(
@@ -664,13 +675,12 @@ export default function TwoFileDiffViewer({
                       )
                     }}
                   >
-                    <Panel defaultSize={68} minSize={35} className="h-full">
-                      <div ref={diffPanelRef} className="flex h-full flex-col overflow-hidden">
+                    <Panel defaultSize={68} minSize={35} className="flex min-h-0 flex-col">
+                      <div ref={diffPanelRef} className="flex flex-1 min-h-0 flex-col overflow-hidden">
                         <DiffView
                           path={diffPath}
                           original={baselineSide?.content ?? ''}
                           modified={comparisonSide?.content ?? ''}
-                          height="100%"
                         />
                       </div>
                     </Panel>
@@ -680,8 +690,8 @@ export default function TwoFileDiffViewer({
                     >
                       <span className="pointer-events-none h-12 w-[2px] rounded-full bg-foreground/20 transition group-hover:bg-primary" />
                     </PanelResizeHandle>
-                    <Panel defaultSize={32} minSize={20} className="h-full overflow-hidden">
-                      <div className="flex h-full flex-col gap-3 overflow-auto p-4 text-sm">
+                    <Panel defaultSize={32} minSize={20} className="flex min-h-0 flex-col overflow-hidden">
+                      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 text-sm">
                         <h3 className="text-sm font-semibold text-foreground/80">Diff details</h3>
                         <dl className="grid grid-cols-1 gap-2 text-xs">
                           <div className="flex flex-col gap-1 rounded-md border border-foreground/10 bg-foreground/5 p-2">

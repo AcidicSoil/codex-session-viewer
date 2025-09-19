@@ -4,10 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as React from 'react'
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import TwoFileDiff, { exportDiff } from '../TwoFileDiff'
+import TwoFileDiff, { exportDiff, type TwoFileDiffViewerProps } from '../TwoFileDiff'
 
 const downloadTextMock = vi.fn()
-const diff2HtmlMock = vi.fn(() => '<div class="d2h-wrapper"></div>')
+const diff2HtmlMock = vi.fn<(diff: string, config: unknown) => string>(() => '<div class="d2h-wrapper"></div>')
 const diffViewMock = vi.fn((props: any) => React.createElement('div', { 'data-testid': 'mock-diff-view' }))
 
 vi.mock('../../utils/download', () => ({ downloadText: downloadTextMock }))
@@ -19,6 +19,8 @@ vi.mock('diff2html', () => ({
 vi.mock('@monaco-editor/react', () => ({
   DiffEditor: () => React.createElement('div', { 'data-testid': 'monaco-diff' }),
 }))
+
+const TwoFileDiffComponent = TwoFileDiff as React.ComponentType<TwoFileDiffViewerProps>
 
 vi.mock('../DiffView', () => ({
   __esModule: true,
@@ -71,12 +73,12 @@ afterEach(() => {
 
 describe('TwoFileDiffViewer', () => {
   it('renders drop zone on the server', () => {
-    const html = renderToString(React.createElement(TwoFileDiff))
+    const html = renderToString(React.createElement(TwoFileDiffComponent))
     expect(html).toContain('Drop files or browse')
   })
 
   it('loads dropped files and exposes metadata', async () => {
-    render(React.createElement(TwoFileDiff))
+    render(React.createElement(TwoFileDiffComponent))
     const dropZone = await screen.findByTestId('twofile-drop')
     const transfer = new DataTransfer()
     transfer.items.add(new File(['hello'], 'left.txt', { type: 'text/plain' }))
@@ -92,7 +94,7 @@ describe('TwoFileDiffViewer', () => {
   })
 
   it('swaps orientation when swap button is clicked', async () => {
-    render(React.createElement(TwoFileDiff))
+    render(React.createElement(TwoFileDiffComponent))
     const dropZone = await screen.findByTestId('twofile-drop')
     const transfer = new DataTransfer()
     transfer.items.add(new File(['foo'], 'a.txt', { type: 'text/plain' }))
@@ -107,7 +109,7 @@ describe('TwoFileDiffViewer', () => {
   })
 
   it('exports unified diff via download helper', async () => {
-    render(React.createElement(TwoFileDiff))
+    render(React.createElement(TwoFileDiffComponent))
     const dropZone = await screen.findByTestId('twofile-drop')
     const transfer = new DataTransfer()
     transfer.items.add(new File(['foo'], 'a.ts', { type: 'text/plain' }))
@@ -125,7 +127,7 @@ describe('TwoFileDiffViewer', () => {
   })
 
   it('dismisses the order notice', async () => {
-    render(React.createElement(TwoFileDiff))
+    render(React.createElement(TwoFileDiffComponent))
     const dismiss = await screen.findByRole('button', { name: /dismiss order notice/i })
     fireEvent.click(dismiss)
     await waitFor(() => {
@@ -134,7 +136,7 @@ describe('TwoFileDiffViewer', () => {
   })
 
   it('toggle expand/minimize updates aria-pressed state', async () => {
-    render(React.createElement(TwoFileDiff))
+    render(React.createElement(TwoFileDiffComponent))
     const expand = await screen.findByRole('button', { name: /expand diff viewer height/i })
     fireEvent.click(expand)
     expect(expand).toHaveAttribute('aria-pressed', 'true')
@@ -148,7 +150,7 @@ describe('TwoFileDiffViewer', () => {
 
   it('sends baseline content to DiffView when baseline is on the left', () => {
     render(
-      React.createElement(TwoFileDiff, {
+      React.createElement(TwoFileDiffComponent, {
         initialLeftFile: { name: 'left.txt', content: 'baseline content' },
         initialRightFile: { name: 'right.txt', content: 'proposed content' },
       })
@@ -160,7 +162,7 @@ describe('TwoFileDiffViewer', () => {
 
   it('sends baseline content to DiffView when baseline is on the right', () => {
     render(
-      React.createElement(TwoFileDiff, {
+      React.createElement(TwoFileDiffComponent, {
         initialLeftFile: { name: 'left.txt', content: 'baseline content' },
         initialRightFile: { name: 'right.txt', content: 'proposed content' },
         leftToRight: false,
