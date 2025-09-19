@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { createTwoFilesPatch } from 'diff'
-import { Diff2Html } from 'diff2html'
+import { html as renderDiffToHtml } from 'diff2html'
 import DiffView from './DiffView'
 import { Button } from './ui/button'
 import { cn } from '../utils/cn'
@@ -237,7 +237,7 @@ export function exportDiff(request: DiffExportRequest): DiffExportResult {
     }
   }
 
-  const html = Diff2Html.getPrettyHtml(diff, {
+  const html = renderDiffToHtml(diff, {
     inputFormat: 'diff',
     outputFormat: 'side-by-side',
     matching: 'lines',
