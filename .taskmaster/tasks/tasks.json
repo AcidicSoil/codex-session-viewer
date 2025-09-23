@@ -2,1326 +2,518 @@
   "master": {
     "tasks": [
       {
-        "id": 29,
-        "title": "Initialize Project Foundation",
-        "description": "Set up the initial project structure using the specified frontend stack: React 18, TypeScript, Vite, Zustand, and Tailwind CSS with Headless UI.",
-        "details": "Create a new Vite project with the React+TS template. Install and configure Tailwind CSS, Headless UI, and Zustand for state management. Establish a basic file structure for components, services, and data models.",
-        "testStrategy": "Verify that the development server runs successfully and that a basic 'Hello World' component renders with Tailwind styles applied.",
+        "id": 67,
+        "title": "Setup Foundational Chat API with Mastra Agent",
+        "description": "Create a new API route `/api/sessions/[id]/chat` that uses the Mastra agent framework. The agent should be initialized with a `get_session` tool that wraps the existing `lib/db.ts#getSession` function to provide session context.",
+        "details": "This is the first step of the MVP. The API route should accept a POST request with the user's question. It needs to instantiate a Mastra agent, invoke it with the question and the session context from the tool, and prepare for streaming responses. This task focuses on the backend wiring, not the UI or streaming itself yet.",
+        "testStrategy": "Create a unit test for the `get_session` tool to ensure it correctly fetches and formats session data. Use an API testing tool like Postman or curl to send a request to the new endpoint and verify it returns a non-empty, non-streamed response from the agent for now.",
         "priority": "high",
         "dependencies": [],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 30,
-        "title": "Define Core Data Models in TypeScript",
-        "description": "Implement the TypeScript interfaces for the application's data layer, including SessionMeta, ResponseItem, FileChange, and ParsedSession.",
-        "details": "Create a `types.ts` or similar file to define the interfaces as specified in the PRD's 'Data Layer' section. Ensure types are exported for use across the application.",
-        "testStrategy": "Code review to ensure type definitions match the PRD. TypeScript compiler should pass without errors when these types are imported and used.",
-        "priority": "high",
-        "dependencies": [
-          29
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 31,
-        "title": "Implement Streaming JSONL Parser",
-        "description": "Develop a robust parser for `.jsonl` session files that can handle large files by streaming and processing them line by line.",
-        "details": "The parser should read a File object, process it incrementally, and parse each line as a JSON object. The first line is `SessionMeta`, and subsequent lines are `ResponseItem` events. Implement basic error recovery for malformed JSON lines.",
-        "testStrategy": "Unit test the parser with valid, large, and malformed `.jsonl` files. Test performance to meet the '< 2s for 10MB file' metric.",
-        "priority": "high",
-        "dependencies": [
-          30
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 32,
-        "title": "Implement Session Loading via File Picker",
-        "description": "Create a UI component that allows users to open a `.jsonl` file using the browser's native file picker.",
-        "details": "Use the Browser File API (`<input type='file'>`) to let users select a file. On selection, pass the file to the JSONL parser and update the application state with the parsed session data.",
-        "testStrategy": "Manual test: Click a button, select a valid `.jsonl` file, and verify that the session data is loaded into the application's state.",
-        "priority": "high",
-        "dependencies": [
-          31
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 33,
-        "title": "Implement Session Loading via Drag-and-Drop",
-        "description": "Add a drag-and-drop zone to the main application window for opening `.jsonl` files.",
-        "details": "Implement event listeners for `dragover`, `dragleave`, and `drop` events. On drop, access the file from the `DataTransfer` object and process it with the JSONL parser.",
-        "testStrategy": "Manual test: Drag a `.jsonl` file from the desktop onto the application window and verify the session loads correctly.",
-        "priority": "high",
-        "dependencies": [
-          31
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 34,
-        "title": "Create Session Metadata Display Panel",
-        "description": "Build a React component to display the parsed session metadata, such as timestamp, instructions, and git info.",
-        "details": "The component will receive the `SessionMeta` object as a prop and render its contents in a clear, readable format. This will be part of the main session view.",
-        "testStrategy": "Component test: Pass a mock `SessionMeta` object and verify all fields are displayed correctly. Manual test: Load a session and check the panel.",
-        "priority": "high",
-        "dependencies": [
-          32
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 35,
-        "title": "Build Virtualized Timeline for Events",
-        "description": "Implement the main chronological event stream using a virtualized list to ensure performance with a large number of events.",
-        "details": "Use a library like `react-window` to render only the visible event items. The list will be fed the `events` array from the `ParsedSession` object.",
-        "testStrategy": "Test with a session containing thousands of events to confirm smooth scrolling and low memory usage. Interaction latency should be < 100ms.",
-        "priority": "high",
-        "dependencies": [
-          31
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 36,
-        "title": "Develop Basic Event Card Component",
-        "description": "Create a generic React component to render a single event within the timeline. It should display the event type and a summary of its content.",
-        "details": "The component will take a `ResponseItem` as a prop and use a switch statement or mapping to render different content based on the event `type` (e.g., 'Message', 'FunctionCall').",
-        "testStrategy": "Component tests for each supported event type to ensure correct rendering. Visual regression testing can be beneficial here.",
-        "priority": "high",
-        "dependencies": [
-          30
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 37,
-        "title": "Implement Basic Full-Text Search",
-        "description": "Add a search input that allows users to perform a case-insensitive text search across all events in the timeline.",
-        "details": "Create an in-memory search index or filter the `events` array based on the search query. Highlight matching text in the event cards and provide a way to navigate between results.",
-        "testStrategy": "Manual test: Load a session, type a query, and verify that the timeline filters to show only matching events and that text is highlighted.",
-        "priority": "high",
-        "dependencies": [
-          35
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 38,
-        "title": "Create File Tree Component",
-        "description": "Build a component that displays a tree view of all files that were modified during the session.",
-        "details": "Derive the file structure from the `fileChanges` array in the `ParsedSession` object. Clicking a file should trigger an action to show its diff.",
-        "testStrategy": "Component test with a mock `fileChanges` array. Manual test: Load a session with file changes and verify the tree is accurate.",
-        "priority": "high",
-        "dependencies": [
-          31
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 39,
-        "title": "Integrate Basic Diff Viewer",
-        "description": "Integrate the Monaco Editor to display diffs for file changes. Initially, support a unified diff view.",
-        "details": "Use the `monaco-diff-editor` component. When a user selects a file from the file tree, feed the corresponding `diff` string from the `FileChange` object to the editor.",
-        "testStrategy": "Manual test: Click a file in the file tree and verify that the correct diff is displayed in the Monaco editor instance.",
-        "priority": "high",
-        "dependencies": [
-          38
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 40,
-        "title": "Implement Advanced Timeline Filters",
-        "description": "Enhance the timeline with controls to filter events by type (Message, FunctionCall, etc.), text content, and associated file paths.",
-        "details": "Build a filter pipeline that can be controlled by a set of UI components (checkboxes, text inputs). The virtualized list should update instantly as filters are applied.",
-        "testStrategy": "Manual test: Apply various filter combinations and verify the timeline updates correctly and performs well.",
-        "priority": "medium",
-        "dependencies": [
-          35,
-          37
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 41,
-        "title": "Add Syntax Highlighting to Diff Viewer",
-        "description": "Configure the Monaco diff editor to apply syntax highlighting based on the language of the file being viewed.",
-        "details": "Detect the file extension from the `path` in the `FileChange` object and set the `language` property on the Monaco editor instance accordingly.",
-        "testStrategy": "Manual test: View diffs for various file types (e.g., `.js`, `.py`, `.rs`, `.md`) and confirm that syntax highlighting is applied correctly.",
-        "priority": "medium",
-        "dependencies": [
-          39
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 42,
-        "title": "Create Command History Timeline",
-        "description": "Implement a dedicated view or filter that isolates `LocalShellCall` events to show a clear history of commands and their outputs.",
-        "details": "This could be a special filter on the main timeline or a separate panel. It should clearly pair each command with its corresponding standard output and error streams.",
-        "testStrategy": "Manual test: Load a session with shell commands and activate the command view. Verify that all commands and their outputs are displayed chronologically and are easy to read.",
-        "priority": "medium",
-        "dependencies": [
-          40
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 43,
-        "title": "Implement Event Bookmarking",
-        "description": "Allow users to bookmark or 'star' important events in the timeline for quick reference and for use in exports.",
-        "details": "Add a bookmark icon to each event card. Manage a list of bookmarked event IDs in the application state. Provide a way to view only bookmarked events.",
-        "testStrategy": "Manual test: Bookmark several events, apply a 'show bookmarked only' filter, and verify the correct events are shown. Ensure bookmarks persist during the session.",
-        "priority": "medium",
-        "dependencies": [
-          35
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 44,
-        "title": "Implement Export to JSON",
-        "description": "Create a function to export the current view of events (all, filtered, or bookmarked) as a JSON file.",
-        "details": "The function will collect the relevant `ResponseItem` objects, serialize them to a JSON string, create a Blob, and trigger a client-side download.",
-        "testStrategy": "Manual test: Filter the timeline, click 'Export to JSON', and verify the downloaded file contains only the filtered events.",
-        "priority": "medium",
-        "dependencies": [
-          40,
-          43
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 45,
-        "title": "Implement Export to Markdown",
-        "description": "Create a function to export a summary of the session, or a selection of events, into a Markdown file.",
-        "details": "Transform the selected `ResponseItem` objects into a human-readable Markdown format. For example, format `Message` events as blockquotes and `LocalShellCall` events as code blocks. Trigger a client-side download.",
-        "testStrategy": "Manual test: Bookmark a few key events, export as Markdown, and open the file to verify its formatting and content.",
-        "priority": "medium",
-        "dependencies": [
-          40,
-          43
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 46,
-        "title": "Ensure Responsive UI Layout",
-        "description": "Refine the application's layout to be responsive and usable across different screen sizes, from mobile to large desktops.",
-        "details": "Use Tailwind's responsive modifiers (e.g., `md:`, `lg:`) to adjust flex layouts, panel visibility, and font sizes. Test common breakpoints.",
-        "testStrategy": "Manual test: Resize the browser window or use browser developer tools to simulate different devices. Verify the layout adapts gracefully without breaking.",
-        "priority": "medium",
-        "dependencies": [
-          34,
-          35,
-          38
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 47,
-        "title": "Implement Deep Linking and URL State",
-        "description": "Preserve the application state (like selected event, filter settings) in the URL hash to allow for sharing specific views.",
-        "details": "Use a library or custom hook to serialize the relevant state to the URL hash. On page load, parse the hash to restore the application state. This enables permalinks.",
-        "testStrategy": "Manual test: Apply a filter, select an event, copy the URL. Open the URL in a new tab and verify the application loads in the exact same state.",
-        "priority": "medium",
-        "dependencies": [
-          40
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 48,
-        "title": "Implement Session Library with IndexedDB",
-        "description": "Maintain a library of previously opened sessions for quick access, storing metadata in the browser's IndexedDB.",
-        "details": "When a session is opened, store its `SessionMeta` and a reference to its location (if possible, or just its name) in an IndexedDB table. Create a UI to list and reopen these sessions.",
-        "testStrategy": "Manual test: Open several sessions. Close and reopen the app. Verify the sessions are listed in the library and can be re-accessed.",
-        "priority": "medium",
-        "dependencies": [
-          32,
-          33
-        ],
-        "status": "done",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Define IndexedDB Schema and Create DB Service",
-            "description": "Create a dedicated service for IndexedDB operations. Define the database schema, including the object store, keys, and indexes for storing session metadata.",
-            "dependencies": [],
-            "details": "Create a new file `src/lib/session-db.ts`. Use the `idb` library (if available, otherwise plain IndexedDB) to set up a database named `codex-session-viewer`. Create an object store named `sessions`. The key path should be the session ID from `SessionMeta`. Define an index on `lastOpened` for sorting. The stored object type, `SessionLibraryEntry`, should be defined in `src/types/session.ts` and include the session `id`, `fileName`, `lastOpened` (timestamp), the full `SessionMeta` object, and an optional `fileHandle` for re-opening.",
-            "status": "done",
-            "testStrategy": "Verify the database and object store are created correctly in the browser's developer tools."
-          },
-          {
-            "id": 2,
-            "title": "Implement Data Access Layer for Session Library",
-            "description": "In the new DB service, implement the core CRUD functions for managing session library entries.",
-            "dependencies": [
-              "48.1"
-            ],
-            "details": "In `src/lib/session-db.ts`, export asynchronous functions: `addSession(entry: SessionLibraryEntry)`, `getAllSessions(): Promise<SessionLibraryEntry[]>`, and `deleteSession(sessionId: string)`. The `addSession` function should perform an 'upsert' (add or update). `getAllSessions` should retrieve all entries, sorted by `lastOpened` in descending order. `deleteSession` will remove an entry by its ID.",
-            "status": "done",
-            "testStrategy": "Manually call these functions from the browser console to add, retrieve, and delete dummy data to confirm they work as expected."
-          },
-          {
-            "id": 3,
-            "title": "Integrate Session Saving into File Loader Hook",
-            "description": "Modify the existing file loading logic to save session metadata to the IndexedDB library upon a successful load.",
-            "dependencies": [
-              "48.2"
-            ],
-            "details": "Locate the `useFileLoader` hook in `src/hooks/useFileLoader.ts`. In the function that processes a file (e.g., `loadFile` or a similar function), after the `SessionMeta` is successfully parsed, call the `addSession` function from `src/lib/session-db.ts`. Construct the `SessionLibraryEntry` object using the `sessionMeta`, the `file.name`, a `new Date().getTime()` for `lastOpened`, and the `fileHandle` if available (from File System Access API).",
-            "status": "done",
-            "testStrategy": "Open a `.jsonl` file. Use browser dev tools to inspect IndexedDB and verify that a corresponding session entry has been created with the correct metadata."
-          },
-          {
-            "id": 4,
-            "title": "Create Session Library UI Component",
-            "description": "Develop a new React component to display the list of saved sessions from IndexedDB.",
-            "dependencies": [
-              "48.2"
-            ],
-            "details": "Create a new component `src/components/SessionLibrary.tsx`. This component will use a `useEffect` hook to call `getAllSessions()` on mount and store the results in its state. It will render a list of sessions, displaying key information for each entry like `fileName`, `meta.application`, and a human-readable `lastOpened` time. Include a placeholder for 'Open' and 'Remove' buttons for each item.",
-            "status": "done",
-            "testStrategy": "Temporarily add this component to `App.tsx` to verify it correctly fetches and displays the list of sessions previously saved to IndexedDB."
-          },
-          {
-            "id": 5,
-            "title": "Integrate Session Library into Welcome Screen",
-            "description": "Embed the new Session Library component into the main welcome screen so it's visible on application startup.",
-            "dependencies": [
-              "48.4"
-            ],
-            "details": "Modify `src/components/WelcomeScreen.tsx`. Import and render the `SessionLibrary` component. It should be displayed prominently, likely below the existing 'Open File' and drag-and-drop instructions, to provide users with immediate access to their recent sessions.",
-            "status": "done",
-            "testStrategy": "Load the application without any session. Verify the list of recent sessions appears on the welcome screen."
-          },
-          {
-            "id": 6,
-            "title": "Implement Re-open and Remove Functionality",
-            "description": "Wire up the 'Open' and 'Remove' buttons in the Session Library UI to manage and reload sessions.",
-            "dependencies": [
-              "48.3",
-              "48.4"
-            ],
-            "details": "In `SessionLibrary.tsx`, implement the button logic. The 'Remove' button should call the `deleteSession` DB function and update the component's state to remove the item from the list. The 'Open' button should use the `fileHandle` (if it exists on the entry) to call the appropriate loading function from the `useFileLoader` hook. If no `fileHandle` exists, the 'Open' button should be disabled, with a tooltip explaining that the file must be re-opened manually (e.g., via drag-and-drop).",
-            "status": "done",
-            "testStrategy": "Click 'Remove' on a session and verify it disappears from the list and the DB. Click 'Open' on a session that was opened with a file picker and verify it reloads."
-          },
-          {
-            "id": 7,
-            "title": "Implement Error Handling and Update Documentation",
-            "description": "Add robust error handling for all database operations and document the new feature in the project's README.",
-            "dependencies": [
-              "48.1",
-              "48.6"
-            ],
-            "details": "In `src/lib/session-db.ts`, wrap all IndexedDB API calls in `try...catch` blocks. Handle potential errors, such as `QuotaExceededError` or DB initialization failures. If the database cannot be used, the Session Library feature should fail gracefully (e.g., the UI component shows an informative message or does not render). Update `README.md` to describe the Session Library feature, its benefits, and any limitations (e.g., the re-open mechanism).",
-            "status": "done",
-            "testStrategy": "Test in a browser's private/incognito mode where IndexedDB might be disabled or restricted to ensure the application does not crash. Review the updated `README.md` for clarity."
-          }
-        ]
-      },
-      {
-        "id": 49,
-        "title": "Optimize Large-File Parsing with a Web Worker",
-        "description": "Move the JSONL parsing logic into a Web Worker to prevent it from blocking the main UI thread when opening very large files.",
-        "details": "Refactor the parser to run in a separate worker script. Use `postMessage` to communicate parsing progress, final results, or errors back to the main thread, which then updates the UI.",
-        "testStrategy": "Test loading a very large file (e.g., 100MB+) and verify that the UI remains responsive (e.g., spinners animate smoothly) during the parsing process.",
-        "priority": "low",
-        "dependencies": [
-          31
-        ],
-        "status": "deferred",
-        "subtasks": []
-      },
-      {
-        "id": 50,
-        "title": "Implement Artifact Extraction and Download",
-        "description": "Provide a mechanism to locate and download artifacts generated during the session as a bundled zip file.",
-        "details": "Parse the session for `Artifact` events. Create a UI to list these artifacts. Use a library like `jszip` to bundle the files client-side and trigger a download.",
-        "testStrategy": "Manual test: Load a session containing artifact data. Verify the artifacts are listed and can be downloaded as a single zip archive.",
-        "priority": "low",
-        "dependencies": [
-          31
-        ],
-        "status": "review",
-        "subtasks": []
-      },
-      {
-        "id": 51,
-        "title": "Implement Export to HTML",
-        "description": "Add an option to export a session report as a self-contained HTML file.",
-        "details": "Generate an HTML document string that includes the selected events and necessary CSS for styling. Create a Blob and trigger a client-side download.",
-        "testStrategy": "Manual test: Export a session as HTML. Open the downloaded file in a browser and verify it renders correctly without needing external resources.",
-        "priority": "low",
-        "dependencies": [
-          44,
-          45
-        ],
-        "status": "done",
-        "subtasks": []
-      },
-      {
-        "id": 52,
-        "title": "Enhance Accessibility (a11y)",
-        "description": "Perform an accessibility audit and implement improvements, including full keyboard navigation, semantic regions, and color-blind safe markers.",
-        "details": "Ensure all interactive elements are focusable and have clear focus states. Use ARIA attributes where necessary. Add distinct visual markers (e.g., patterns, icons) to diffs in addition to color.",
-        "testStrategy": "Manual audit using keyboard-only navigation. Run automated accessibility checkers like Axe. Test color-blind safe markers with a simulator.",
-        "priority": "low",
-        "dependencies": [
-          46
-        ],
-        "status": "deferred",
-        "subtasks": []
-      },
-      {
-        "id": 53,
-        "title": "Package as Web App or NPM Package (replace Electron)",
-        "description": "Provide distribution paths as a static web app and/or an installable npm package so users can either host the viewer or embed it in their apps.",
-        "status": "deferred",
-        "dependencies": [
-          29,
-          46
-        ],
-        "priority": "low",
-        "details": "### Objective\nReplace the Electron desktop app focus with two distribution paths: (A) a static web app build suitable for deployment on services like GitHub Pages, Netlify, or Vercel, and (B) an npm package that exports reusable React components and utilities for embedding in other applications.\n\n### Path A: Static Web App\n1.  **Build Configuration**: Update `vite.config.ts` to correctly handle the `base` path for deployment to a subdirectory (e.g., for GitHub Pages). The existing `\"build\": \"tsc && vite build\"` script in `package.json` should produce a deployable SPA in the `dist/` directory.\n2.  **Deployment Docs**: Add a new section to `README.md` with clear, step-by-step deployment instructions for GitHub Pages and at least one other static hosting provider (e.g., Vercel or Netlify), including how to configure 404 fallbacks for the SPA.\n\n### Path B: NPM Package\n1.  **Vite Library Mode**: Configure `vite.config.ts` to support library mode, creating a build that outputs ESM and type definitions. This may require a separate build script (e.g., `build:lib`).\n2.  **Library Entry Point**: Create a new library entry point (e.g., `src/index.ts`) that exports the primary `SessionView` component from `src/components/SessionView.tsx`, the `ParsedSession` type from `src/lib/parser.ts`, and any other relevant hooks or utilities.\n3.  **Package Metadata**: Update `package.json` to prepare it for publishing:\n    *   Add `main`, `module`, and `types` fields.\n    *   Define an `exports` map for proper module resolution.\n    *   Move `react` and `react-dom` to `peerDependencies`.\n    *   Ensure the `files` array includes the `dist` directory and necessary type definitions.\n4.  **Usage Documentation**: Add a usage example to `README.md` showing how to install the package and embed the `SessionView` component in a React application.",
-        "testStrategy": "### Web App Build Verification\n1.  Run `npm run build` and use `npm run preview` to serve the `dist` folder locally. Verify the app runs correctly.\n2.  Deploy the `dist` folder to a static host (e.g., Vercel or a `gh-pages` branch).\n3.  Confirm the deployed application loads and that any client-side routing handles deep links and 404 fallbacks correctly.\n\n### NPM Package Verification\n1.  Run the library build script and then `npm pack` to generate a local `.tgz` package file.\n2.  In a separate test React project (e.g., created with `npx vite-create-app --template react-ts`), install the package from the local file (`npm install ../path/to/codex-session-viewer-vX.Y.Z.tgz`).\n3.  Import and render the `SessionView` component with a sample session object to verify it works as expected.\n4.  Run `npm publish --dry-run` in the main project to ensure all `package.json` metadata is correct and there are no publishing errors.\n\n### Documentation Review\nReview `README.md` and other documentation to ensure all Electron-related information is removed or marked as superseded, and that the new deployment/usage instructions are clear and accurate.",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Decide distribution targets and package naming",
-            "description": "Confirm whether we’ll ship both paths (static web app + npm package) or just one first. Finalize npm package name/scope and public README positioning.",
-            "details": "Output: docs/distribution.md summarizing targets, naming (e.g., `@your-scope/codex-session-viewer`), and rollout order.",
-            "status": "pending",
-            "dependencies": [],
-            "parentTaskId": 53
-          },
-          {
-            "id": 2,
-            "title": "Configure SPA build for static hosting",
-            "description": "Ensure Vite build works for subpath deployments and SPA fallback.",
-            "details": "Tasks: set `base` in `vite.config.ts` if needed; document SPA 404 fallback for GH Pages (e.g., 404.html copy) and Netlify/Vercel config; verify `npm run build && npm run preview`.",
-            "status": "pending",
-            "dependencies": [
-              "53.1"
-            ],
-            "parentTaskId": 53
-          },
-          {
-            "id": 3,
-            "title": "Add deployment docs and GitHub Pages workflow",
-            "description": "Write step-by-step docs for deploying the static site to GH Pages and one managed host (Vercel/Netlify).",
-            "details": "Create docs/deploy.md and an optional `.github/workflows/deploy.yml` for GH Pages CI. Include base path config notes.",
-            "status": "pending",
-            "dependencies": [
-              "53.2"
-            ],
-            "parentTaskId": 53
-          },
-          {
-            "id": 4,
-            "title": "Set up library build (Vite library mode)",
-            "description": "Configure a library build that emits ESM and `.d.ts` types for the React viewer component(s) and utilities.",
-            "details": "Add `build:lib` script; configure `vite.config.ts` (or Rollup/tsup) for library mode; ensure tree-shakeable exports; generate type declarations.",
-            "status": "pending",
-            "dependencies": [],
-            "parentTaskId": 53
-          },
-          {
-            "id": 5,
-            "title": "Define library entry points and exports map",
-            "description": "Create `src/index.ts` that re-exports primary components/types; configure `package.json` `exports`, `main`, `module`, and `types` fields; move React deps to `peerDependencies`.",
-            "details": "Ensure `files` whitelist includes `dist` and type files. Add README usage snippet for embedding.",
-            "status": "pending",
-            "dependencies": [
-              "53.4"
-            ],
-            "parentTaskId": 53
-          },
-          {
-            "id": 6,
-            "title": "Local pack and embed test",
-            "description": "Run `npm pack` and consume the tarball in a fresh React TS app to verify component import, types, and rendering.",
-            "details": "Create a small example app (or codesandbox) that imports the viewer, passes a sample session, and renders successfully.",
-            "status": "pending",
-            "dependencies": [
-              "53.5"
-            ],
-            "parentTaskId": 53
-          },
-          {
-            "id": 7,
-            "title": "Publish dry-run and docs cleanup",
-            "description": "Run `npm publish --dry-run`, ensure metadata is correct, and update README/docs to remove or deprecate Electron references in favor of web/npm paths.",
-            "details": "Add a Publishing section with versioning and release steps; keep Electron as historical note only.",
-            "status": "pending",
-            "dependencies": [
-              "53.3",
-              "53.6"
-            ],
-            "parentTaskId": 53
-          }
-        ]
-      },
-      {
-        "id": 54,
-        "title": "All Sessions View (auto-discovery + selector)",
-        "description": "Add a UI to list and search all auto-detected session files (from .codex/sessions, sessions, artifacts/sessions) and allow loading any of them. Keep it lightweight, client-only. Integrate with current loader.",
-        "details": "- Build a reusable component `SessionsList` that accepts discovered assets and exposes an `onSelect` callback. \n- Add search, count badge, and sort by filename (desc) with quick actions (copy path, open). \n- Wire into App: show \"View all (N)\" near the session chips and open the list in a modal/card. \n- Reuse existing `handleFile` to load a selected asset (fetch -> blob -> File). \n- Keep discovery in `useAutoDiscovery()`; no runtime fs access. \n- Add docs to README under Usage.",
-        "testStrategy": "Manual: add multiple sample .jsonl files under ./.codex/sessions and ./sessions, run dev, click \"View all (N)\", filter, and load a file. Verify Timeline renders and Diff Viewer opens for FileChange events.",
-        "status": "done",
-        "dependencies": [],
-        "priority": "medium",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Create `SessionsList` Component Scaffold",
-            "description": "Create the basic structure for the `SessionsList` component. It will be a reusable component responsible for displaying a list of discovered session files.",
-            "dependencies": [],
-            "details": "Create a new file `src/components/SessionsList.tsx`. Define the component to accept `sessions: DiscoveredSession[]` as a prop and an `onSelect: (session: DiscoveredSession) => void` callback. Use Chakra UI components (`List`, `ListItem`, `Flex`, `Box`, `Text`) to render a basic, unstyled list of session paths. For now, the `onSelect` can be triggered via a simple `onClick` on each list item. Include placeholder buttons for 'Copy Path' and 'Open' for each item.",
-            "status": "done",
-            "testStrategy": "Use Storybook or a temporary mount in `App.tsx` to render the component with mock `DiscoveredSession` data and verify the list appears."
-          },
-          {
-            "id": 2,
-            "title": "Implement Search, Sorting, and Count Badge in `SessionsList`",
-            "description": "Add stateful filtering and sorting capabilities to the `SessionsList` component to allow users to easily find specific sessions.",
-            "dependencies": [
-              "54.1"
-            ],
-            "details": "In `SessionsList.tsx`, add a state for the search query using a Chakra `Input` component. Implement filtering logic to show only sessions whose paths match the query (case-insensitive). Add a `Heading` that includes a count badge, e.g., `All Sessions ({filteredSessions.length})`. Implement sorting logic to display sessions in descending order by filename by default. Use `useMemo` to optimize the filtering and sorting operations.",
-            "status": "done",
-            "testStrategy": "In the component's test environment, verify that typing in the search input filters the list correctly. Verify the count badge updates. Verify the list is sorted by filename descending by default."
-          },
-          {
-            "id": 3,
-            "title": "Integrate `SessionsList` into `App.tsx` via a Modal",
-            "description": "Wire the `SessionsList` component into the main application, making it accessible from a trigger near the existing session chips.",
-            "dependencies": [
-              "54.1"
-            ],
-            "details": "In `src/App.tsx`, use the `useDisclosure` hook from Chakra UI to manage the modal's state. Add a `Button` or `Chip` next to the quick-access session chips with the text `View all ({discoveredSessions.length})`. The `onClick` of this button should call the `onOpen` function from `useDisclosure`. Render a Chakra `Modal` (`Modal`, `ModalOverlay`, `ModalContent`, `ModalHeader`, `ModalBody`, `ModalCloseButton`) which contains the `SessionsList` component. Pass the `discoveredSessions` from the `useAutoDiscovery` hook to the component.",
-            "status": "done",
-            "testStrategy": "Run the app. Verify the 'View all (N)' button appears with the correct count. Clicking it should open a modal displaying the full list of sessions from `useAutoDiscovery`."
-          },
-          {
-            "id": 4,
-            "title": "Implement Session Loading Logic on Selection",
-            "description": "Connect the `onSelect` action in the `SessionsList` to the application's existing file handling logic to load the chosen session.",
-            "dependencies": [
-              "54.3"
-            ],
-            "details": "In `App.tsx`, define the function that will be passed as the `onSelect` prop to `SessionsList`. This function will receive the selected `DiscoveredSession`. Inside this function, perform the following: 1. Use the `fetch` API to get the session file content from its public path (`session.path`). 2. Convert the response to a `Blob`. 3. Create a `new File(...)` object from the blob and filename. 4. Call the existing `handleFile` function (from the `useSession` hook) with the new `File` object. 5. Close the modal using the `onClose` function from `useDisclosure`.",
-            "status": "done",
-            "testStrategy": "Open the 'All Sessions' modal, click on a session. Verify the modal closes and the application loads the selected session, displaying its timeline and metadata."
-          },
-          {
-            "id": 5,
-            "title": "Implement Empty/Loading States and Quick Actions",
-            "description": "Enhance the `SessionsList` component with better user experience by handling edge cases and implementing the placeholder quick actions.",
-            "dependencies": [
-              "54.2"
-            ],
-            "details": "In `SessionsList.tsx`: 1. If the `sessions` prop is empty, display a message like 'No discovered sessions found.'. 2. If the search filter yields no results, display 'No sessions match your search.'. 3. Implement the 'Copy Path' button using `navigator.clipboard.writeText(session.path)`. Provide user feedback with a Chakra `useToast`. 4. Implement the 'Open' button as an `<a>` tag that opens the raw session file (`.jsonl`) in a new tab.",
-            "status": "done",
-            "testStrategy": "Manually test the empty state by providing an empty array. Test the 'no results' state by searching for gibberish. Test the 'Copy Path' and 'Open' buttons for a few sessions to ensure they work as expected."
-          },
-          {
-            "id": 6,
-            "title": "Update README.md with Usage Documentation",
-            "description": "Document the new 'All Sessions' view feature for users.",
-            "dependencies": [
-              "54.3"
-            ],
-            "details": "Edit the `README.md` file. Add a section under 'Usage' or 'Features' that describes the session auto-discovery and the 'All Sessions' modal. Explain how to access it (by clicking the 'View all' button) and its functionalities, including search and loading a session.",
-            "status": "done",
-            "testStrategy": "Review the `README.md` file to ensure the new documentation is clear, concise, and accurately reflects the feature's functionality."
-          },
-          {
-            "id": 7,
-            "title": "Bulk content scan + grouping in All Sessions",
-            "description": "Add a content filter that scans session files in bulk and marks matches; group the All Sessions list into Matches and Others sections with indicators and a matches-only toggle.",
-            "details": "- Add an input and buttons to scan all discovered sessions for a text needle (e.g., 'apply_patch'), reading first ~256KB per file via fetch; show progress.\n- Mark matching sessions (green dot) and group the list into 'Matches' and 'Others' with sticky headers.\n- Provide 'Matches only' and 'Clear marks' actions.\n- Fully guard against network failures and type errors; no blank screens.\n- Include a preset to scan for 'apply_patch'.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 54
-          }
-        ]
-      },
-      {
-        "id": 55,
-        "title": "Reload Sessions Button (re-scan without page refresh)",
-        "description": "Add a UI button to re-run session auto-discovery without a full page reload, updating the quick chips and All Sessions list.",
-        "details": "- Refactor `useAutoDiscovery()` to expose a `reload()` signal that re-evaluates the globs and updates state. At dev time, Vite HMR should pick up newly added files under watched folders; `reload()` forces the hook to refresh its results.\n- Add a small spinner/disabled state while recalculating.\n- Place the button next to the session chips (and in the All Sessions list header).",
-        "testStrategy": "Manual: add a new .jsonl under ./.codex/sessions while dev server runs, click Reload; verify it appears in chips and list. Remove a file, click Reload; verify it's removed. If Vite does not pick it up immediately, note the limitation in README and suggest a page refresh as fallback.",
-        "status": "done",
-        "dependencies": [],
-        "priority": "medium",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Refactor `useAutoDiscovery` Hook to Expose `reload` and `loading` State",
-            "description": "Modify the `useAutoDiscovery` hook in `src/hooks/useAutoDiscovery.ts` to support manual re-triggering. This involves changing the core logic from a one-time `useEffect` to an on-demand function and adding a loading state.",
-            "dependencies": [],
-            "details": "In `src/hooks/useAutoDiscovery.ts`, refactor the existing `useEffect` logic into a `useCallback` function, let's call it `scan`. This function will contain the logic for processing the `import.meta.glob` results. Introduce a `useState` boolean for `isLoading`. The hook should call `scan` once on mount. It should return the existing `discoveredSessions` and `sessionCount`, plus the new `isLoading` state and the `scan` function (exposed as `reload`).",
-            "status": "done",
-            "testStrategy": "Verify in the browser that sessions still load on the initial page load. Manually call the new `reload` function from the browser console to ensure it can be triggered."
-          },
-          {
-            "id": 2,
-            "title": "Add Reload Button to Main App View",
-            "description": "Integrate the new `reload` functionality into the main application UI by adding a button next to the session quick-view chips.",
-            "dependencies": [
-              "55.1"
-            ],
-            "details": "In `src/App.tsx`, update the call to `useAutoDiscovery` to receive the `reload` function and `isLoading` state. Add a new button, preferably an icon button with a 'refresh' icon, next to the session chips container. The button's `onClick` handler should call the `reload` function. The button should be disabled when `isLoading` is true.",
-            "status": "done",
-            "testStrategy": "Manually test by clicking the new reload button. Verify the button becomes disabled during the (brief) reload period."
-          },
-          {
-            "id": 3,
-            "title": "Add Reload Button to `AllSessionsView` Component",
-            "description": "Add a consistent reload button to the header of the `AllSessionsView` modal/page for a unified user experience.",
-            "dependencies": [
-              "55.1"
-            ],
-            "details": "In `src/App.tsx`, pass the `reload` function and `isLoading` state as props to the `AllSessionsView` component. Modify `src/components/AllSessionsView.tsx` to accept these new props. Add a reload button to the component's header, similar to the one in the main view. This button should also call `reload` and be disabled when `isLoading` is true.",
-            "status": "done",
-            "testStrategy": "Open the 'All Sessions' view. Click the reload button in its header and verify it triggers the reload and enters a disabled state."
-          },
-          {
-            "id": 4,
-            "title": "Implement UI Spinner for Loading Feedback",
-            "description": "Provide clear visual feedback during the re-scan process by displaying a spinner next to the reload buttons.",
-            "dependencies": [
-              "55.2",
-              "55.3"
-            ],
-            "details": "Identify an existing spinner component in the project or create a simple CSS-based one. In both `src/App.tsx` and `src/components/AllSessionsView.tsx`, conditionally render this spinner next to the reload button when the `isLoading` state is true. The refresh icon can be hidden and replaced by the spinner during the loading state.",
-            "status": "done",
-            "testStrategy": "Click either reload button and visually confirm that a spinner appears and the button's icon is hidden. The spinner should disappear once the reload is complete."
-          },
-          {
-            "id": 5,
-            "title": "Implement Debounce on the `reload` Function",
-            "description": "Prevent excessive re-scans from rapid button clicks by adding a debounce mechanism to the `reload` function within the `useAutoDiscovery` hook.",
-            "dependencies": [
-              "55.1"
-            ],
-            "details": "In `src/hooks/useAutoDiscovery.ts`, modify the exposed `reload` function. Use a combination of `useRef` to hold a timeout ID and `setTimeout`/`clearTimeout` to create a debounce effect. A debounce delay of 300-500ms is appropriate. This ensures that even if the button is clicked multiple times in quick succession, the expensive `scan` logic only runs once after the user stops clicking.",
-            "status": "done",
-            "testStrategy": "Add a `console.log` inside the core scan logic. Click the reload button rapidly multiple times and verify from the console that the log message appears only once after the clicks have stopped."
-          },
-          {
-            "id": 6,
-            "title": "Write Unit Tests for `useAutoDiscovery` Hook",
-            "description": "Create unit tests for the `useAutoDiscovery` hook to ensure its logic is correct, including the initial load, reload functionality, loading state, and debouncing.",
-            "dependencies": [
-              "55.1",
-              "55.5"
-            ],
-            "details": "Create a new test file `src/hooks/useAutoDiscovery.test.ts`. Use a testing library (e.g., Vitest, Jest) to mock Vite's `import.meta.glob`. Write test cases to: 1) Verify sessions are loaded on initial render. 2) Verify `isLoading` is `true` while `reload` is executing and `false` otherwise. 3) Verify calling `reload` updates the session list. 4) Use fake timers to test that the debounce logic correctly limits the execution of the scan function.",
-            "status": "done",
-            "testStrategy": "Run the test suite and ensure all assertions pass."
-          }
-        ]
-      },
-      {
-        "id": 56,
-        "title": "Newest-First Sorting for Detected Sessions",
-        "description": "Add robust newest-first sorting for auto-detected sessions and All Sessions list by parsing timestamps from filenames/directories, with fallback to lexicographic order.",
-        "details": "- Parse timestamps from common patterns like `rollout-YYYY-MM-DDTHH-mm-ss`, `YYYY/MM/DD/...`, and ISO-like tokens in the path.\n- Compute and cache a `sortKey` (epoch ms) per asset.\n- Provide a UI toggle between `Newest` and `Name` sort, defaulting to `Newest`.\n- Ensure sorting is stable and resilient when timestamps are missing.",
-        "testStrategy": "Manual: seed mixed session filenames; verify order matches expected timestamps. Unit test the parser against representative names and directory patterns.",
-        "status": "done",
-        "dependencies": [],
-        "priority": "medium",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Create Timestamp Parsing Utility",
-            "description": "Implement a utility function to extract a timestamp from a file path string. This function will be the core of the sorting logic.",
-            "dependencies": [],
-            "details": "Create a new file `src/utils/timestamp.ts`. Inside, export a function `parseTimestampFromPath(path: string): number | null`. This function should use regular expressions to find and parse timestamps from the following patterns in order of priority:\n1. `rollout-YYYY-MM-DDTHH-mm-ss` in the filename.\n2. ISO 8601-like date strings (e.g., `YYYY-MM-DDTHH-mm-ss.sssZ`) anywhere in the path.\n3. Directory structures like `YYYY/MM/DD/`.\nReturn the parsed timestamp as epoch milliseconds, or `null` if no recognizable timestamp is found.",
-            "status": "done",
-            "testStrategy": "This will be tested directly in subtask 56.5."
-          },
-          {
-            "id": 2,
-            "title": "Integrate Timestamp Parsing into `useAutoDiscovery` Hook",
-            "description": "Modify the auto-discovery hook to compute and attach a `sortKey` to each discovered session object.",
-            "dependencies": [
-              "56.1"
-            ],
-            "details": "In `src/hooks/useAutoDiscovery.ts`:\n1. Update the `DiscoveredSession` interface to include `sortKey: number | null`.\n2. Import `parseTimestampFromPath` from `src/utils/timestamp.ts`.\n3. Within the `useEffect` that processes the `glob` results, call `parseTimestampFromPath` for each file's path.\n4. Attach the returned epoch milliseconds (or `null`) to the new `sortKey` property of the `DiscoveredSession` object being created.",
-            "status": "done",
-            "testStrategy": "Manual verification by inspecting the hook's output with a debugger or console log."
-          },
-          {
-            "id": 3,
-            "title": "Add Sort Toggle UI to All Sessions Modal",
-            "description": "Implement the UI controls for switching between 'Newest' and 'Name' sorting within the 'All Sessions' list.",
-            "dependencies": [],
-            "details": "In `src/components/AllSessionsModal.tsx`:\n1. Add a new state variable: `const [sortOrder, setSortOrder] = useState<'newest' | 'name'>('newest');`.\n2. In the modal's header area, add a simple button group or segmented control that allows the user to select between 'Newest' and 'Name'.\n3. The onClick handler for these controls should update the `sortOrder` state.\n4. Ensure the default selection is 'Newest'.",
-            "status": "done",
-            "testStrategy": "Manually open the 'All Sessions' modal and verify the toggle UI is present, defaults to 'Newest', and can be changed."
-          },
-          {
-            "id": 4,
-            "title": "Implement Stable Sorting Logic",
-            "description": "Apply the sorting logic based on the selected sort order, ensuring a stable sort and proper fallback for items without a timestamp.",
-            "dependencies": [
-              "56.2",
-              "56.3"
-            ],
-            "details": "In `src/components/AllSessionsModal.tsx`, replace the existing `a.name.localeCompare(b.name)` sort.\n1. Create a new sorted list based on the `sortOrder` state.\n2. If `sortOrder` is `'newest'`, sort by `b.sortKey - a.sortKey`. For items where `sortKey` is `null` or equal, use `a.name.localeCompare(b.name)` as a secondary, stable sort criterion.\n3. If `sortOrder` is `'name'`, sort by `a.name.localeCompare(b.name)`.\n4. In `src/components/WelcomeScreen.tsx`, apply the default 'newest' sorting logic to the session chips it displays from `useAutoDiscovery`. No UI toggle is needed here, just the default sort behavior.",
-            "status": "done",
-            "testStrategy": "Manually test with a mix of session files (some with timestamps in the name, some without) and verify that the list order in the modal and on the welcome screen is correct. Check that toggling the sort order works as expected."
-          },
-          {
-            "id": 5,
-            "title": "Write Unit Tests for Timestamp Parser",
-            "description": "Create a suite of unit tests to ensure the `parseTimestampFromPath` utility is robust and handles various path formats correctly.",
-            "dependencies": [
-              "56.1"
-            ],
-            "details": "Create a new test file `src/utils/timestamp.test.ts`.\nUsing Vitest (or the project's testing framework), write tests for `parseTimestampFromPath` that cover:\n- Each of the specified patterns (`rollout-`, ISO-like, `YYYY/MM/DD`).\n- Paths containing no timestamp (should return `null`).\n- Paths with malformed or invalid dates.\n- Edge cases like paths with multiple potential timestamps (ensure priority is handled correctly).",
-            "status": "done",
-            "testStrategy": "Run `npm test` (or equivalent) and ensure all tests pass."
-          },
-          {
-            "id": 6,
-            "title": "Update README with Sorting Behavior Documentation",
-            "description": "Document the new sorting feature, its default behavior, and the filename patterns it recognizes.",
-            "dependencies": [],
-            "details": "In `README.md`, add a new section under 'Features' titled 'Session Sorting'.\nExplain that sessions are sorted by newest first by default. Detail the specific filename and directory patterns that the application recognizes for timestamp extraction, listing them in order of priority. Mention that it falls back to alphabetical sorting by name if no timestamp is found.",
-            "status": "done",
-            "testStrategy": "Review the `README.md` file to confirm the new section is clear and accurate."
-          }
-        ]
-      },
-      {
-        "id": 57,
-        "title": "Complete Diff Viewer Functionality",
-        "description": "Make the Diff Viewer robust for real-world diffs and add essential controls.",
-        "details": "- Parser resilience: handle diffs without @@ hunks; tolerate missing ---/+++ headers; keep context lines; ignore 'No newline at end of file'.\n- Viewer controls: toggles for side-by-side vs inline, word wrap, ignore whitespace; copy and download raw diff; surface language.\n- Large/binary guards: show clear notices and allow opening raw.\n- Tests: unit tests for the diff parser and a couple of snapshot tests for the viewer config.\n- Docs: expand README Diff Viewer section and note supported formats/limits.\n<info added on 2025-09-11T20:21:15.684Z>\n**Implementation Summary:**\n\nThe core functionality has been implemented and is ready for review. The diff parser, located in `src/utils/diff.ts`, was enhanced to robustly handle headerless and hunkless unified diffs, with comprehensive unit tests covering these cases in `src/utils/__tests__/diff.test.ts`.\n\nIn the frontend, `src/components/DiffViewer.tsx` now incorporates key viewer controls, including toggles for split/inline view and word wrap. It also integrates guards from `src/utils/guards.ts` to gracefully handle large or binary diffs by displaying a notice instead of attempting to render. Language detection for syntax highlighting has been improved via a mapping utility in `src/utils/language.ts`.\n\n**Design Decisions & Deviations:**\n\n- **Subtask 57.3 (Copy/Download Raw):** Per a UI refinement decision (related to Task 59.10), dedicated 'Copy' and 'Download' buttons were intentionally **not** added to the `DiffViewer` header. Instead, users can access the raw diff content via the toggle mechanism within the `src/components/ApplyPatchView.tsx` component when applicable.\n- **Subtask 57.7 (Snapshot Tests):** This subtask has been deferred and moved to Task 63 (UI/UX Polish). This decision was made to avoid creating brittle snapshot tests while the UI is still undergoing final polish.\n\nAll other subtasks, including documentation updates in the `README.md`, have been completed. The feature set is considered complete pending this review.\n</info added on 2025-09-11T20:21:15.684Z>",
-        "testStrategy": "Unit tests for parser branches; manual test with diverse diffs (single-hunk, multi-hunk, headerless, only +/- lines, and binary-looking).",
-        "status": "done",
-        "dependencies": [],
-        "priority": "medium",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Enhance Diff Parser for Headerless and Hunkless Diffs",
-            "description": "Modify the diff parsing logic to robustly handle diffs that lack standard '---'/'+++' headers or '@@' hunk specifiers. The parser should correctly process context, added, and removed lines based on their prefixes (' ', '+', '-') and ignore '\\ No newline at end of file' lines.",
-            "dependencies": [],
-            "details": "Locate the primary diff parsing function, likely `parseUnifiedDiffToSides` in a file such as `src/utils/diffParser.ts`. Update its logic to check for the presence of `---`/`+++` headers. If they are absent, treat the entire input as a single file change. Iterate through each line, assigning it to the 'left' (for '-' and ' ' prefixes) or 'right' (for '+' and ' ' prefixes) side of the diff. Ensure lines starting with '\\' are skipped.",
-            "status": "done",
-            "testStrategy": "Add unit tests for various diff formats: headerless, hunkless, mixed, and standard unified diffs."
-          },
-          {
-            "id": 2,
-            "title": "Implement Viewer Controls for Display Modes",
-            "description": "Add UI controls to the Diff Viewer for toggling between side-by-side and inline views, enabling/disabling word wrap, and ignoring whitespace changes. These settings should be managed by local component state.",
-            "dependencies": [],
-            "details": "In the `DiffViewer.tsx` component, introduce `useState` hooks to manage `renderSideBySide` (boolean), `wordWrap` ('on'/'off'), and `ignoreTrimWhitespace` (boolean). Add UI elements (e.g., buttons or switches from the project's component library) to the viewer's header area to modify these state variables. Pass these values to the `options` prop of the Monaco `DiffEditor` component to control its behavior.",
-            "status": "done",
-            "testStrategy": "Manually verify that toggling each control correctly updates the Monaco editor's display style."
-          },
-          {
-            "id": 3,
-            "title": "Add 'Copy Raw' and 'Download Raw' Actions",
-            "description": "Implement two new actions in the Diff Viewer's header: a 'Copy raw' button to copy the original diff text to the clipboard, and a 'Download raw' button to save the diff text as a file.",
-            "dependencies": [],
-            "details": "In `DiffViewer.tsx`, add two new buttons. For 'Copy raw', use the `navigator.clipboard.writeText()` API with the raw `diff` string prop. For 'Download raw', reuse the file download utility function from existing export features (see Task 44). Create a `Blob` from the raw `diff` string with MIME type `text/plain` and trigger a download. The filename should be derived from the file path, e.g., `path-to-file.diff`.",
-            "status": "done",
-            "testStrategy": "Click 'Copy raw' and paste into a text editor. Click 'Download raw' and verify the contents of the downloaded file."
-          },
-          {
-            "id": 4,
-            "title": "Implement Guards for Large and Binary Diffs",
-            "description": "Add detection for large or binary diffs. Instead of attempting to render them, display a clear notification message and provide an option to view or download the raw content.",
-            "dependencies": [
-              "57.3"
-            ],
-            "details": "In `DiffViewer.tsx`, before rendering the editor, add a pre-processing step. Check the raw `diff` string for binary content (e.g., presence of null bytes `\\0`) or excessive length (e.g., > 1MB or > 10,000 lines). If a guard is triggered, render a message like 'Binary file diff cannot be displayed.' or 'Diff is too large to display.' and show a 'Download Raw Diff' button that reuses the logic from subtask 3.",
-            "status": "done",
-            "testStrategy": "Test with a very large text file diff and a diff from a binary file (e.g., an image) to ensure the notice appears correctly."
-          },
-          {
-            "id": 5,
-            "title": "Refine Language Detection for Syntax Highlighting",
-            "description": "Improve the language detection logic to correctly map common file extensions to their corresponding Monaco Editor language identifiers, such as mapping 'tsx' to 'typescript' and 'yml' to 'yaml'.",
-            "dependencies": [],
-            "details": "In `DiffViewer.tsx` or a new utility file (`src/utils/languageDetection.ts`), create or update the function that determines the language for Monaco. This function will take the file path (e.g., `newPath` prop) as input. Implement a mapping object or a switch statement to handle aliases: `tsx` -> `typescript`, `jsx` -> `javascript`, `yml` -> `yaml`, `py` -> `python`, etc. The result should be passed to the `language` prop of the `DiffEditor`.",
-            "status": "done",
-            "testStrategy": "Load diffs for `.tsx`, `.jsx`, and `.yml` files and verify that syntax highlighting is applied correctly."
-          },
-          {
-            "id": 6,
-            "title": "Add Unit Tests for Diff Parser Resilience",
-            "description": "Create a suite of unit tests for the diff parsing function to ensure it correctly handles the newly supported formats and does not regress on standard formats.",
-            "dependencies": [
-              "57.1"
-            ],
-            "details": "Create a new test file, `src/utils/diffParser.test.ts`, using the project's testing framework (e.g., Jest/Vitest). Write specific test cases for the `parseUnifiedDiffToSides` function, covering: a diff with only `+` and `-` lines, a diff without `---`/`+++` headers, a diff with context lines but no hunk `@@` header, and a diff containing the 'No newline at end of file' string. Also include a test for a standard, well-formed diff.",
-            "status": "done",
-            "testStrategy": "Run the test suite and ensure all assertions pass for the various diff input scenarios."
-          },
-          {
-            "id": 7,
-            "title": "Create Snapshot Test for Diff Viewer Options",
-            "description": "Add a component-level snapshot test for the Diff Viewer to capture its rendering with different view options, ensuring UI consistency and preventing regressions.",
-            "dependencies": [
-              "57.2"
-            ],
-            "details": "In the Storybook file for the diff viewer, likely `src/components/DiffViewer/DiffViewer.stories.tsx`, create several stories. One story should render the viewer in its default state. Add other stories that pass props to enable different options, such as `{ renderSideBySide: false }` for inline view and `{ options: { wordWrap: 'on' } }` for word wrap. If snapshot testing is configured (e.g., via `@storybook/addon-storyshots`), these stories will generate snapshots.",
-            "status": "done",
-            "testStrategy": "Generate snapshots for the new stories. On subsequent changes, verify that snapshot diffs are intentional."
-          },
-          {
-            "id": 8,
-            "title": "Update README with Diff Viewer Capabilities",
-            "description": "Expand the 'Diff Viewer' section in the project's README.md to document the new features, supported formats, UI controls, and known limitations.",
-            "dependencies": [],
-            "details": "Edit the `README.md` file. Locate the section on the Diff Viewer. Add details about the enhanced parser's resilience (e.g., 'Handles headerless diffs'). List the new viewer controls (Side-by-side/inline toggle, Word Wrap, etc.). Mention the handling of large and binary files. Include a simple code block example of a diff that is now supported.",
-            "status": "done",
-            "testStrategy": "Review the rendered `README.md` on the Git hosting platform to ensure the formatting is correct and the information is clear."
-          }
-        ]
-      },
-      {
-        "id": 58,
-        "title": "Filter‑Aware Granular Export",
-        "description": "Implement export functionality that respects the currently selected filters and allows granular field/column and scope selection, with CSV and JSON formats.",
-        "details": "Goal: Enable users to export exactly what they’re viewing based on active filters, with fine-grained selection of fields and row scope.\n\nRequirements:\n- Respect current filter state (via Zustand selectors) so exported rows match the filtered dataset (and current sort if feasible).\n- Provide export formats: CSV and JSON (extensible to Parquet in future; design for pluggable exporters).\n- Granular field selection: allow users to pick columns/attributes to include.\n- Row scope options: current page vs. all filtered results vs. selected rows.\n- UI: Export button opens a modal/dialog with format, fields, and scope controls. Show row count estimate.\n- Performance: Handle large exports without freezing the UI (use Web Worker and streaming/chunking for CSV where possible).\n- Accessibility: Keyboard navigable modal and focus management.\n- Telemetry: basic timing metrics around export generation (optional).\n\nAcceptance Criteria:\n- Exported file row count equals filtered dataset for chosen scope.\n- Included columns match selections; CSV headers match field labels.\n- CSV opens correctly in common spreadsheet apps; JSON validates.\n- Operation completes for 50k+ rows without locking the main thread.\n- Unit tests cover field mapping and CSV generation; smoke/E2E verifies end-to-end export respects filters.\n",
-        "testStrategy": "",
-        "status": "done",
-        "dependencies": [],
-        "priority": "high",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Confirm export scope, formats, and field mapping",
-            "description": "Finalize exportable entities/fields, default columns, and CSV/JSON specs. Decide how nested fields are flattened, how dates are formatted, and column labels vs. keys. Deliver a short spec and example files.",
-            "details": "Deliverables: 1) concise spec in docs/export.md with field list and mapping rules; 2) example CSV/JSON for a small sample; 3) alignment with current table columns and filters.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 58
-          },
-          {
-            "id": 2,
-            "title": "Add column metadata and field selection utilities",
-            "description": "Create a central metadata map of exportable fields (key, label, type, extractor, formatter). Provide utilities to resolve selected fields into extraction/formatting pipelines.",
-            "details": "Proposed files: src/export/columns.ts (metadata), src/export/fieldSelection.ts (helpers). Ensure parity with table columns and filter keys.",
-            "status": "done",
-            "dependencies": [
-              "58.1"
-            ],
-            "parentTaskId": 58
-          },
-          {
-            "id": 3,
-            "title": "Implement filter-aware dataset selector from Zustand",
-            "description": "Expose a selector that returns rows for export based on the current filters (and sort if feasible). Support row scope: all filtered results, current page, or explicitly selected rows.",
-            "details": "Add a pure selector in state layer that the export service can call. Include unit tests around filter combinations to ensure correct row counts.",
-            "status": "done",
-            "dependencies": [
-              "58.1"
-            ],
-            "parentTaskId": 58
-          },
-          {
-            "id": 4,
-            "title": "Implement CSV/JSON exporters with unit tests",
-            "description": "Build `toCSV` and `toJSON` utilities that take rows + selected field metadata and produce downloadable data. Handle quoting, delimiters, nulls, and unicode.",
-            "details": "Proposed files: src/export/csv.ts, src/export/json.ts, with tests under src/export/__tests__/. Aim for chunked/streamed CSV generation to avoid large memory spikes.",
-            "status": "done",
-            "dependencies": [
-              "58.2"
-            ],
-            "parentTaskId": 58
-          },
-          {
-            "id": 5,
-            "title": "Add Web Worker pipeline for large exports",
-            "description": "Generate CSV/JSON in a Web Worker to keep UI responsive on large datasets; provide progress updates and cancelation.",
-            "details": "Create src/export/worker/exportWorker.ts. Use postMessage for progress and result blobs. Fallback to main-thread when dataset is small (<5k rows).",
-            "status": "done",
-            "dependencies": [
-              "58.4"
-            ],
-            "parentTaskId": 58
-          },
-          {
-            "id": 6,
-            "title": "Create Export modal (format, fields, scope)",
-            "description": "Add an Export modal using Headless UI + Tailwind. Controls: format (CSV/JSON), field checklist, row scope (all filtered / current page / selected), and a row count estimate.",
-            "details": "Wire to Zustand selectors and exporter service. Disable action while processing, show progress and completion states.",
-            "status": "done",
-            "dependencies": [
-              "58.2",
-              "58.3",
-              "58.4"
-            ],
-            "parentTaskId": 58
-          },
-          {
-            "id": 7,
-            "title": "Download handling and filenames",
-            "description": "Generate a Blob and trigger file download. Compose filenames that include timestamp and key filter context. Ensure cross-browser compatibility.",
-            "details": "Implement `downloadBlob(blob, filename)` util. Derive filename like `sessions_2025-09-09_filtered-by-model.csv`. Add success/error toasts.",
-            "status": "done",
-            "dependencies": [
-              "58.6"
-            ],
-            "parentTaskId": 58
-          },
-          {
-            "id": 8,
-            "title": "Tests: verify exports respect filters and fields",
-            "description": "Add unit tests for field mapping and CSV generation; add an E2E smoke test that applies filters, runs export, and validates row/column counts.",
-            "details": "Use sample dataset with known counts. Ensure test dataset covers edge cases (quotes, commas, unicode, nulls).",
-            "status": "done",
-            "dependencies": [
-              "58.3",
-              "58.4",
-              "58.6",
-              "58.7"
-            ],
-            "parentTaskId": 58
-          },
-          {
-            "id": 9,
-            "title": "Docs: README usage and known limits",
-            "description": "Document the Export feature: how to start, field selection, scopes, and any performance limits. Include troubleshooting tips for very large exports.",
-            "details": "Update README and add docs/export.md with screenshots/GIFs where useful.",
-            "status": "done",
-            "dependencies": [
-              "58.7"
-            ],
-            "parentTaskId": 58
-          }
-        ]
-      },
-      {
-        "id": 59,
-        "title": "Theme Color Picker + Light/Dark Mode",
-        "description": "Let users select custom theme colors and choose Light, Dark, or System mode. Persist preferences and apply across the UI using Tailwind + CSS variables.",
-        "details": "Objective: Provide user-controlled theming with custom colors and light/dark (including system) mode. Keep accessibility and persistence in mind.\n\nAcceptance Criteria:\n- User can toggle Light/Dark/System; System tracks OS changes via `prefers-color-scheme`.\n- User can pick primary/accent colors; UI updates live via CSS variables; changes persist across reloads.\n- Default theme remains unchanged when no customizations are set.\n- Contrast guidance shown when selected colors risk AA violations (informational warning is sufficient).\n- Works with existing Tailwind setup; no major layout regressions.\n\nImplementation Notes:\n- Tailwind: use CSS variables for color tokens (e.g., `--color-primary`, `--color-accent`) and map them in `tailwind.config.*` so utilities (bg/text/border) reflect user choices.\n- State: store in Zustand (mode: \"light\" | \"dark\" | \"system\"; colors: HEX/HSL); persist to `localStorage` with a small versioned schema and migration.\n- UI: Headless UI modal/drawer with live preview, reset-to-default, and apply actions.\n- Accessibility: basic contrast check and warning.\n- Testing: unit tests for state persistence and theme resolution; smoke test that toggling mode flips root class/attributes and updates CSS variables.",
-        "testStrategy": "",
-        "status": "done",
-        "dependencies": [],
-        "priority": "medium",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Specify theme tokens and mode behavior",
-            "description": "Define theme tokens (primary, accent, surface, text), CSS variable names, and how Light/Dark/System modes resolve. Decide default palette and mapping to Tailwind utilities.",
-            "details": "Deliver docs/theme.md with tokens, variable names, and example mappings. Include decision on using HSL vs HEX and shade derivation (e.g., HSL adjustments).",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 59
-          },
-          {
-            "id": 2,
-            "title": "Wire Tailwind + CSS variables",
-            "description": "Introduce CSS variables for theme tokens and map them to Tailwind theme via `tailwind.config.*` extensions. Support `[data-theme=\"dark\"]` or `class=\"dark\"` toggling and live updates.",
-            "details": "Files: `src/styles/theme.css` (variables), `tailwind.config.ts` (extend colors using CSS vars), ensure dark mode strategy aligns with existing config. Provide a safe default palette.",
-            "status": "done",
-            "dependencies": [
-              "59.1"
-            ],
-            "parentTaskId": 59
-          },
-          {
-            "id": 3,
-            "title": "Add Zustand theme store + persistence",
-            "description": "Create a theme slice with mode (light/dark/system) and color tokens. Add localStorage persistence and hydration (with schema version). Expose selectors for resolved mode and computed variables.",
-            "details": "Files: `src/state/theme.ts`. Include migration from older schema if present. Provide helper to apply root attributes/classes on change.",
-            "status": "done",
-            "dependencies": [
-              "59.1"
-            ],
-            "parentTaskId": 59
-          },
-          {
-            "id": 4,
-            "title": "Build Theme Picker UI (modal)",
-            "description": "Create a Headless UI modal for theme settings: System/Light/Dark toggle; color pickers for primary/accent; live preview; Reset to default.",
-            "details": "Files: `src/components/ThemePicker.tsx` and integration in a settings menu. Use `<input type=\"color\">` initially; structure to allow future advanced picker.",
-            "status": "done",
-            "dependencies": [
-              "59.2"
-            ],
-            "parentTaskId": 59
-          },
-          {
-            "id": 5,
-            "title": "Apply theme to app and root toggling",
-            "description": "Ensure mode toggling sets the correct root attribute/class and CSS variables update across the app. Provide a small hook to subscribe and apply changes.",
-            "details": "Files: `src/appTheme.ts` or `src/hooks/useApplyTheme.ts`. Verify no FOUC and initial mode resolves before first paint where possible.",
-            "status": "done",
-            "dependencies": [
-              "59.2",
-              "59.3"
-            ],
-            "parentTaskId": 59
-          },
-          {
-            "id": 6,
-            "title": "Accessibility: contrast checks and warnings",
-            "description": "Add a simple contrast checker for chosen primary/accent against surfaces. Show non-blocking warnings when selections risk failing WCAG AA.",
-            "details": "Utility function + inline warning in the Theme Picker. Provide links to documentation for guidance.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 59
-          },
-          {
-            "id": 7,
-            "title": "Tests: theme store, persistence, and UI smoke",
-            "description": "Unit tests for theme store (mode resolution, persistence, migrations). UI smoke test to ensure toggling mode flips root class and variables update.",
-            "details": "Files: `src/state/theme.test.ts`, `src/components/ThemePicker.test.tsx` (lightweight).",
-            "status": "done",
-            "dependencies": [
-              "59.3"
-            ],
-            "parentTaskId": 59
-          },
-          {
-            "id": 8,
-            "title": "Docs: Theme settings and tips",
-            "description": "Document theme settings in README and docs/theme.md: how to open picker, modes, persistence, and troubleshooting (e.g., contrast warnings).",
-            "details": "Include screenshots/GIFs where useful. Mention System mode behavior and how it responds to OS changes.",
-            "status": "done",
-            "dependencies": [
-              "59.5"
-            ],
-            "parentTaskId": 59
-          },
-          {
-            "id": 9,
-            "title": "Sync Diff Viewer with app theme + per-view editor theme picker",
-            "description": "Make the Monaco DiffViewer honor app light/dark mode and add a per-view picker (auto/light/dark).",
-            "details": "- Detect app mode via theme store and data-mode attribute and set Monaco theme to `vs` or `vs-dark` accordingly when editor theme is `auto`.\n- Add a small select (auto/light/dark) in the DiffViewer header to override per-view.\n- Keep word-wrap/split toggles as-is; ensure no runtime errors when monaco packages are missing (lazy already covers).",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 59
-          },
-          {
-            "id": 10,
-            "title": "Polish UI: remove dev/demo controls and excess buttons",
-            "description": "Remove demo counter, disclosure, and less-needed buttons (Copy/Raw/Open diff/etc.) per spec. Keep core functionality and bookmarks.",
-            "details": "- App: remove counter button, disclosure section, and tagline; keep ThemePicker.\n- FilePreview: remove 'Open diff' button and retain language badge.\n- EventCard: remove Reveal/Open/Copy JSON buttons; keep bookmarks.\n- SessionsList: remove Copy path and Raw buttons; keep Load.\n- ApplyPatchView: remove Copy raw and Download raw buttons; keep Raw/Rendered toggle.\n- CommandsView: remove per-row copy button.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 59
-          }
-        ]
-      },
-      {
-        "id": 60,
-        "title": "Workspace Scanner for CWD + .codex/sessions (diff tracking)",
-        "description": "Scan the launch directory (cwd) and its .codex/sessions folder to detect file changes and feed the Diff Viewer with a timeline of modifications since the session started.",
-        "details": "Objective: Allow the viewer to connect to a workspace folder (the cwd it was started from) and scan both the root and .codex/sessions to detect changes to files, so the Diff Viewer can show diffs between original and current states and keep a running history.\n\nKey Behaviors:\n- User chooses a workspace folder via the File System Access API (DirectoryPicker) or drags a folder onto the app; we persist a handle (with permission) for subsequent scans.\n- Initial snapshot: recursively index files (configurable globs), compute lightweight hashes (Web Crypto) and sizes; store path->hash/size/handle.\n- Rescan on demand: compare snapshots to detect adds/mods/deletes; produce a change set for the Diff Viewer.\n- .codex/sessions integration: specifically scan .codex/sessions for JSONL session files and map events to workspace paths to correlate code changes with file diffs.\n- Performance: chunked traversal, progress reporting, and ability to cancel scans.\n- Persistence: store snapshot metadata and handles in IndexedDB (with user consent) so rescans persist across reloads.\n\nAcceptance Criteria:\n- Selecting a folder indexes files and identifies .codex/sessions automatically.\n- A Rescan action updates a “Changed files” list and the Diff Viewer can open a before/after for any changed file.\n- Change types (added/modified/deleted) and counts are displayed; large trees (50k+ files) do not freeze the UI (workers/yielding loops).\n- Permissions and errors are handled gracefully with clear user messaging.\n- Docs describe limitations (browser FS APIs) and fallback flows.\n",
-        "testStrategy": "",
-        "status": "done",
-        "dependencies": [],
-        "priority": "high",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Decide directory access + security approach",
-            "description": "Choose File System Access API as primary (DirectoryPicker + persisted handles) and define fallback (manual zip upload). Document permission prompts and limitations.",
-            "details": "Deliver docs/scanner.md section outlining browser support, permission flows, and why live watchers aren’t available; rescans are manual or scheduled.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 60
-          },
-          {
-            "id": 2,
-            "title": "Implement recursive scanner + hashing",
-            "description": "Build utilities to traverse selected directory, filter by globs, and compute content hashes (Web Crypto) + sizes. Yield progress incrementally.",
-            "details": "Files: src/scanner/scan.ts, src/scanner/hash.ts. Use async generators and chunked reads; support cancel via AbortSignal.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 60
-          },
-          {
-            "id": 3,
-            "title": "Create initial snapshot index + persistence",
-            "description": "Store path→{hash,size} plus handle references in IndexedDB. Support loading/saving named snapshots per workspace.",
-            "details": "Files: src/scanner/indexStore.ts using existing IndexedDB service (if available).",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 60
-          },
-          {
-            "id": 4,
-            "title": "Rescan + change detection",
-            "description": "Compute deltas (added/modified/deleted) by comparing current scan vs snapshot; produce a consumable ChangeSet for the Diff Viewer.",
-            "details": "Files: src/scanner/diffIndex.ts. Include mtime if available; detect text/binary via simple sniff; expose summary counts.",
-            "status": "done",
-            "dependencies": [
-              "60.2"
-            ],
-            "parentTaskId": 60
-          },
-          {
-            "id": 5,
-            "title": ".codex/sessions integration",
-            "description": "Scan `.codex/sessions` under the chosen root; parse session JSONL and correlate events with file paths to annotate changes with session context.",
-            "details": "Files: src/scanner/sessionsLink.ts. Reuse existing JSONL parser; produce mapping for Diff Viewer to jump from event → file and vice versa.",
-            "status": "done",
-            "dependencies": [
-              "60.2"
-            ],
-            "parentTaskId": 60
-          },
-          {
-            "id": 6,
-            "title": "Diff Viewer integration",
-            "description": "Expose a provider that supplies before/after content for changed files and session-linked diffs so the Diff Viewer can render unified/side-by-side views.",
-            "details": "Wire a new diff data source into existing viewer controls; add a Changed Files panel with counts and quick open.",
-            "status": "done",
-            "dependencies": [
-              "39",
-              "60.4"
-            ],
-            "parentTaskId": 60
-          },
-          {
-            "id": 7,
-            "title": "UI: Connect Workspace + Rescan + Progress",
-            "description": "Add a UI flow to connect a folder, show the selected root, display changed files list, progress/estimates, and a Rescan button (with debounce).",
-            "details": "Use Headless UI modal or settings panel; surface permission errors and tips; integrate with existing reload button if present.",
-            "status": "done",
-            "dependencies": [
-              "60.2"
-            ],
-            "parentTaskId": 60
-          },
-          {
-            "id": 8,
-            "title": "Persistence via IndexedDB (workspaces + snapshots)",
-            "description": "Persist workspace handles (where supported) and snapshot metadata to IndexedDB with versioned schema; allow switching workspaces and restoring previous snapshot.",
-            "details": "Extend existing DB service from Task 48 or add a new store. Handle permission revocation gracefully.",
-            "status": "done",
-            "dependencies": [
-              "48"
-            ],
-            "parentTaskId": 60
-          },
-          {
-            "id": 9,
-            "title": "Tests: scanner correctness and diff integration",
-            "description": "Unit tests for hashing and change detection; integration test that selecting a folder, scanning, editing a file, and rescanning shows expected changes and renders diffs.",
-            "details": "Mock FS handles where possible; include text/binary edge cases and large directory simulation.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 60
-          },
-          {
-            "id": 10,
-            "title": "Docs: workspace scanning and limitations",
-            "description": "Document how to connect a folder, how rescans work, and limitations (browser support, permissions, no live watchers). Include troubleshooting for common errors.",
-            "details": "Add docs/scanner.md and update README with a new section.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 60
-          }
-        ]
-      },
-      {
-        "id": 61,
-        "title": "Render apply_patch FunctionCall diffs and results",
-        "description": "Parse and render diffs originating from Codex session FunctionCall events where `name === \"shell\"` and the `args` contain an `apply_patch` envelope; correlate with the corresponding result event to display success/failure.",
-        "details": "Scope:\n- Parse `apply_patch` envelopes from FunctionCall events (e.g., example-patch.json) into structured file operations: Add, Delete, Update with hunks.\n- Support diff line types (+, -, context) and hunk headers starting with `@@`.\n- Pair the initiating event with its completion/result event (e.g., example-success-patch.json) using temporal proximity or explicit `call_id` when available.\n- Render a unified diff view per file, reusing our Diff Viewer styling; include small status header (success/failure, exit_code, duration).\n- Provide a toggle between rendered view and raw patch text.\n- Handle headerless or partial patches gracefully; fall back to raw view when parsing fails.\n- Large patch safety: virtualize long diffs, collapse extra hunks with an expand control.\n- Binary/unsupported: show a clear placeholder message.\n\nData plumbing:\n- Extend the session parser/types to surface `apply_patch` payloads and result metadata.\n- Emit a normalized `ParsedFileChange` model the viewer consumes (add/delete/update + hunks).\n\nUX wiring:\n- From a timeline event card, clicking an `apply_patch` action opens the Diff Viewer anchored to the first affected file; sidebar lists all files within the patch.\n\nEdge cases:\n- Multiple file ops in a single patch.\n- Missing matching result event; show pending/unknown status.\n- Non-zero exit codes; show error styling and any stderr captured.\n",
-        "testStrategy": "Fixture-driven manual + unit tests:\n- Load .deepwiki/Diff Viewer Implementation.md to confirm behavior requirements.\n- Use provided example-patch.json and example-success-patch.json to verify parsing, pairing, and rendering.\n- Add unit tests for the patch parser (good path, headerless, malformed). Snapshot-test the rendered viewer for a multi-file patch.\n",
-        "status": "done",
-        "dependencies": [
-          39,
-          41
-        ],
-        "priority": "high",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Implement apply_patch parser",
-            "description": "Parse the `apply_patch` envelope into structured operations (Add/Delete/Update) and hunks.",
-            "details": "- Input: raw patch text from FunctionCall.args (example-patch.json).\n- Output: `ParsedFileChange[]` with file path, op type, and hunks with lines marked insert/delete/context.\n- Tolerate headerless diffs and trim trailing newlines.\n- Create a small module `src/parsers/applyPatch.ts` with thorough JSDoc.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          },
-          {
-            "id": 2,
-            "title": "Correlate start/result events",
-            "description": "Link `apply_patch` FunctionCall with its corresponding result event.",
-            "details": "- Prefer `call_id` when available; otherwise, correlate by temporal proximity within the same session and name.\\n- Surface `exit_code`, `duration_seconds`, and any stdout/stderr in the model for the viewer header.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          },
-          {
-            "id": 3,
-            "title": "Wire into Diff Viewer UI",
-            "description": "Render parsed file operations using existing Diff Viewer styling and components.",
-            "details": "- Show a status header with success/failure, exit code, and duration.\\n- Support multi-file patches via a sidebar list; default to first file.\\n- Reuse virtualization and hunk separation patterns from the spec.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          },
-          {
-            "id": 4,
-            "title": "Add Raw/Rendered toggle",
-            "description": "Provide a control to switch between raw patch text and rendered diff.",
-            "details": "- Persist selection per-view using component state.\\n- Copy/Download raw buttons for convenience (reuse patterns from task_057 where applicable).",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          },
-          {
-            "id": 5,
-            "title": "Edge cases and fallbacks",
-            "description": "Handle headerless/malformed patches, binary/unsupported content, and very large patches.",
-            "details": "- Gracefully fallback to raw display on parse errors with a short explanation.\\n- Collapse/expand long hunks; avoid rendering performance issues.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          },
-          {
-            "id": 6,
-            "title": "Unit tests for parser",
-            "description": "Add tests covering successful parse, headerless diffs, and malformed inputs.",
-            "details": "- Place under `tests/unit/parsers/applyPatch.test.ts`.\\n- Use fixtures derived from example-patch.json and hand-crafted edge cases.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          },
-          {
-            "id": 7,
-            "title": "Snapshot tests for viewer",
-            "description": "Add Storybook stories and snapshot tests for multi-file patches and status header.",
-            "details": "- Create stories under `src/components/DiffViewer/__stories__/ApplyPatch.stories.tsx`.\\n- If storyshots are enabled, ensure snapshots cover rendered/inline and collapsed/expanded states.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          },
-          {
-            "id": 8,
-            "title": "Docs: README Diff Viewer",
-            "description": "Document apply_patch support, status header, and known limits.",
-            "details": "- Update README Diff Viewer section with examples and a short troubleshooting note (e.g., parsing fallback to raw).",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          },
-          {
-            "id": 9,
-            "title": "Dynamic filters for FunctionCall names (apply_patch and others)",
-            "description": "Extend filters to target specific FunctionCall names, including an option for only apply_patch. Discover available function/tool names dynamically from the current session and surface them as selectable chips/options.",
-            "details": "Requirements:\n- Discovery: Scan events for type === 'FunctionCall' and build a unique, stable list of `name` values (e.g., 'shell', 'web.run', 'git', etc.). If args indicate an apply_patch envelope, expose an additional granular option 'apply_patch'.\n- UI: In the Filters toolbar, add a secondary control when Type == 'FunctionCall' or 'ToolCalls' showing dynamic function/tool names with counts. Include a dedicated 'apply_patch' option that filters only `shell` calls where args.command[0] === 'apply_patch'.\n- Behavior: Combine with existing type/role/search/path filters. Multiple selections allowed; default to 'All'. Counts should reflect current search/path filters.\n- State: Store selection in URL hash (e.g., `fn=shell,web.run,apply_patch`) similar to other filters.\n- Performance: Use memoized selectors over the filtered list and avoid recompute per item.\n- Tests: Unit test the name extraction and the filtering predicate for apply_patch vs generic shell calls. Add a quick UI smoke test if jsdom is enabled.\nDependencies: 35 (timeline plumbing), 40 (advanced filters).\nAcceptance: Selecting 'apply_patch' shows only apply_patch FunctionCall events; selecting other names filters accordingly. Counts and URL state update correctly.",
-            "status": "done",
-            "dependencies": [],
-            "parentTaskId": 61
-          }
-        ]
-      },
-      {
-        "id": 62,
-        "title": "Standalone Two-File Diff Tool (Drag-and-Drop)",
-        "description": "Make the Diff Viewer usable as a standalone tool, allowing users to compare any two local files by dragging and dropping them (or selecting via file pickers).",
-        "details": "Scope\n- Entry point: add a top-level “Compare Files” tool (route or tab) available without loading a session.\n- Inputs: drag-and-drop zone that accepts one or two files; if only one is dropped, prompt for the second; also provide two file pickers as an accessible fallback.\n- Read/parse: read files as text (UTF-8 by default; try BOM-based detection). For non-text or very large files (>2MB), show a guard with an option to open anyway and a raw viewer fallback.\n- Diff: bypass unified-diff parsing and create Monaco models directly from the two text buffers; support swap-left/right; detect language from file extension.\n- UX: show filename chips, size info, language badge, word wrap toggle, inline/side-by-side toggle, ignore-trailing-whitespace; copy/download combined diff; clear/reset action.\n- A11y: fully keyboard operable; announce drop targets; ensure focus order and ARIA labels; contrast-safe controls.\n- Persistence: remember last view options (inline/side-by-side, wrap, ignore whitespace) in localStorage.\n- Theming: honor app theme and Monaco theme sync.\n\nDefinition of Done\n- Users can drag two files onto the tool and see a Monaco diff.\n- Works when launched without any session data.\n- Handles files up to at least 5MB each with responsive UI and no crashes.\n- Controls for swap sides, wrap, inline/side-by-side, ignore whitespace function as expected.\n- Accessible and keyboard-usable; basic screen reader labels present.\n- README gains a short “Compare two files” section with usage notes/limits.",
-        "testStrategy": "Unit: file read utility (text detection, guard conditions); options reducer. Integration: component test mounts Diff Tool with two string inputs. Manual: drag one file then second; drag two files at once; very large text file warning; binary-looking file warning; swap sides; toggles effect; theme sync. Performance: load 2x ~5MB .txt and ensure interaction remains responsive (no main-thread stalls >200ms).",
-        "status": "done",
-        "dependencies": [
-          39,
-          41
-        ],
-        "priority": "high",
-        "subtasks": []
-      },
-      {
-        "id": 63,
-        "title": "UI/UX Polish and Fixes (Filters, Buttons, States)",
-        "description": "Comprehensive UI pass to fix broken/annoying controls, refine filters, and normalize buttons/labels across the app.",
-        "details": "Scope\n- Filters UX: make filters discoverable and reliable; add clear-all; show active filter chips with counts; debounce text search; persist filters in URL hash and localStorage.\n- Buttons/controls: standardize sizes/variants/icons; enforce disabled/loading states; add tooltips and accessible labels; ensure consistent keyboard focus order and visible focus rings.\n- Empty/Loading/Errors: add empty-state messages, skeletons/spinners where needed; central toast/toaster for success/failed actions (copy/download/export); show recoverable error banners with retry.\n- Nonfunctional/broken items: audit all interactive elements in Timeline, Files panel, Diff Viewer, Exports; remove dead controls or wire them up; fix no-op toggles.\n- A11y: ARIA roles/names for buttons, toggles, tablists; ensure ESC closes popovers/modals; tab/shift+tab cycles correctly; provide screen-reader only labels where icons are used.\n- Consistency: typography scale, spacing, and color tokens; unify icon set; standard header/actions layout per panel.\n- Performance: ensure virtualized list keeps 60fps; throttle resize/scroll handlers; avoid unnecessary re-renders (memo/selectors) in filter-heavy views.\n- Preferences: persist user options (theme, wrap/inline, ignore whitespace, filters) and restore on load.\n- Diff Viewer niceties: add quick swap-sides, word-wrap toggle, ignore whitespace; show filename badges; graceful fallback when Monaco unavailable.\n\nDefinition of Done\n- All visible controls have correct hover/active/disabled/loading states and tooltips.\n- Filters operate reliably, can be cleared in one click, and persist via URL/localStorage.\n- Empty/loading/error states exist for Timeline, Files, Diff, and Exports; actions show toasts on success/failure.\n- Keyboard-only navigation covers main flows; basic screen reader checks pass on key screens.\n- No known broken/no-op controls remain; removed or wired.\n- Measurable: typing into search doesn’t drop below 45fps on a 5k-event session; initial render <1.5s on typical dev machine.\n\nOut of Scope\n- New major features; focus is stabilization and UX polish.\n\n<info added on 2025-09-11T20:21:42.769Z>\n---\n**Scope Update (Consolidating Polish Items):**\n- **Button Harmonization:** Standardize button labels, variants, and sizes across the `SessionsList` and `Timeline` toolbars to ensure consistency.\n- **README Cleanup:** Update `README.md` to match the current UI, specifically by removing references to the obsolete \"Copy Raw\" and \"Download Raw\" buttons.\n- **Diff Viewer Testing:** Add a snapshot test for the `DiffViewer` component to prevent visual regressions (this item has been moved from task #57).\n</info added on 2025-09-11T20:21:42.769Z>",
-        "testStrategy": "Checklist-based manual QA across screens with a bug bash template. Add RTL tests for filter reducer logic and UI state toggles; vitest+@testing-library for buttons’ disabled/loading behavior and a11y labels. Add perf smoke (Timeline render under load) and a Cypress (or Playwright) basic flow if available. Verify URL/hash sync by reloading. Include a short a11y sweep via axe where feasible.",
-        "status": "done",
-        "dependencies": [
-          35,
-          38,
-          39,
-          40,
-          41,
-          43,
-          44,
-          45
-        ],
-        "priority": "high",
-        "subtasks": []
-      },
-      {
-        "id": 64,
-        "title": "Implement Comprehensive Application Logging",
-        "description": "Introduce a centralized logging utility to instrument key application flows, providing structured logs with levels, sampling, and privacy controls for improved debugging and monitoring.",
-        "details": "1. **Create Central Logger Module (`src/utils/logger.ts`):**\n   - Export a singleton logger instance configured on initialization.\n   - The logger should support levels: `debug`, `info`, `warn`, `error`.\n   - Implement methods like `logger.info(message, context, payload)`.\n\n2. **Environment Variable Control:**\n   - Read `VITE_LOG_LEVEL` from `import.meta.env` to set the active log level (default to 'info' in production, 'debug' in development).\n   - Read `VITE_LOG_SAMPLING_RATE` (0.0 to 1.0) to control sampling for noisy events.\n   - If a log call's level is below the configured level, the function should return immediately for minimal performance impact.\n\n3. **Remote Logging & Batching:**\n   - If `VITE_LOG_SERVER_URL` is defined, buffer log events in an in-memory array.\n   - Periodically (e.g., every 5 seconds) or when the buffer reaches a certain size (e.g., 20 events), send the batch to the server URL via `fetch` POST request.\n   - Use `navigator.sendBeacon` in a `pagehide` or `beforeunload` event listener to attempt sending any remaining logs before the user navigates away.\n   - Wrap network calls in `try/catch` to prevent logging failures from crashing the app.\n\n4. **Privacy Guard & Sanitization:**\n   - Implement a `sanitize(payload)` function that is automatically called on all log payloads.\n   - This function should recursively traverse objects/arrays and:\n     - Truncate strings longer than 1024 characters.\n     - Truncate arrays with more than 50 elements.\n     - Redact values for keys matching a regex like `/secret|token|password|key|pii/i`.\n\n5. **Instrumentation Points:**\n   - **`src/main.tsx`**: Log app initialization and environment configuration (`logger.info('App Initializing', { env: import.meta.env })`).\n   - **`src/components/ErrorBoundary.tsx`**: In `componentDidCatch`, call `logger.error('ErrorBoundary Caught Error', { error, errorInfo })`.\n   - **`src/workers/fs-scanner.ts`**: The worker cannot directly import the logger. It should use `postMessage({ type: 'log', level: 'info', ... })` to send log data back to the main thread. The main thread will have a listener that forwards these messages to the central logger.\n   - **`src/lib/utils/session-db.ts`**: Log key IndexedDB operations like `logger.info('Session saved to DB', { sessionId })` and `logger.error('Failed to write to DB', { error })`.\n   - **`src/lib/parsers/applyPatch.ts`**: Log success and failure scenarios, e.g., `logger.warn('Patch application failed', { filePath, hunk })`.\n   - **UI Components (`DiffViewer`, `FileTree`, etc.)**: Add `debug` level logs for component mounting, prop changes, and user interactions (e.g., `logger.debug('File selected in tree', { path })`). Use sampling for high-frequency events like scrolling or dragging.\n\n6. **Developer Documentation (`docs/logging.md`):**\n   - Create a new markdown file explaining the logging system.\n   - Document the log event schema, log levels, and how to control them via `.env` variables.\n   - Provide a taxonomy of key log events and their contexts (e.g., `context: 'SessionDB'`, `context: 'FileTree'`).\n   - Explain how to view logs in the browser console and how to set up a local server to receive remote logs.",
-        "testStrategy": "1. **Unit Tests (`src/utils/logger.test.ts`):**\n   - Write tests to verify that log methods are correctly filtered by `VITE_LOG_LEVEL`. For example, when level is 'warn', `logger.info` and `logger.debug` should not produce output.\n   - Test the `sanitize` function to ensure it correctly truncates large data and redacts sensitive keys.\n   - Mock `fetch` and `navigator.sendBeacon` to assert that logs are correctly batched and sent to the `VITE_LOG_SERVER_URL`.\n   - Test the network error handling by making the mocked `fetch` throw an error, ensuring the application does not crash.\n   - Verify the sampling logic by calling a logger method in a loop and asserting the number of actual log calls is within the expected range.\n\n2. **Integration Tests:**\n   - In a test for file loading (related to Task 32/33), spy on `logger.info` to confirm that a 'session_loaded' event is logged upon successful file processing.\n   - Create a test that mounts a component designed to throw an error within the `ErrorBoundary` and assert that `logger.error` is called with the correct error details.\n\n3. **Manual Verification:**\n   - Run the application with `VITE_LOG_LEVEL=debug` in the `.env` file. Open the developer console and perform various actions (loading a session, clicking files). Verify that detailed, structured logs appear.\n   - Change the `VITE_LOG_LEVEL` to `warn` and restart the dev server. Repeat the actions and confirm that only warnings and errors are logged.\n   - Set up a simple local Node.js/Express server that listens for POST requests and prints the body. Set `VITE_LOG_SERVER_URL` to point to it. Verify that log batches are received by the server.",
-        "status": "done",
-        "dependencies": [],
-        "priority": "high",
-        "subtasks": []
-      },
-      {
-        "id": 65,
-        "title": "Sniff-then-Parse Strategy for JSONL Parser",
-        "description": "Introduce a two-phase parsing strategy that first samples lines to detect wrapper keys, type aliases, and content locations, then applies a tailored normalization strategy during streaming to improve resilience to format drifts.",
-        "details": "Goals\n- Maintain streaming, low-memory parsing while improving correctness on heterogeneous exporters.\n- Sample the first N non-empty, non-state lines (default 200) to detect: wrapper keys (e.g., `type=\\\"response_item\\\"`, `type=\\\"event_msg\\\"`, `{record_type:\\\"event\\\"}`), type aliases (e.g., `message.created`, `tool_call.completed`, `function_call_output`, `agent_reasoning`), and content paths (e.g., `payload.content[]`, `response.output_text[]`, `response.output[].content[].text`).\n- Build a per-file Strategy: `{ unwrapKeys, typeAliases, contentExtractors, skipKinds }` and reuse it in the main pass.\n- Preserve current heuristics as fallback when Strategy is inconclusive; never regress performance.\n- Provide light metrics in dev mode (counts of mapped aliases, unwrapped wrappers, skipped states).\n\nImplementation\n- Add a `sniffSession(blob, options)` helper returning a Strategy object.\n- Integrate Strategy into `parseResponseItemLine` via an optional context, or route via `parseLineByVersion(version, line, strategy)`.\n- Keep behavior compatible with existing tolerant JSON and wrapper unwrapping; Strategy only biases normalization.\n- Configurable via `ParserOptions`: `{ sniffLines?: number, enableSniff?: boolean }` (default on).\n\nEdge Cases\n- All lines conform to current v1 shapes ⇒ Strategy is mostly empty, no overhead beyond sampling.\n- Mixed exporters in a single file ⇒ Strategy aggregates union of hints; parser still falls back per-line heuristics when needed.\n\nAcceptance\n- Previously uncategorized lines (shown as \\\"Other\\\") get promoted to Message/FunctionCall/Reasoning where shapes are recognizable by Strategy.",
-        "testStrategy": "Unit tests + fixtures:\n- Provide sample logs covering: response_item/event_msg wrappers, dotted types (message.created, tool_call.completed), content arrays (input_text/output_text), and state lines.\n- Verify Strategy detection (unwrap keys, alias table, content extractors) using a small sniffed subset.\n- Assert improved classification vs baseline on the same fixtures (fewer 'Other').\n- Performance check: ensure total parse time within 5% of baseline on 2–3 MB logs.",
         "status": "pending",
-        "dependencies": [
-          31
-        ],
-        "priority": "medium",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Create User Database Schema",
+            "description": "Define and create the necessary database table(s) to store user information, including credentials and profile data.",
+            "dependencies": [],
+            "details": "Create a 'users' table with columns for 'id' (primary key), 'email' (unique), 'password_hash' (string), 'created_at', and 'updated_at'. Use a database migration script to apply the schema. Ensure passwords are not stored in plain text.",
+            "status": "pending",
+            "testStrategy": "Verify the table and its columns are created correctly in the development database. Write a unit test for the migration script to ensure it runs up and down without errors."
+          },
+          {
+            "id": 2,
+            "title": "Develop API Endpoints for User Registration and Login",
+            "description": "Create the backend API endpoints for user registration (`/api/auth/register`) and user login (`/api/auth/login`).",
+            "dependencies": [],
+            "details": "The registration endpoint should accept email and password, hash the password using bcrypt, and save the new user to the database. The login endpoint should validate credentials, and upon success, generate and return a JSON Web Token (JWT).",
+            "status": "pending",
+            "testStrategy": "Write integration tests for both endpoints. Test successful registration, duplicate email registration attempts, successful login with correct credentials, and failed login with incorrect credentials. Validate the structure of the returned JWT."
+          },
+          {
+            "id": 3,
+            "title": "Create Frontend UI for Registration and Login Forms",
+            "description": "Build the user interface components for the registration and login pages using the chosen frontend framework.",
+            "dependencies": [],
+            "details": "Create two separate routes/pages: `/register` and `/login`. Each page should have a form with input fields for email and password, and a submit button. Implement basic client-side validation for email format and password strength. On form submission, make an API call to the corresponding endpoint.",
+            "status": "pending",
+            "testStrategy": "Use component tests to verify the forms render correctly and that client-side validation logic works as expected. Use UI snapshots to prevent unintended visual regressions."
+          },
+          {
+            "id": 4,
+            "title": "Implement Client-Side State Management and Protected Routes",
+            "description": "Manage the user's authentication state within the frontend application, including storing tokens and protecting routes from unauthorized access.",
+            "dependencies": [],
+            "details": "Upon successful login, store the received JWT securely in an HttpOnly cookie. Create a global state or context to hold user information and authentication status. Implement a 'protected route' wrapper that redirects unauthenticated users to the login page. Create a 'logout' function that clears the token and user state.",
+            "status": "pending",
+            "testStrategy": "Write end-to-end tests to verify that a user can log in, access a protected route, log out, and then be denied access to the same protected route. Unit test the state management logic (e.g., context providers or store actions)."
+          }
+        ]
       },
       {
-        "id": 66,
-        "title": "Fix include/exclude glob sanitization",
-        "description": "Correct the glob pattern sanitization logic to properly handle path normalization and directory matching, ensuring include/exclude rules work as expected in the workspace scanner.",
-        "details": "The `sanitizePatterns` function in `src/utils/ignore-utils.ts` currently only trims strings before passing them to `micromatch`. This causes patterns like `/dist/`, `dist/`, or `./src/**/*.ts` to fail because they are not properly normalized. The fix involves updating `sanitizePatterns` to perform more robust processing.\n\nImplementation Steps:\n1.  **Modify `src/utils/ignore-utils.ts`:**\n    *   Update the `sanitizePatterns` function to process each pattern in the input array.\n    *   For each pattern, perform the following steps in sequence:\n        a. Trim leading/trailing whitespace.\n        b. Convert backslashes to forward slashes for POSIX compatibility.\n        c. Remove any leading `./` prefix.\n        d. If the pattern ends with a `/`, append `**` to it to ensure it matches all files and subdirectories within that directory (e.g., `dist/` becomes `dist/**`).\n    *   After processing all patterns, use a `Set` to collect the results, which will automatically handle the elimination of any duplicates created during sanitization (e.g., if both `dist/` and `dist/**` were in the original input).\n    *   Return the unique, sanitized patterns as an array.\n2.  **Verification:** Confirm that `src/workers/fs-scanner.ts` uses this utility for both its `include` and `exclude` patterns. No changes should be required in `fs-scanner.ts` itself, as the fix is contained within the utility function it calls.",
-        "testStrategy": "The primary verification will be through unit tests for the updated utility function.\n\n1.  **Create/Update Unit Tests for `ignore-utils.ts`:**\n    *   Add a test suite for the `sanitizePatterns` function.\n    *   **Test Case: Directory Expansion:** Assert that an input of `[' /dist/ ', 'node_modules/']` produces the output `['dist/**', 'node_modules/**']`.\n    *   **Test Case: Path Normalization:** Assert that `['./src/**/*.ts', 'test\\\\run.js']` produces `['src/**/*.ts', 'test/run.js']`.\n    *   **Test Case: Deduplication:** Assert that `['build/', 'build/**', ' build/ ']` produces a single entry: `['build/**']`.\n    *   **Test Case: Edge Cases:** Test with an empty array, an array with empty strings, and patterns without any special characters.\n2.  **Update `globMatch` Tests:**\n    *   Ensure tests for `globMatch` (or the equivalent function that uses `micromatch`) are updated to use unsanitized, realistic patterns as input to prove the end-to-end logic works.\n    *   Test that `globMatch` correctly identifies a file like `src/components/button.tsx` when given the pattern `./src/**/*.tsx`.\n    *   Test that `globMatch` correctly excludes a file like `dist/assets/index.js` when given the exclusion pattern `dist/`.",
+        "id": 68,
+        "title": "Implement Local/Cloud Model Switching Configuration",
+        "description": "Create a configuration module that allows switching between a local Nexa server and a cloud-based OpenAI-compatible provider. Use environment variables (`LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_NAME`) to configure the OpenAI client.",
+        "details": "This task is critical for privacy and flexibility. The implementation should provide a factory function or a singleton client instance that is configured on startup based on environment variables. This ensures that all agent calls use the correct endpoint without needing provider-specific code in the business logic.",
+        "testStrategy": "Write unit tests to verify that the client is configured correctly for both local (Nexa) and cloud scenarios based on mock environment variables. Test that a dummy API key is used for local connections as specified in the PRD.",
+        "priority": "high",
+        "dependencies": [
+          67
+        ],
         "status": "pending",
-        "dependencies": [],
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Implement User Database Schema",
+            "description": "Create the necessary database table to store user information, including email, hashed password, and timestamps.",
+            "dependencies": [],
+            "details": "Using a database migration tool, create a 'users' table. The table should include columns: 'id' (primary key, e.g., UUID), 'email' (unique, indexed), 'hashed_password' (string), 'created_at' (timestamp), and 'updated_at' (timestamp).",
+            "status": "pending",
+            "testStrategy": "Run the migration against a test database and verify the schema. Write a unit test to confirm that a model object can be created, saved, and retrieved successfully."
+          },
+          {
+            "id": 2,
+            "title": "Develop User Registration API Endpoint",
+            "description": "Create a public API endpoint (e.g., POST /api/register) that allows new users to create an account.",
+            "dependencies": [],
+            "details": "The endpoint should accept an email and password. It must validate the input, check for existing users with the same email, and hash the password using bcrypt before storing the new user record in the database. Return a 201 status on success or appropriate error codes (400 for bad input, 409 for conflict).",
+            "status": "pending",
+            "testStrategy": "Write integration tests to cover successful registration, registration with a duplicate email, and registration with invalid input (e.g., invalid email format, weak password). Verify that the password stored in the database is properly hashed."
+          },
+          {
+            "id": 3,
+            "title": "Implement User Login API Endpoint with JWT",
+            "description": "Create an API endpoint (e.g., POST /api/login) for users to authenticate and receive a JSON Web Token (JWT).",
+            "dependencies": [],
+            "details": "The endpoint should accept an email and password. It will find the user by email, compare the provided password with the stored hash. If credentials are valid, generate a JWT containing the user ID and an expiration claim. Return the JWT to the client. Handle invalid login attempts with a generic error message.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for successful login with correct credentials, failed login with an incorrect password, and failed login for a non-existent user. For successful logins, validate the structure and signature of the returned JWT."
+          }
+        ]
+      },
+      {
+        "id": 69,
+        "title": "Implement Streaming SSE and Frontend Chat UI",
+        "description": "Enhance the `/api/sessions/[id]/chat` endpoint to stream responses using Server-Sent Events (SSE). On the frontend, modify `app/sessions/[id]/page.tsx` to include a new 'Chat' tab with a message input and a display area that renders the streamed tokens.",
+        "details": "The backend will use the agent's `.stream()` method and pipe the output to an SSE response. The frontend will use the `EventSource` API to listen for tokens and append them to the chat display. The UI should include a form for sending new messages and display conversation history.",
+        "testStrategy": "Manually test the chat UI in the browser. Ask a question that generates a long response and verify that tokens appear within 2 seconds. Check the browser's network tab to confirm an `EventSource` connection is established and receiving data. Add a BDD test case for the streaming acceptance criteria.",
+        "priority": "high",
+        "dependencies": [
+          67
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Implement User Database Schema",
+            "description": "Create the necessary database table(s) to store user information, including credentials and profile data, to support the authentication system.",
+            "dependencies": [],
+            "details": "Using a database migration tool, create a 'users' table. The table should include columns such as 'id' (UUID, primary key), 'email' (VARCHAR, unique, not null), 'password_hash' (VARCHAR, not null), 'created_at' (TIMESTAMP), and 'updated_at' (TIMESTAMP).",
+            "status": "pending",
+            "testStrategy": "Run the migration to create the table. Verify the schema in the database manually or with a schema inspection tool. Write a test for the migration to ensure it can be applied and reverted successfully."
+          },
+          {
+            "id": 2,
+            "title": "Develop User Registration API Endpoint",
+            "description": "Create a public API endpoint (e.g., POST /api/auth/register) that allows new users to create an account.",
+            "dependencies": [],
+            "details": "The endpoint must accept 'email' and 'password' in the request body. It should validate the input (e.g., valid email format, password complexity). Use a strong hashing algorithm like bcrypt to hash the password before storing it in the 'users' table. Return a 201 Created status on success.",
+            "status": "pending",
+            "testStrategy": "Write integration tests to cover successful registration, registration with a duplicate email (expect a 409 Conflict), and registration with invalid input (e.g., weak password, invalid email format, expect a 400 Bad Request)."
+          },
+          {
+            "id": 3,
+            "title": "Implement User Login API Endpoint with JWT Generation",
+            "description": "Create a public API endpoint (e.g., POST /api/auth/login) for users to authenticate and receive a JSON Web Token (JWT).",
+            "dependencies": [],
+            "details": "The endpoint should accept 'email' and 'password'. It will find the user by email, then use bcrypt's compare function to verify the password against the stored hash. If credentials are valid, generate a signed JWT containing the user's ID and role in the payload. The token must have an expiration time. Return the JWT in the response body.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for successful login (expect a 200 OK and a JWT), login with an incorrect password (expect a 401 Unauthorized), and login with a non-existent email (expect a 401 Unauthorized)."
+          },
+          {
+            "id": 4,
+            "title": "Create JWT Authentication Middleware",
+            "description": "Develop a middleware function that can be applied to API routes to ensure only authenticated users can access them.",
+            "dependencies": [],
+            "details": "The middleware will extract the JWT from the 'Authorization: Bearer <token>' header. It must verify the token's signature and check if it has expired. If the token is valid, decode the payload to get the user ID and attach the user's identity to the request object (e.g., req.user). If the token is missing, invalid, or expired, the middleware must respond with a 401 Unauthorized error.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for the middleware logic. Test scenarios with a valid token, an invalid/tampered token, an expired token, and a missing token. Ensure the correct HTTP status code is returned in each failure case and that 'next()' is called on success."
+          },
+          {
+            "id": 5,
+            "title": "Implement a Protected User Profile Route",
+            "description": "Create an example protected route (e.g., GET /api/users/me) that returns the current authenticated user's data.",
+            "dependencies": [],
+            "details": "Create a new route GET /api/users/me and apply the JWT authentication middleware to it. The route handler will use the user ID from the request object (populated by the middleware) to fetch the user's details from the database. The response should include non-sensitive data like 'id' and 'email'.",
+            "status": "pending",
+            "testStrategy": "Write an integration test that first calls the login endpoint to obtain a valid JWT. Then, use that JWT to make a request to the protected profile route and assert that the correct user data is returned. Also, test the route without a token and with an invalid token to ensure a 401 Unauthorized error is returned."
+          }
+        ]
+      },
+      {
+        "id": 70,
+        "title": "Implement Conversation Memory with LibSQL",
+        "description": "Integrate Mastra's Memory feature to persist chat history for each session. Use the existing LibSQL connection (`@libsql/client`) to create and manage a `memory` table to store conversation messages.",
+        "details": "The schema for the memory table should include `userId`, `sessionId`, `messages` (as JSON), and `lastUsedAt`. The chat API will be updated to load memory at the start of a conversation and save it at the end. This enables follow-up questions.",
+        "testStrategy": "After a chat conversation, inspect the LibSQL database file or Turso table to verify that a corresponding memory record has been created or updated. Start a new chat session on the same page and ask a follow-up question to confirm the agent uses the previous context.",
         "priority": "medium",
-        "subtasks": []
+        "dependencies": [
+          69
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Create User Database Schema",
+            "description": "Define and create the necessary database table(s) to store user information, including credentials and profile data.",
+            "dependencies": [],
+            "details": "Create a 'users' table with columns for 'id' (primary key, auto-increment), 'email' (unique, indexed), 'password_hash' (string), 'full_name' (string), 'created_at' (timestamp), and 'updated_at' (timestamp). Use a database migration tool like Alembic or Flyway to script the schema creation.",
+            "status": "pending",
+            "testStrategy": "Run the migration script against a test database. Verify that the 'users' table and all specified columns with their constraints (e.g., uniqueness on email) are created correctly. Write a test to ensure the migration can be applied and reverted successfully."
+          },
+          {
+            "id": 2,
+            "title": "Develop User Registration API Endpoint",
+            "description": "Create a public API endpoint (e.g., POST /api/v1/users/register) that allows new users to create an account.",
+            "dependencies": [],
+            "details": "The endpoint should accept 'email', 'password', and 'full_name'. It must validate input: check for a valid email format, enforce password complexity rules, and ensure the email is not already in use. Hash the password using a strong, salted algorithm like bcrypt before storing it in the database. On success, return a 201 Created status with the newly created user's ID and email.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for: 1) Successful registration with valid data. 2) Failed registration due to a duplicate email. 3) Failed registration due to an invalid email format. 4) Failed registration due to a weak password. 5) Verify that the password stored in the database is a hash and not plaintext."
+          },
+          {
+            "id": 3,
+            "title": "Develop User Login API Endpoint and JWT Generation",
+            "description": "Create an endpoint (e.g., POST /api/v1/auth/login) for users to authenticate and receive a JSON Web Token (JWT).",
+            "dependencies": [],
+            "details": "The endpoint should accept 'email' and 'password'. It will find the user by email, then use bcrypt's compare function to verify the password against the stored hash. If credentials are valid, generate a signed JWT containing the user's ID, role (if any), and an expiration claim (e.g., 1 hour). Return the JWT in the response body.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for: 1) Successful login with correct credentials, verifying a valid JWT is returned. 2) Failed login with an incorrect password. 3) Failed login with a non-existent email. Ensure error responses are generic (e.g., 'Invalid credentials') to prevent user enumeration attacks."
+          },
+          {
+            "id": 4,
+            "title": "Implement Authentication Middleware for Protected Routes",
+            "description": "Create a middleware that intercepts requests to protected endpoints, validates the JWT from the Authorization header, and attaches the authenticated user's data to the request context.",
+            "dependencies": [],
+            "details": "The middleware should parse the 'Bearer <token>' from the 'Authorization' header. It will verify the JWT's signature and check if it has expired. If the token is valid, extract the user ID from the payload, fetch the user from the database, and attach the user object to the request for downstream handlers. If the token is invalid, missing, or expired, the middleware should immediately respond with a 401 Unauthorized error.",
+            "status": "pending",
+            "testStrategy": "Create a sample protected endpoint (e.g., GET /api/v1/profile/me). Write integration tests to: 1) Access the endpoint with a valid JWT and verify a 200 OK response. 2) Access the endpoint with an invalid/malformed JWT and verify a 401 Unauthorized response. 3) Access the endpoint with an expired JWT and verify a 401 Unauthorized response. 4) Access the endpoint with no Authorization header and verify a 401 Unauthorized response."
+          }
+        ]
+      },
+      {
+        "id": 71,
+        "title": "Backend for One-Click Session Summary",
+        "description": "Create a new API route `/api/sessions/[id]/summarize` that uses the Session Analyst agent to generate a summary. The summary should be stored in a new `summaries` table in the database, linked to the session ID.",
+        "details": "The agent will be given a specific instruction to summarize the session content, focusing on key errors, fixes, and commands. The resulting summary object will be persisted using the LibSQL client. The API should return the generated summary upon completion.",
+        "testStrategy": "Call the `/summarize` endpoint for a session with >100 log lines. Verify that a `200 OK` is returned and that a new record appears in the `summaries` table. Validate that the stored summary content is structured with the required sections.",
+        "priority": "medium",
+        "dependencies": [
+          67
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Set Up User Authentication Database Schema",
+            "description": "Create the necessary database tables and fields to store user information, including credentials and profile data.",
+            "dependencies": [],
+            "details": "Define a `users` table with columns like `id` (primary key), `email` (unique), `hashed_password`, `created_at`, and `updated_at`. Use a database migration tool (e.g., Alembic, Flyway) to create and version the schema. Ensure email field is indexed for fast lookups.",
+            "status": "pending",
+            "testStrategy": "Run the migration script and verify the table structure and constraints directly in the database. Write a unit test to confirm the migration runs without errors and the `users` table is created as expected."
+          },
+          {
+            "id": 2,
+            "title": "Develop User Registration API Endpoint",
+            "description": "Create a public API endpoint (e.g., POST /api/users/register) that allows new users to create an account.",
+            "dependencies": [],
+            "details": "The endpoint should accept `email` and `password`. It must validate the input: check for a valid email format, enforce password complexity rules, and ensure the email is not already registered. Use a strong hashing algorithm like bcrypt to hash the password before storing it in the database. Return a 201 Created status on success.",
+            "status": "pending",
+            "testStrategy": "Write integration tests to cover successful registration, registration with a duplicate email, registration with an invalid email format, and registration with a weak password. Use an API client like Postman or automated test scripts to check responses and status codes."
+          },
+          {
+            "id": 3,
+            "title": "Develop User Login API Endpoint and Token Generation",
+            "description": "Create an API endpoint (e.g., POST /api/auth/login) for users to authenticate and receive a JSON Web Token (JWT).",
+            "dependencies": [],
+            "details": "The endpoint should accept `email` and `password`. It will find the user by email, compare the provided password against the stored hash using the bcrypt compare function. If credentials are valid, generate a signed JWT containing the user ID and an expiration claim. Return the JWT in the response body.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for successful login with correct credentials, and failed login attempts with an incorrect password or non-existent email. Verify that a structurally valid JWT is returned on successful login."
+          },
+          {
+            "id": 4,
+            "title": "Implement Authentication Middleware for Protected Routes",
+            "description": "Create a middleware to secure specific API routes, requiring a valid JWT for access.",
+            "dependencies": [],
+            "details": "The middleware should be applied to protected routes. It will extract the JWT from the `Authorization` header (e.g., 'Bearer <token>'). It must then verify the token's signature and check for expiration. If the token is valid, attach the user's information to the request object for use in the route handler. If invalid, return a 401 Unauthorized error.",
+            "status": "pending",
+            "testStrategy": "Create a sample protected endpoint. Write integration tests that attempt to access this endpoint with a valid JWT (should succeed), with an invalid or expired JWT (should return 401), and with no JWT (should return 401)."
+          }
+        ]
+      },
+      {
+        "id": 72,
+        "title": "Frontend UI for Session Summary",
+        "description": "On the session page (`app/sessions/[id]/page.tsx`), add a 'Summarize session' button. When clicked, this button should call the summarize API. A new UI panel should be added to display the stored summary, with sections for Errors, Fixes, and Commands.",
+        "details": "The page should first check if a summary already exists for the session and display it on load. The button should be disabled while a summary is being generated. The summary panel should be clearly distinct from the main log view.",
+        "testStrategy": "Load a session page. Click the 'Summarize session' button and verify a loading state appears. Once complete, confirm the summary panel is populated correctly. Reload the page and ensure the summary is displayed immediately without needing to click the button again.",
+        "priority": "medium",
+        "dependencies": [
+          71
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Set Up User Database Schema",
+            "description": "Create the necessary database tables to store user information, including credentials and profile data, using a migration script.",
+            "dependencies": [],
+            "details": "Define a 'users' table with columns for 'id' (primary key), 'email' (unique), 'password_hash' (string), 'created_at', and 'updated_at'. Use a database migration tool (e.g., Flyway, Alembic) to create and version the schema.",
+            "status": "pending",
+            "testStrategy": "Run the migration script and verify that the 'users' table and its columns are created correctly in the development database. Write a unit test to ensure the migration can be applied and reverted successfully."
+          },
+          {
+            "id": 2,
+            "title": "Implement User Registration API Endpoint",
+            "description": "Create a public API endpoint (e.g., POST /api/register) that allows new users to create an account by providing their email and password.",
+            "dependencies": [],
+            "details": "The endpoint should validate input data (e.g., valid email format, password strength). It must hash the password using a strong algorithm like bcrypt before storing the new user record in the database. Return a success message or the created user object (without the password hash).",
+            "status": "pending",
+            "testStrategy": "Write integration tests to cover: 1) Successful registration with valid data. 2) Attempted registration with a duplicate email. 3) Attempted registration with invalid input (e.g., weak password, invalid email format)."
+          },
+          {
+            "id": 3,
+            "title": "Implement User Login and JWT Generation",
+            "description": "Create an API endpoint (e.g., POST /api/login) for users to authenticate and receive a JSON Web Token (JWT).",
+            "dependencies": [],
+            "details": "The endpoint will accept 'email' and 'password'. It should retrieve the user by email, compare the provided password against the stored hash using the bcrypt compare function, and if valid, generate a signed JWT containing the user ID and an expiration claim.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for: 1) Successful login with correct credentials, verifying a valid JWT is returned. 2) Failed login with an incorrect password. 3) Failed login for a non-existent user email."
+          },
+          {
+            "id": 4,
+            "title": "Create Authentication Middleware for Protected Routes",
+            "description": "Develop middleware to verify the JWT on incoming requests to secure specific endpoints.",
+            "dependencies": [],
+            "details": "The middleware should extract the JWT from the 'Authorization: Bearer <token>' header. It must verify the token's signature and check for expiration. If valid, decode the payload and attach the user's identity to the request context. If invalid or missing, it must return a 401 Unauthorized status.",
+            "status": "pending",
+            "testStrategy": "Apply the middleware to a test endpoint. Write integration tests to: 1) Access the endpoint with a valid token. 2) Access with an expired token. 3) Access with an invalid/malformed token. 4) Access with no token. Ensure correct HTTP status codes are returned."
+          }
+        ]
+      },
+      {
+        "id": 73,
+        "title": "Implement Embeddings Generation for Semantic Search",
+        "description": "Create a background process or script to generate embeddings for all sessions. This process will read session data, chunk it, and call the `/v1/embeddings` endpoint (local Nexa or cloud) to get vectors, which are then stored in a new `embeddings` table.",
+        "details": "The `embeddings` table should store the vector, the original text chunk, and the `sessionId`. The script should be idempotent, allowing it to be re-run to update or backfill embeddings for sessions that don't have them.",
+        "testStrategy": "Run the script on a sample of sessions. Inspect the `embeddings` table to confirm that vector data has been populated. Verify that the dimensions of the stored vectors match the output of the embedding model being used.",
+        "priority": "medium",
+        "dependencies": [
+          68
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Implement User Database Schema",
+            "description": "Create the necessary database table(s) to store user information, including credentials and profile data.",
+            "dependencies": [],
+            "details": "Create a 'users' table with columns for id (primary key), username (unique), email (unique), hashed_password, created_at, and updated_at. Use a database migration tool to manage the schema changes.",
+            "status": "pending",
+            "testStrategy": "Verify the migration runs successfully. Write a unit test to connect to a test database and confirm the 'users' table and its columns exist with the correct data types and constraints."
+          },
+          {
+            "id": 2,
+            "title": "Create User Registration API Endpoint",
+            "description": "Develop a public API endpoint (e.g., POST /api/users/register) that allows new users to create an account.",
+            "dependencies": [],
+            "details": "The endpoint should accept a username, email, and password. It must validate the input, check for existing username/email, hash the password using bcrypt, and save the new user to the database. Return a success message or user object upon successful registration.",
+            "status": "pending",
+            "testStrategy": "Write integration tests to cover: 1) Successful registration with valid data. 2) Failed registration with a duplicate username/email. 3) Failed registration with invalid input (e.g., weak password). 4) Verify the password stored in the database is hashed."
+          },
+          {
+            "id": 3,
+            "title": "Implement User Login and JWT Generation",
+            "description": "Create an API endpoint (e.g., POST /api/auth/login) for users to log in and receive an authentication token.",
+            "dependencies": [],
+            "details": "The endpoint should accept a username/email and password. It will find the user in the database and compare the provided password with the stored hash. If they match, generate a JSON Web Token (JWT) containing the user ID and an expiration date. Return the JWT to the client.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for: 1) Successful login with correct credentials, verifying a valid JWT is returned. 2) Failed login with an incorrect password. 3) Failed login with a non-existent username. 4) Test the JWT payload to ensure it contains the correct user ID and an expiration claim."
+          },
+          {
+            "id": 4,
+            "title": "Develop Authentication Middleware for Protected Routes",
+            "description": "Create a middleware that can be applied to API endpoints to ensure only authenticated users can access them.",
+            "dependencies": [],
+            "details": "The middleware should extract the JWT from the 'Authorization' header. It must validate the token's signature and expiration. If valid, it should identify the user from the token's payload and attach the user object to the request context. If the token is invalid or missing, it should return a 401 Unauthorized error.",
+            "status": "pending",
+            "testStrategy": "Create a dummy protected endpoint. Write tests to: 1) Access the endpoint with a valid JWT and expect a 200 OK response. 2) Access the endpoint with an invalid or expired JWT and expect a 401 Unauthorized response. 3) Access the endpoint with no JWT and expect a 401 Unauthorized response."
+          }
+        ]
+      },
+      {
+        "id": 74,
+        "title": "Create Semantic Search API with Keyword Fallback",
+        "description": "Implement a new API route `GET /api/search?q=` that performs semantic search. The route will first generate an embedding for the query `q`, then perform a top-k vector search against the `embeddings` table. Implement a fallback to keyword-based search if no embeddings are available.",
+        "details": "The vector search can be implemented with a cosine similarity function in SQL for LibSQL, or using pgvector functions if Postgres is available. The API should return a list of session results ordered by similarity score. If the fallback is used, the response should include an indicator.",
+        "testStrategy": "Test the API with a conceptual query (e.g., 'cache problems'). Verify that the returned sessions are semantically related and ordered by score. Then, temporarily disable embeddings and re-run the search to ensure the system gracefully falls back to keyword search and includes the 'fallback' indicator in the response.",
+        "priority": "medium",
+        "dependencies": [
+          73
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Implement User Database Schema",
+            "description": "Create the necessary database tables to store user information, including credentials and profile data, using a migration script.",
+            "dependencies": [],
+            "details": "Create a `users` table with columns: `id` (UUID, primary key), `email` (varchar, unique, not null), `password_hash` (varchar, not null), `created_at` (timestamp), and `updated_at` (timestamp). Use a database migration tool like Alembic or Flyway to manage the schema.",
+            "status": "pending",
+            "testStrategy": "Run the migration and verify its successful application. Manually inspect the database schema to confirm all columns, types, and constraints (unique, not null) are correctly created. Write a rollback test for the migration."
+          },
+          {
+            "id": 2,
+            "title": "Develop User Registration API Endpoint",
+            "description": "Create a public API endpoint (e.g., `POST /api/v1/register`) that allows new users to create an account.",
+            "dependencies": [],
+            "details": "The endpoint should accept an email and password. It must validate the input (e.g., password strength, valid email format), check if the email is already in use, hash the password using bcrypt, and store the new user in the database. On success, return a 201 Created status with the new user's ID and email.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for input validation logic. Write integration tests to cover successful registration, registration with a duplicate email, and registration with invalid data (e.g., weak password, bad email format). Verify the password stored in the database is properly hashed."
+          },
+          {
+            "id": 3,
+            "title": "Implement User Login Endpoint and JWT Generation",
+            "description": "Create an API endpoint (e.g., `POST /api/v1/login`) for users to authenticate and receive a JSON Web Token (JWT).",
+            "dependencies": [],
+            "details": "The endpoint accepts an email and password. It will retrieve the user by email, compare the provided password against the stored hash using bcrypt. If valid, generate a signed JWT containing the user ID and an expiration claim (e.g., 1 hour). Return the JWT in the response body.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for successful login with correct credentials, failed login with an incorrect password, and failed login for a non-existent user. Unit test the JWT generation and verify the token payload and signature."
+          },
+          {
+            "id": 4,
+            "title": "Create Authentication Middleware for Protected Routes",
+            "description": "Implement middleware to verify the JWT on incoming requests to secure specific API endpoints, making user information available to the request handler.",
+            "dependencies": [],
+            "details": "The middleware should extract the JWT from the `Authorization: Bearer <token>` header. It must validate the token's signature and check for expiration. If valid, decode the token, retrieve the user from the database, and attach the user object to the request context. If the token is invalid, expired, or missing, return a 401 Unauthorized error.",
+            "status": "pending",
+            "testStrategy": "Create a sample protected endpoint. Write integration tests that attempt to access it with a valid token, an expired token, a malformed token, and no token. Assert that the correct HTTP status code and response body are returned for each case."
+          }
+        ]
+      },
+      {
+        "id": 75,
+        "title": "Implement Global Search UI",
+        "description": "Add a global search bar to the application's header or main page. As the user types, it should call the `/api/search` endpoint and display the results, including session titles, similarity scores, and snippets.",
+        "details": "The search results page should clearly present the findings. Each result should be a link to the corresponding session page (`/sessions/[id]`). The UI should also display the 'fallback' indicator if the API returns it.",
+        "testStrategy": "Use the UI to search for a term. Verify that results are displayed and that clicking a result navigates to the correct session. Test the keyword fallback by searching for a term when the embeddings service is known to be down and check for the UI indicator.",
+        "priority": "low",
+        "dependencies": [
+          74
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Implement User Database Schema",
+            "description": "Create the necessary database table(s) to store user information, including credentials and profile data.",
+            "dependencies": [],
+            "details": "Create a 'users' table with columns: 'id' (primary key, auto-increment), 'email' (unique, string), 'password_hash' (string), 'created_at' (timestamp), and 'updated_at' (timestamp). Use a database migration tool to manage schema changes.",
+            "status": "pending",
+            "testStrategy": "Verify the migration runs successfully against a test database. Manually inspect the schema to confirm all columns, types, and constraints (e.g., 'unique') are created correctly. Write a unit test to ensure the User model can be instantiated."
+          },
+          {
+            "id": 2,
+            "title": "Develop User Registration API Endpoint",
+            "description": "Create a public API endpoint for new users to register for an account by providing their credentials.",
+            "dependencies": [],
+            "details": "Implement a `POST /api/auth/register` endpoint. It should accept 'email' and 'password'. Perform validation: check for empty fields, valid email format, and if the email already exists. Hash the password using a strong algorithm like bcrypt before storing it. On success, return a 201 status code and the newly created user object (excluding the password hash).",
+            "status": "pending",
+            "testStrategy": "Write integration tests to cover: successful registration, attempting to register with a duplicate email, registration with invalid input (e.g., malformed email, weak password), and ensuring the password stored in the database is properly hashed and not plaintext."
+          },
+          {
+            "id": 3,
+            "title": "Implement User Login API Endpoint and Token Generation",
+            "description": "Create an API endpoint for users to log in. Upon successful authentication, generate and return a session token (JWT).",
+            "dependencies": [],
+            "details": "Implement a `POST /api/auth/login` endpoint. It should accept 'email' and 'password'. Find the user by email. Compare the provided password with the stored hash. If credentials are valid, generate a JSON Web Token (JWT) containing the user ID and an expiration date. Return the JWT to the client.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for: successful login with correct credentials, failed login with an incorrect password, and failed login with a non-existent email. Verify that a valid JWT with the correct payload (user ID, expiration) is returned on success."
+          },
+          {
+            "id": 4,
+            "title": "Create Authentication Middleware for Protected Routes",
+            "description": "Develop middleware to secure API endpoints, ensuring they are only accessible by users with a valid session token.",
+            "dependencies": [],
+            "details": "Create a middleware function that intercepts requests. It should extract the JWT from the 'Authorization: Bearer <token>' header. It must verify the token's signature and check for expiration. If the token is valid, decode the payload to identify the user and attach the user's information to the request object for use in subsequent handlers. If the token is missing or invalid, return a 401 Unauthorized error.",
+            "status": "pending",
+            "testStrategy": "Create a sample protected endpoint. Write integration tests to verify that: a request with a valid token is allowed, a request without a token is rejected with a 401 error, and a request with an invalid or expired token is rejected with a 401 error."
+          }
+        ]
+      },
+      {
+        "id": 76,
+        "title": "UI/UX Polish and Accessibility Enhancements",
+        "description": "Review and enhance all new UI components (Chat, Summary, Search) for accessibility and user experience. Implement full keyboard navigation, ARIA labels, and clear empty/loading states.",
+        "details": "This includes adding ARIA live regions for streaming chat, ensuring focus management when opening panels, and providing high-contrast mode compliance. Add clear empty states for when a session has no summary or search returns no results. Also, handle the case where the local Nexa server is offline.",
+        "testStrategy": "Perform an accessibility audit using browser developer tools (e.g., Lighthouse) and a screen reader. Navigate the entire application using only the keyboard. Manually test empty and error states by stopping the backend server or clearing data.",
+        "priority": "low",
+        "dependencies": [
+          69,
+          72,
+          75
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design and Implement User Database Schema",
+            "description": "Create the necessary database table(s) to store user information, including credentials and profile data.",
+            "dependencies": [],
+            "details": "Define a 'users' table with columns for id (primary key, UUID), email (unique, text), hashed_password (text), created_at (timestamp), and updated_at (timestamp). Use a database migration tool like Alembic or Flyway to script and apply the schema changes.",
+            "status": "pending",
+            "testStrategy": "Write a migration test to apply and revert the schema change. Manually inspect the database schema after migration to confirm all columns, types, and constraints (e.g., unique index on email) are correctly created."
+          },
+          {
+            "id": 2,
+            "title": "Implement Password Hashing and Verification Service",
+            "description": "Create a secure, isolated service for hashing new user passwords and verifying passwords during login attempts.",
+            "dependencies": [],
+            "details": "Use a strong, adaptive hashing algorithm like Argon2id or bcrypt. Create two core functions: `hashPassword(plainTextPassword)` which returns a hash string, and `verifyPassword(plainTextPassword, storedHash)` which returns a boolean. This logic should be in a dedicated 'security' or 'crypto' module.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for the service. Test that `hashPassword` always produces a different hash for the same input. Test that `verifyPassword` returns true for a correct password and false for an incorrect one. Ensure it handles edge cases like empty passwords."
+          },
+          {
+            "id": 3,
+            "title": "Develop User Registration API Endpoint",
+            "description": "Create a backend API endpoint (e.g., POST /api/v1/auth/register) to handle new user sign-ups.",
+            "dependencies": [],
+            "details": "The endpoint must accept user data (email, password). It should validate the input (e.g., valid email format, password complexity), check if the email already exists in the 'users' table, hash the password using the service from subtask 2, and store the new user record. Return a 201 Created status on success or appropriate 4xx error codes.",
+            "status": "pending",
+            "testStrategy": "Write API integration tests. Test the happy path for successful registration. Test failure cases: duplicate email, invalid email format, weak password, missing fields. Verify that the password stored in the database is a valid hash and not plaintext."
+          },
+          {
+            "id": 4,
+            "title": "Develop User Login API Endpoint and JWT Issuance",
+            "description": "Create a backend API endpoint (e.g., POST /api/v1/auth/login) to authenticate users and issue a JSON Web Token (JWT).",
+            "dependencies": [],
+            "details": "The endpoint accepts an email and password. It will fetch the user from the database by email, use the password service (subtask 2) to verify the password. If valid, generate a signed JWT containing the user ID and an expiration claim. The JWT secret key must be loaded from environment variables, not hardcoded.",
+            "status": "pending",
+            "testStrategy": "Write API integration tests. Test successful login and verify the structure and signature of the returned JWT. Test failed login attempts with an incorrect password and a non-existent email. Test that the JWT payload contains the correct user ID and expiry."
+          },
+          {
+            "id": 5,
+            "title": "Implement Middleware for Protecting Authenticated Routes",
+            "description": "Create server-side middleware to verify the JWT on incoming requests to protected API endpoints.",
+            "dependencies": [],
+            "details": "The middleware should extract the JWT from the 'Authorization' header (Bearer scheme). It will then validate the token's signature and expiration. If valid, it should decode the payload, retrieve the user ID, and attach the user object or ID to the request context for use in downstream handlers. If the token is invalid or missing, it must return a 401 Unauthorized error.",
+            "status": "pending",
+            "testStrategy": "Write integration tests for a sample protected endpoint. Test that a request with a valid JWT is allowed. Test that requests with no token, an expired token, an invalid signature, or a malformed token are all rejected with a 401 status code."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-09-08T17:44:30.733Z",
-      "updated": "2025-09-16T22:15:39.733Z",
+      "updated": "2025-09-23T19:49:05.109Z",
       "description": "Tasks for master context"
     }
   }

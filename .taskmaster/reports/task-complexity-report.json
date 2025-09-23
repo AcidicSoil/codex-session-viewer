@@ -1,117 +1,93 @@
 {
 	"meta": {
-		"generatedAt": "2025-09-09T16:21:18.218Z",
-		"tasksAnalyzed": 12,
-		"totalTasks": 32,
-		"analysisCount": 13,
+		"generatedAt": "2025-09-23T19:56:25.107Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
 		"thresholdScore": 5,
 		"projectName": "codex-session-viewer",
 		"usedResearch": true
 	},
 	"complexityAnalysis": [
 		{
-			"taskId": 38,
-			"taskTitle": "Create File Tree Component",
-			"complexityScore": 4,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Based on the existing files `FileTree.tsx`, `FileTreeNode.tsx`, and `fileTreeUtils.ts`, break this task down. The first subtask should focus on completing the tree-building logic in `fileTreeUtils.ts` to convert a flat list of file paths into a hierarchical data structure. The second should focus on implementing the recursive rendering in `FileTreeNode.tsx` to display the tree. The final subtask should be about handling state, specifically what happens when a file is clicked, including triggering an action and visually highlighting the selected node.",
-			"reasoning": "Codebase analysis shows that component files (`FileTree.tsx`, `FileTreeNode.tsx`, `fileTreeUtils.ts`) already exist. The task is 'in-progress', so the complexity is reduced from greenfield development to completing the implementation. The core challenge is the tree-building algorithm in `fileTreeUtils.ts`, which is moderately complex. The rest is straightforward recursive component rendering and state management."
-		},
-		{
-			"taskId": 39,
-			"taskTitle": "Integrate Basic Diff Viewer",
-			"complexityScore": 3,
-			"recommendedSubtasks": 2,
-			"expansionPrompt": "The `DiffViewer.tsx` component already exists. Break this down into two parts. First, implement the core `DiffViewer` component to accept `original` and `modified` content strings and correctly configure the `@monaco-editor/react` DiffEditor with these values and basic options. Second, integrate this component into the main `SessionView`, ensuring it receives the correct diff content when a file is selected in the `FileTree` component (from Task 38).",
-			"reasoning": "A `DiffViewer.tsx` component file already exists. The task relies on the `@monaco-editor/react` library, which handles the heavy lifting of diff rendering. The complexity is low, primarily involving passing props from a parent component (driven by the file tree selection) to the Monaco editor component and setting up its initial configuration."
-		},
-		{
-			"id": 41,
-			"title": "Add Syntax Highlighting to Diff Viewer",
-			"complexityScore": 2,
-			"recommendedSubtasks": 2,
-			"expansionPrompt": "This task enhances the existing `DiffViewer.tsx`. Break it down into two small subtasks. First, create a utility function `getLanguageForPath(path: string)` that takes a file path, extracts its extension, and returns the corresponding Monaco language ID (e.g., '.ts' -> 'typescript', '.py' -> 'python'). Second, modify the `DiffViewer` component to accept the file path as a prop, call this utility, and pass the resulting language to the Monaco Diff Editor's `language` option.",
-			"reasoning": "This is a minor enhancement to an existing component (`DiffViewer.tsx`). The logic involves creating a simple utility function to map file extensions to language identifiers and passing an additional `language` prop to the Monaco editor. The implementation is straightforward and has a very small footprint."
-		},
-		{
-			"taskId": 48,
-			"taskTitle": "Implement Session Library with IndexedDB",
-			"complexityScore": 8,
-			"recommendedSubtasks": 7,
-			"expansionPrompt": "This task is already well-defined with 7 subtasks. The current breakdown is excellent. Please proceed with generating detailed implementation steps for each of the existing subtasks, starting with 'Define IndexedDB Schema and Create DB Service'. Ensure the plan uses the `idb` library for simplicity and includes robust error handling for all DB operations, as well as graceful degradation if IndexedDB is unavailable.",
-			"reasoning": "This is a large feature that introduces a persistence layer. It involves schema design, creating a data access layer (`session-db.ts`), building new UI components (`SessionLibrary.tsx`), and integrating with the existing file loading flow (`useFileLoader.ts`). Working with IndexedDB, even with a library like `idb`, adds significant complexity due to its asynchronous nature, version management, and error handling requirements. The existing 7 subtasks accurately reflect this high complexity."
-		},
-		{
-			"taskId": 53,
-			"taskTitle": "Package as Web App or NPM Package (replace Electron)",
-			"complexityScore": 7,
-			"recommendedSubtasks": 7,
-			"expansionPrompt": "This task is well-decomposed into 7 subtasks covering both the static web app and npm package distribution paths. The plan is solid. Please proceed with generating detailed implementation steps for each subtask, starting with 'Decide distribution targets and package naming'. Pay close attention to the `vite.config.ts` changes for library mode and the `package.json` `exports` map, as these are critical and error-prone for the npm package.",
-			"reasoning": "This task involves no application logic changes but is complex due to its focus on build tooling and packaging. Configuring Vite for both SPA and library builds, correctly setting up `package.json` fields (`exports`, `peerDependencies`, etc.), and creating a verification process are non-trivial. The complexity lies in the configuration details and potential for cross-environment issues, not in writing React components."
-		},
-		{
-			"taskId": 54,
-			"taskTitle": "All Sessions View (auto-discovery + selector)",
-			"complexityScore": 5,
-			"recommendedSubtasks": 6,
-			"expansionPrompt": "This task has a solid 6-subtask breakdown. The plan correctly leverages the existing `useAutoDiscovery` hook. Proceed with generating detailed implementation steps for each subtask, starting with 'Create `SessionsList` Component Scaffold'. Ensure the plan uses the project's existing UI library (e.g., Chakra UI) for the modal and list components, and details the `fetch -> Blob -> File` logic for loading a selected session.",
-			"reasoning": "Codebase analysis indicates a `useAutoDiscovery` hook already exists, providing the necessary data. The task is therefore primarily UI development. It involves creating a new modal and a list component with stateful search/sort (`SessionsList.tsx`), and wiring it into `App.tsx`. The complexity is medium as it requires building new, non-trivial UI components and interaction logic, but it leverages existing data-fetching logic."
-		},
-		{
-			"taskId": 55,
-			"taskTitle": "Reload Sessions Button (re-scan without page refresh)",
-			"complexityScore": 4,
-			"recommendedSubtasks": 6,
-			"expansionPrompt": "This task and its 6 subtasks are marked as 'done'. The breakdown was excellent, covering the hook refactoring, UI integration in two places, loading state feedback, debouncing, and testing. No further expansion is needed. If this were a new task, the prompt would be: 'Break this down into subtasks covering: 1. Refactoring `useAutoDiscovery` to expose a `reload` function. 2. Adding the UI button to the main view. 3. Adding the button to the `AllSessionsView`. 4. Implementing loading state feedback. 5. Adding debounce logic. 6. Writing unit tests for the refactored hook.'",
-			"reasoning": "The task is marked as complete. The original complexity was moderate (4/10) because it required refactoring a core hook (`useAutoDiscovery`) to expose new functionality, updating multiple UI consumers (`App.tsx`, `AllSessionsView.tsx`) with the new state (`isLoading`) and actions (`reload`), and implementing non-trivial logic like debouncing. The 6 completed subtasks accurately reflect this scope."
-		},
-		{
-			"taskId": 56,
-			"taskTitle": "Newest-First Sorting for Detected Sessions",
-			"complexityScore": 5,
-			"recommendedSubtasks": 1,
-			"expansionPrompt": "This task is nearly complete, with only the unit tests for the timestamp parser remaining. The expansion should focus solely on subtask 56.5: 'Write Unit Tests for Timestamp Parser'. The prompt should be: 'Create a comprehensive test suite in `src/utils/timestamp.test.ts` for the `parseTimestampFromPath` function. Ensure you cover all specified patterns (rollout-style, ISO-like, YYYY/MM/DD paths), as well as edge cases like malformed dates, paths with no dates, and paths with multiple potential timestamps to verify priority.'",
-			"reasoning": "Most subtasks are 'done'. The core complexity was in creating a robust timestamp parsing utility (`src/utils/timestamp.ts`) with regex to handle multiple formats, which is moderately difficult. The remaining work is to write unit tests for this utility. The overall task involved touching the data hook, multiple UI components, and adding new utility code, justifying a medium complexity score."
-		},
-		{
-			"taskId": 57,
-			"taskTitle": "Complete Diff Viewer Functionality",
-			"complexityScore": 7,
-			"recommendedSubtasks": 8,
-			"expansionPrompt": "This is a large feature enhancement with an excellent 8-subtask breakdown. The plan covers parser improvements, new UI controls, and testing. Proceed with generating detailed implementation steps for each subtask, starting with 'Enhance Diff Parser for Headerless and Hunkless Diffs'. Pay special attention to the unit tests for the parser to ensure its new resilience doesn't cause regressions.",
-			"reasoning": "This task is a significant enhancement of the `DiffViewer`. The complexity is high due to the combination of multiple distinct features: refactoring a diff parser to be more resilient (a tricky and high-risk task), adding a suite of new UI controls (toggles, buttons), handling edge cases like binary/large files, and the corresponding testing effort. The 8 well-defined subtasks confirm the large scope."
-		},
-		{
-			"taskId": 58,
-			"taskTitle": "Filter‑Aware Granular Export",
-			"complexityScore": 9,
-			"recommendedSubtasks": 9,
-			"expansionPrompt": "This task and its 9 subtasks are marked as 'done'. The breakdown was comprehensive, covering everything from spec definition to UI, a Web Worker pipeline, and testing. No further expansion is needed. If this were a new task, the prompt would be: 'This is a highly complex feature. Use the existing 9 subtasks as a guide to create a detailed implementation plan. Start with defining the data spec, then build the data transformation pipeline, implement the exporters (CSV/JSON), wrap it in a Web Worker, build the UI modal, and finally add tests and docs.'",
-			"reasoning": "This task is marked as complete, but its original scope was highly complex. Codebase analysis shows dedicated `export` and `export/worker` directories. The feature required a Web Worker for performance, deep integration with state management (Zustand) to respect filters, a complex UI modal for granular selection, and multiple data formatters. This combination of performance optimization, complex UI, and data transformation pipelines makes it one of the most challenging features."
-		},
-		{
-			"taskId": 59,
-			"taskTitle": "Theme Color Picker + Light/Dark Mode",
+			"taskId": 67,
+			"taskTitle": "Setup Foundational Chat API with Mastra Agent",
 			"complexityScore": 6,
-			"recommendedSubtasks": 8,
-			"expansionPrompt": "This task has an excellent 8-subtask breakdown for adding a complete theming system. The plan correctly identifies using CSS variables with Tailwind and a Zustand store for persistence. Proceed with generating detailed implementation steps for each subtask, starting with 'Specify theme tokens and mode behavior'. The plan should detail how to set up the CSS variables in a global stylesheet and reference them in `tailwind.config.ts`.",
-			"reasoning": "This is a greenfield feature of moderate complexity. It requires foundational changes to the app's styling by integrating CSS variables with `tailwind.config.ts`. The complexity comes from coordinating multiple parts: the Tailwind setup, a new Zustand store with `localStorage` persistence, a UI for the theme picker, and logic to handle the 'system' preference. While not algorithmically difficult, the number of interconnected pieces is significant."
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Based on the codebase analysis, this task is greenfield development of a new API route. Break this task down into the following subtasks:\n1. Create the new Next.js API route file at `app/api/sessions/[id]/chat/route.ts` and handle POST request validation.\n2. Add `mastra` and `openai` as project dependencies and configure the basic Mastra agent, initially without any tools or specific models.\n3. Implement the `get_session` tool for the agent by creating a wrapper around the existing `lib/db.ts#getSession` function. Ensure the tool's schema and description are correctly defined for the agent to use.\n4. Implement the initial agent invocation logic within the POST handler to receive a question, use the agent to generate a single, non-streamed response, and return it as JSON. Include basic error handling.",
+			"reasoning": "Codebase analysis shows this is a greenfield task. A Next.js API route needs to be created at `app/api/sessions/[id]/chat/route.ts`. The `lib/db.ts` file provides a clear and reusable `getSession` function, simplifying the creation of the required tool. The main complexity comes from integrating and configuring the new 'Mastra' agent library for the first time, establishing a new pattern for AI features in the application. The task is foundational but doesn't require UI or complex state management, hence a medium complexity score."
 		},
 		{
-			"taskId": 60,
-			"taskTitle": "Workspace Scanner for CWD + .codex/sessions (diff tracking)",
-			"complexityScore": 10,
-			"recommendedSubtasks": 10,
-			"expansionPrompt": "This is a very large and complex feature with a 10-subtask breakdown. The plan correctly identifies the major components: using the File System Access API, performant scanning/hashing, IndexedDB for persistence, and change detection. Proceed with generating detailed implementation steps for each subtask, starting with 'Decide directory access + security approach'. The plan must emphasize performance (using async generators or workers for scanning) and robust error/permission handling for the File System Access API.",
-			"reasoning": "This is an extremely complex, high-impact feature. It introduces a new paradigm of interacting with the local file system, akin to a lightweight version control system. The complexity stems from using the advanced File System Access API, the critical need for high performance when scanning large directories (requiring workers or yielding loops), managing cryptographic hashing, and persisting large snapshots and directory handles in IndexedDB. Each of the 10 subtasks represents a significant engineering effort."
-		},
-		{
-			"taskId": 41,
-			"taskTitle": "Add Syntax Highlighting to Diff Viewer",
-			"complexityScore": 5,
+			"taskId": 68,
+			"taskTitle": "Implement Local/Cloud Model Switching Configuration",
+			"complexityScore": 3,
 			"recommendedSubtasks": 3,
-			"expansionPrompt": "Break down this task with a focus on add syntax highlighting to diff viewer.",
-			"reasoning": "Automatically added due to missing analysis in AI response."
+			"expansionPrompt": "Based on the codebase analysis, this is a self-contained configuration task. Break it down into the following subtasks:\n1. Create a new file `lib/llm-client.ts` to encapsulate LLM configuration.\n2. Implement logic within this file to read `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL_NAME` from `process.env` and instantiate an `OpenAI` client. It should handle the case where `LLM_BASE_URL` points to a local server and use a dummy API key if `LLM_API_KEY` is not set.\n3. Export a singleton instance of the configured client and refactor the agent initialization from Task #67 to use this shared client.",
+			"reasoning": "This is a low-complexity configuration task. The analysis confirms there is no existing LLM client, so this is greenfield. The task involves creating a new module (`lib/llm-client.ts`) to read environment variables and export a singleton client, which is a standard and well-understood pattern. It has no UI impact and minimal dependencies on other application logic, other than being consumed by the agent from Task #67."
+		},
+		{
+			"taskId": 69,
+			"taskTitle": "Implement Streaming SSE and Frontend Chat UI",
+			"complexityScore": 8,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Based on the codebase analysis, this is a complex full-stack task. Break it down into the following subtasks:\n1. **Backend**: Refactor the `app/api/sessions/[id]/chat/route.ts` to use the agent's streaming capabilities and return a `ReadableStream` formatted for Server-Sent Events (SSE).\n2. **Frontend UI Structure**: Modify `app/sessions/[id]/page.tsx` to be a client component or host one. Create a new `ChatPanel.tsx` component that uses the existing `Tabs` component from `components/ui/tabs.tsx` to create a 'Chat' tab.\n3. **Frontend UI Components**: Inside `ChatPanel.tsx`, add a message display area and a form with an input field (using `components/ui/input.tsx`) and a submit button (using `components/ui/button.tsx`).\n4. **Frontend Streaming Logic**: Implement the client-side logic using the `EventSource` API to connect to the chat endpoint. Handle incoming messages, append tokens to the current response, and manage the conversation history state.\n5. **State Management**: Implement state management for the chat's loading status, error states, and the list of messages in the conversation.",
+			"reasoning": "This task has high complexity as it spans the full stack and introduces real-time streaming. The backend requires changing the API from a simple JSON response to a `ReadableStream` for SSE, which adds complexity. The frontend `app/sessions/[id]/page.tsx` is currently a Server Component and needs significant modification to incorporate a new interactive chat UI. Implementing client-side logic with `EventSource` and managing the state of a streaming response is inherently complex."
+		},
+		{
+			"taskId": 70,
+			"taskTitle": "Implement Conversation Memory with LibSQL",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Based on the codebase analysis, this task involves database schema changes and API logic updates. Break it down into the following subtasks:\n1. **DB Schema**: Update `drizzle/schema.ts` to define a new `chat_memory` table with columns for `sessionId`, `messages` (JSON), and `updatedAt`.\n2. **DB Migration**: Use `drizzle-kit` to generate a new SQL migration file for the `chat_memory` table and apply it.\n3. **DB Access Logic**: In `lib/db.ts`, create two new functions: `getChatMemory(sessionId)` and `saveChatMemory(sessionId, messages)` that interact with the new table.\n4. **API Integration**: Modify the `app/api/sessions/[id]/chat/route.ts` to call `getChatMemory` before initializing the agent and pass the history. After a successful interaction, use `saveChatMemory` to persist the updated conversation.",
+			"reasoning": "The complexity is medium. The project already uses Drizzle ORM, so adding a new table (`drizzle/schema.ts`) and generating a migration is a familiar workflow. The main work involves creating new data access functions in `lib/db.ts` and integrating them into the chat API's request/response lifecycle. While it requires careful handling of conversation state, it leverages existing database patterns and doesn't require new UI."
+		},
+		{
+			"taskId": 71,
+			"taskTitle": "Backend for One-Click Session Summary",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Based on the codebase analysis, this task is similar to the initial chat API but for a different purpose. Break it down into subtasks:\n1. **DB Schema & Migration**: Add a `summaries` table to `drizzle/schema.ts` with columns for `sessionId`, `summary` (JSON or text), and `createdAt`. Generate and apply the migration.\n2. **DB Access Logic**: In `lib/db.ts`, create a `saveSummary` function and a `getSummary` function for the new table.\n3. **API Route**: Create a new API route at `app/api/sessions/[id]/summarize/route.ts` that accepts POST requests.\n4. **Agent Logic**: In the new route, initialize a 'Session Analyst' agent with a specific system prompt for summarization. Use the `get_session` tool (from Task #67) to fetch session data, invoke the agent, persist the result using `saveSummary`, and return the summary.",
+			"reasoning": "This task has medium complexity. It largely follows the pattern established in Task #67 (create API route, use agent). The project's Drizzle setup makes adding the `summaries` table straightforward. The complexity is in defining the agent's behavior and prompt for summarization and wiring the new database persistence logic. It reuses the LLM client from #68 and the tool pattern from #67, reducing the amount of novel work."
+		},
+		{
+			"taskId": 72,
+			"taskTitle": "Frontend UI for Session Summary",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Based on the codebase analysis, this task involves adding a new client-side feature to an existing page. Break it down into subtasks:\n1. **Data Fetching Hook**: Create a client-side data fetching mechanism (e.g., using `SWR` or `useEffect`/`useState`) in `app/sessions/[id]/page.tsx` to fetch an existing summary from a new `/api/sessions/[id]/summary` GET endpoint.\n2. **Display Component**: Create a new `SummaryPanel.tsx` client component. It should conditionally render the summary if it exists, or show an empty state.\n3. **Action Button**: Add a 'Summarize session' button (using `components/ui/button.tsx`) to the page. Implement the `onClick` handler to call the `POST /api/sessions/[id]/summarize` endpoint.\n4. **State Handling**: Manage the UI state for the button (e.g., disabled while loading) and the display panel (e.g., show a loading indicator, update with the new summary on success, show an error on failure).",
+			"reasoning": "Complexity is low-to-medium. The analysis of `app/sessions/[id]/page.tsx` shows it's a simple server component, so it will need to be adapted to include new client components. The existence of a component library (`shadcn/ui`) simplifies creating the button and panel. The task is self-contained and primarily involves client-side state management and API calls, which are common frontend tasks."
+		},
+		{
+			"taskId": 73,
+			"taskTitle": "Implement Embeddings Generation for Semantic Search",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Based on the codebase analysis, this is a backend data processing task. Break it down into the following subtasks:\n1. **DB Schema & Migration**: Add an `embeddings` table to `drizzle/schema.ts` with columns for `id`, `sessionId`, `content_chunk`, and `embedding` (JSON or blob). Generate and apply the migration.\n2. **Script Setup**: Create a new standalone script file (e.g., `scripts/generate-embeddings.ts`). Add a corresponding script command to `package.json` to execute it with `tsx` or a similar runner.\n3. **Data Processing Logic**: In the script, implement logic to fetch all sessions from the database. For each session, chunk its log data into smaller, manageable text pieces.\n4. **Embedding & Storage**: For each chunk, call the embeddings API endpoint (using the configured client from Task #68). Implement idempotent logic to check if an embedding for a chunk already exists before generating a new one. Store the resulting vector and its corresponding text chunk in the `embeddings` table.",
+			"reasoning": "This task has a medium-high complexity. It's not a web request but a background script, which is a new pattern for this codebase. The complexity lies in the data processing logic: fetching all data, implementing a robust text-chunking strategy, and ensuring the script is idempotent to prevent duplicate work or errors on re-runs. Interacting with the embeddings API is new, and handling potentially large amounts of data requires careful implementation."
+		},
+		{
+			"taskId": 74,
+			"taskTitle": "Create Semantic Search API with Keyword Fallback",
+			"complexityScore": 9,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Based on the codebase analysis, this is a technically challenging backend task. Break it down into the following subtasks:\n1. **API Route and Query Embedding**: Create a new API route `GET /api/search`. In this route, take the search query `q`, and use the LLM client (from Task #68) to generate an embedding vector for it.\n2. **Vector Search Query**: Implement the core vector search logic. Since LibSQL/SQLite lacks native vector functions, use Drizzle's raw SQL capabilities (`sql.raw`) to write a query that calculates cosine similarity between the query vector and the stored vectors in the `embeddings` table. Order the results by similarity.\n3. **Keyword Fallback**: Implement the fallback mechanism. This should be triggered if the vector search returns no results or if embeddings are disabled. The fallback should perform a simple `LIKE` search on the session log content.\n4. **Response Formatting**: Structure the API response to return a list of matching sessions, including their ID, title, a snippet of the matching text, and the similarity score. Include a boolean flag `isFallback` to indicate which search method was used.",
+			"reasoning": "This task is highly complex, primarily due to the requirement of implementing vector search (cosine similarity) in raw SQL for a database (LibSQL/SQLite) that does not have native support. This involves complex mathematical operations within the SQL query itself, which is difficult to write, debug, and optimize. The additional logic for generating query embeddings and implementing a keyword-based fallback adds further complexity, making this one of the most challenging backend tasks."
+		},
+		{
+			"taskId": 75,
+			"taskTitle": "Implement Global Search UI",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Based on the codebase analysis, this is a standard frontend feature implementation. Break it down into the following subtasks:\n1. **Global Search Input**: Create a new client component for a search bar. Add this component to a shared layout file, such as `app/layout.tsx` or a new header component, so it appears on all pages.\n2. **Debounced API Calls**: In the search bar component, implement logic to call the `/api/search` endpoint as the user types. Use a debounce mechanism (e.g., with the `use-debounce` library) to avoid sending excessive requests.\n3. **Search Results Page**: Create a new page at `app/search/page.tsx` that receives the search query from URL parameters. This page will be responsible for fetching and displaying the final search results.\n4. **Display Logic**: On the results page, render the list of sessions returned by the API. Each item should be a link to the corresponding session page. Also, display the similarity score and the `isFallback` indicator if the API provides it.",
+			"reasoning": "The complexity is medium. It involves creating a new, globally visible UI component and a new search results page. The existence of `components/ui/input.tsx` will speed up development. The main frontend complexities are managing the state of the search input, implementing debouncing for performance, and handling routing between the search bar and the results page. It's a standard feature but touches multiple parts of the frontend application."
+		},
+		{
+			"taskId": 76,
+			"taskTitle": "UI/UX Polish and Accessibility Enhancements",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Based on the codebase analysis, this is a cross-cutting refinement task. Break it down into subtasks focused on the new features:\n1. **Chat UI Accessibility**: Review the `ChatPanel.tsx` component. Implement `aria-live` regions for streaming messages so screen readers announce new content. Ensure the input and message list are fully keyboard navigable.\n2. **Summary UI Polish**: Review the `SummaryPanel.tsx`. Ensure the button has clear focus states and is disabled correctly with `aria-disabled`. Add clear loading and empty states with appropriate ARIA roles.\n3. **Search UI/UX**: Review the global search input and results page. Ensure full keyboard navigation (e.g., arrow keys to move through results). Add ARIA labels to all controls and ensure search results are announced correctly.\n4. **Focus Management**: Implement proper focus management across all new interactive elements. For example, when a chat is sent, focus should return to the input field.\n5. **Error & Empty States**: Systematically review all new components and pages to ensure they gracefully handle API errors, offline states (e.g., local server down), and cases with no data (e.g., no search results).",
+			"reasoning": "This task has medium complexity because it requires a broad review of multiple new, complex UI components (Chat, Summary, Search) and a specialized skill set in accessibility (ARIA, keyboard navigation, screen readers). While it doesn't involve complex algorithms, performing a thorough and effective accessibility audit is time-consuming and detail-oriented. The number of new surfaces to cover contributes significantly to the workload."
 		}
 	]
 }
