@@ -32,6 +32,7 @@ import DiffView from './components/DiffView'
 import TwoFileDiff from './components/TwoFileDiff'
 import TwoFileDiffViewerDemo from './components/TwoFileDiffViewerDemo'
 import { extractApplyPatchText } from './parsers/applyPatch'
+import { parseSessionToArrays } from './parser/streaming'
 import { parseUnifiedDiffToSides } from './utils/diff'
 import { isApplyPatchFunction, passesFunctionNameFilter, sanitizeFnFilterList } from './utils/functionFilters'
 import { getLanguageForPath } from './utils/language'
@@ -44,6 +45,7 @@ import SessionLibrary from './components/SessionLibrary'
 import { getWorkspaceDiff } from './scanner/diffProvider'
 import { readFileText } from './utils/fs-io'
 import { enumerateFiles, enumerateFilesInfo, type FileEntryInfo } from './utils/dir-enum'
+import { downloadText } from './utils/download'
 
 function DevButtons({ onGenerate }: { onGenerate: () => void }) {
   return (
@@ -129,6 +131,8 @@ function AppInner() {
   const [sessionsFilterText, setSessionsFilterText] = useState('')
   const [sessionsMinKB, setSessionsMinKB] = useState('')
   const [sessionsMaxKB, setSessionsMaxKB] = useState('')
+  const [isBulkExporting, setIsBulkExporting] = useState(false)
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 })
   const [changeMap, setChangeMap] = useState<Record<string, 'added' | 'modified' | 'deleted'>>({})
   const [autoDetect, setAutoDetect] = useState(true)
   const [showFileTree, setShowFileTree] = useState(false)
@@ -462,6 +466,59 @@ function AppInner() {
       await handleFile(file)
     } catch (e) {
       console.warn('loadFromHandle failed', e)
+    }
+  }
+
+  async function exportAllSessionsFromHandle(format = 'json') {
+    if (!sessionsHandle) return
+    if (format !== 'json') {
+      console.warn('Unsupported export format', format)
+      return
+    }
+
+    const targets = displayedSessions
+    if (!targets.length) return
+
+    setIsBulkExporting(true)
+    setBulkProgress({ current: 0, total: targets.length })
+
+    const sessions: Array<{ path: string; filename?: string; meta: unknown; events: unknown }> = []
+
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        const entry = targets[i]!
+        try {
+          const parts = entry.path.split('/').filter(Boolean)
+          let dir: any = sessionsHandle
+          for (let j = 0; j < parts.length - 1; j++) dir = await dir.getDirectoryHandle(parts[j]!)
+          const fh = await dir.getFileHandle(parts[parts.length - 1]!)
+          const file = await fh.getFile()
+          const parsed = await parseSessionToArrays(file)
+          sessions.push({
+            path: entry.path,
+            filename: buildFilename(parsed.meta as any, false, 'json'),
+            meta: parsed.meta,
+            events: parsed.events,
+          })
+        } catch (err) {
+          console.warn('exportAllSessionsFromHandle failed for', entry.path, err)
+        } finally {
+          setBulkProgress({ current: i + 1, total: targets.length })
+        }
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        total: sessions.length,
+        source: '.codex/sessions',
+        sessions,
+      }
+      const name = `codex-sessions-export-${timestamp}.json`
+      downloadText(name, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8')
+    } finally {
+      setIsBulkExporting(false)
+      setBulkProgress({ current: 0, total: 0 })
     }
   }
 
@@ -864,6 +921,16 @@ function AppInner() {
                   <option value="name-asc">Name (A→Z)</option>
                   <option value="name-desc">Name (Z→A)</option>
                 </select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isBulkExporting || !displayedSessions.length || !sessionsHandle}
+                  onClick={() => exportAllSessionsFromHandle()}
+                >
+                  {isBulkExporting
+                    ? `Exporting… ${Math.min(bulkProgress.current, bulkProgress.total)}/${bulkProgress.total}`
+                    : `Export all${displayedSessions.length ? ` (${displayedSessions.length})` : ''}`}
+                </Button>
               </div>
               <ul className="max-h-48 overflow-auto space-y-1">
                 {displayedSessions.map((s) => (
