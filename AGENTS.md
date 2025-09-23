@@ -56,6 +56,30 @@
 
 ---
 
+## Validation
+
+- Behavior extension: must be readable text.
+- Rule-pack: must have front matter with `description` (string), `globs` (string), `alwaysApply` (bool).
+- Invalid items are skipped and logged in `DocFetchReport.validation_errors[]`.
+
+---
+
+## Execution flow (docs integration)
+
+- **Preflight must list:**
+
+  - `DocFetchReport.context_files[]` from `@{...}`
+  - `DocFetchReport.approved_instructions[]`
+  - `DocFetchReport.approved_rule_packs[]`
+- Compose in this order:
+
+  1. Baseline
+  2. Behavior extensions
+  3. Rule-packs
+- Proceed only when `DocFetchReport.status == "OK"`.
+
+---
+
 ## Conflict resolution
 
 - **Specificity rule:** If both target the same scope, the later item in the final order wins.
@@ -164,6 +188,19 @@ Also log memory batching and status coupling events when applicable:
 - Each Task Master status call: append `{action:"status", name:"task-master", value, status}` to `server_actions[]`.
 
 ---
+
+## Task Master Integration — Correct Usage (per README)
+
+- **Package vs CLI:** The npm package is `task-master-ai`. The CLI binary is `task-master`.
+- **MCP server (Cursor) setup:** Use a Command server with `npx -y task-master-ai` as the command. Name “Task Master”. This exposes Task Master tools inside Cursor.
+- **Configuration source of truth:** Use the `.taskmasterconfig` file created/managed by `task-master models --setup` or the `models` MCP tool. Do **not** set model choice, max tokens, temperature, or log level via environment variables.
+- **Environment variables:** Only for API keys and specific endpoints (e.g., `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `OLLAMA_BASE_URL`). For CLI, store in a project `.env`. For MCP, store under the server’s `env` block.
+- **CLI commands used by this system:** `task-master parse-prd`, `task-master list`, `task-master next`, `task-master generate`, `task-master show`, `task-master set-status`, `task-master update`, `task-master expand`, `task-master clear-subtasks`, dependency validators, and complexity analysis commands. Use exactly these spellings.
+- **Status vocabulary:** Prefer `pending`, `in-progress`, `done`, and `deferred` for Task Master. Keep any extra internal states (e.g., `verify`, `needs-local-tests`) inside this system and map them to Task Master per §3.
+
+**Logging note:** When logging to `DocFetchReport.server_actions[]`, keep `{action:"status", name:"task-master", value:"<status>", status:"ok|error"}`. This aligns with the CLI/MCP usage.
+
+**ESM note:** Task Master is ESM. If invoking scripts directly, ensure Node ESM compatibility.
 
 ## A) Preflight: Latest Docs Requirement (**MUST**, Blocking)
 
@@ -278,7 +315,7 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 1. Re-run the **Dynamic Docs MCP Router** (§7) to discover and rank all `*-docs-mcp` servers relevant to the error topics (derive from stack traces, failing commands, and test names).
 2. Fetch **latest pertinent docs** via the ranked chain, then `contex7-mcp` → `gitmcp`.
-3. Rebuild `DocFetchReport` with `refresh_reason: "3_turns_persistent_errors"`, `since_turns: 3`, and `since_time_utc` from the last successful run.
+3. Rebuild `DocFetchReport` with `refresh_reason: "3_turns_persistent_errors",`since\_turns: 3`, and`since\_time\_utc\` from the last successful run.
 4. Set `ctx.docs_ready = false` until the refreshed report returns `status == "OK"`.
 5. Compute and record `doc_delta` vs the previous report (changed sources, new guidance, version bumps). Attach to `DocFetchReport.changed_guidance[]`.
 
@@ -407,24 +444,18 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 - After any successful flush that changes `percent_complete` or has `status_intent`:
 
-  - Call Task Master MCP to set status:
+  - Update **Task Master** using either the CLI (`task-master set-status`) or the MCP server.
 
-    - first execution flush → `in-progress`,
-    - post-completion pre-checks → `verify`,
-    - after §2.1 outcomes → `done|blocked|needs-local-tests`.
+    - **Start of execution** → set Task Master status to **`in-progress`**.
+    - **Internal `verify` phase** → **do not** set a nonstandard Task Master status. Keep **`in-progress`** and attach a note in memory (and, if supported, task details) that verification is running.
+    - **Outcomes**
+
+      - Success → set **`done`**.
+      - Failure or deferral → set **`deferred`** and include a reason note (e.g., `blocked` or `needs-local-tests`).
+
 - Record hook: `{hook:"task-master", result:"ok|error", ts_utc}` in memory.
 
-### Transition gating and retries
-
-- Emit status changes only immediately after a successful memory flush.
-- If Task Master call fails, set `status_pending` and retry on next flush or T+2m, capped backoff.
-
-### Logging in DocFetchReport
-
-- Add each flush under `memory_ops[]` with `{tool:"memory", op:"upsert_batch", time_utc, scope, batch_id, count}`.
-- Add Task Master calls under `server_actions[]` with `{action:"status", name:"task-master", value, status}`.
-
-### Execution logging alignment
+### Completion
 
 - Replace per-event writes with batch buffer per the policy above.
 - Update `percent_complete` only at flush time.
@@ -526,22 +557,21 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 ## 3) Status management (**REVISED**)
 
-- Use Task Master MCP to set task status:
+- Use Task Master **only** for external status sync with Task Master’s documented vocabulary.
 
   - **`in-progress`** on start of execution after §A and §1.1 planning.
-  - **`verify`** automatically after memory updates and before tests (§2.1).
-  - **Auto-set `done`** when all subtasks are done, gates passed, and §2.1 checks succeed.
-  - **`needs-local-tests`** when §2.1 defers execution via the Safety Gate.
-  - **`blocked`** when a check fails or a gate prevents progress; include block reason and an unblock plan in memory.
+  - Keep **`in-progress`** during the internal **verify** phase (§2.1). Do not write `verify` to Task Master.
+  - Set **`done`** when all subtasks are done, gates passed, and §2.1 checks succeed.
+  - On failures or deferral via the Safety Gate (§2.1), set **`deferred`** and include a reason in the note (e.g., `blocked` or `needs-local-tests`).
 
-- **Transition rules:**
-  `in-progress → verify → done` on success.
-  `verify → blocked` on check failure.
-  `verify → needs-local-tests` on deferral.
+- **Transition rules (internal → Task Master mapping):**
+
+  - Internal: `in-progress → verify → done` ⇒ Task Master: `in-progress → done`.
+  - Internal: `verify → blocked` or `verify → needs-local-tests` ⇒ Task Master: `deferred` (with reason note).
 
 - **Transition gating:**
 
-  - Emit Task Master status changes **only** immediately after a successful memory flush.
+  - Emit Task Master status changes only immediately after a successful memory flush.
   - If the Task Master call fails, mark `status_pending` in memory; retry on next flush or at T+2m with capped backoff.
 
 ---
@@ -1028,6 +1058,27 @@ To demonstrate prompts in practice, a full-stack app workflow includes:
 - Dedupe removes repeats with identical `dedupe_key`.
 - A Task Master status call follows every successful flush that changes progress or status intent.
 - Finalization performs read-back verification and writes `completion_summary_md`.
+
+---
+
+## Build Artifacts Policy — `dist/` (Do not edit build outputs)
+
+Short answer: yes—that’s the normal rule.
+
+`dist/` is build output (from tsc, Rollup, Webpack, Vite, etc.). It gets regenerated, so don’t hand-edit files in `dist/`; make changes in `src/` (and config) and rebuild.
+
+A few practical notes:
+
+- Put it in ignores:
+  `.gitignore` → `dist/`
+  `.eslintignore` / `.prettierignore` / test coverage excludes → `dist/`
+- Typical patterns all work; simplest is just `dist/`. (`dist/*` or `dist/**/*` are fine; they just mean “everything under dist recursively.”)
+- Exceptions where teams *do* keep built files:
+
+  - Publishing a library to npm: don’t commit `dist/` to Git, but **do** ship compiled files in the npm package. Use `"files"` in `package.json` (e.g., `"files": ["dist"]`) and a build in `prepublishOnly`/`prepare`.
+  - Repos that deploy straight from the repo (e.g., GitHub Pages from a `docs`/`dist` branch). In that case the generated folder is committed on purpose.
+
+If none of those special cases apply, ignore `dist/` and never edit it directly.
 
 ---
 
