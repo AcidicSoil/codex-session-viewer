@@ -24,7 +24,7 @@ import GithubGlobeModal from './components/GithubGlobeModal'
 import { startFileSystemScanFromHandle, type ScanStats } from './utils/fs-scanner'
 import { listHashes, getSetting, setSetting, deleteSetting } from './utils/session-db'
 import { buildChangeSet, type ChangeSet } from './scanner/diffIndex'
-import { exportJson, exportMarkdown, exportHtml, exportCsv, buildFilename } from './utils/exporters'
+import { buildBulkExportBundle, type BulkExportFormat, type BulkSessionRecord } from './utils/exporters'
 import type { ResponseItem } from './types'
 import FileTree from './components/FileTree'
 import FilePreview from './components/FilePreview'
@@ -131,6 +131,7 @@ function AppInner() {
   const [sessionsFilterText, setSessionsFilterText] = useState('')
   const [sessionsMinKB, setSessionsMinKB] = useState('')
   const [sessionsMaxKB, setSessionsMaxKB] = useState('')
+  const [bulkExportFormat, setBulkExportFormat] = useState<BulkExportFormat>('json')
   const [isBulkExporting, setIsBulkExporting] = useState(false)
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 })
   const [changeMap, setChangeMap] = useState<Record<string, 'added' | 'modified' | 'deleted'>>({})
@@ -179,6 +180,7 @@ function AppInner() {
     setChipScanning(false)
     setChipProgress(0)
     setChipOnlyMatches(false)
+    setBulkExportFormat('json')
     setSessionKey((k) => k + 1)
   }
 
@@ -469,12 +471,8 @@ function AppInner() {
     }
   }
 
-  async function exportAllSessionsFromHandle(format = 'json') {
+  async function exportAllSessionsFromHandle(format: BulkExportFormat = 'json') {
     if (!sessionsHandle) return
-    if (format !== 'json') {
-      console.warn('Unsupported export format', format)
-      return
-    }
 
     const targets = displayedSessions
     if (!targets.length) return
@@ -482,7 +480,7 @@ function AppInner() {
     setIsBulkExporting(true)
     setBulkProgress({ current: 0, total: targets.length })
 
-    const sessions: Array<{ path: string; filename?: string; meta: unknown; events: unknown }> = []
+    const sessions: BulkSessionRecord[] = []
 
     try {
       for (let i = 0; i < targets.length; i++) {
@@ -496,9 +494,8 @@ function AppInner() {
           const parsed = await parseSessionToArrays(file)
           sessions.push({
             path: entry.path,
-            filename: buildFilename(parsed.meta as any, false, 'json'),
-            meta: parsed.meta,
-            events: parsed.events,
+            meta: parsed.meta as any,
+            events: parsed.events as any,
           })
         } catch (err) {
           console.warn('exportAllSessionsFromHandle failed for', entry.path, err)
@@ -507,15 +504,22 @@ function AppInner() {
         }
       }
 
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const payload = {
-        exportedAt: new Date().toISOString(),
-        total: sessions.length,
-        source: '.codex/sessions',
-        sessions,
+      if (!sessions.length) return
+
+      const bundle = await buildBulkExportBundle(sessions, format)
+      if (bundle.kind === 'json') {
+        downloadText(bundle.filename, bundle.text, bundle.mime)
+      } else {
+        const blob = new Blob([bundle.archive], { type: bundle.mime })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = bundle.filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        setTimeout(() => URL.revokeObjectURL(url), 5000)
       }
-      const name = `codex-sessions-export-${timestamp}.json`
-      downloadText(name, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8')
     } finally {
       setIsBulkExporting(false)
       setBulkProgress({ current: 0, total: 0 })
@@ -921,11 +925,23 @@ function AppInner() {
                   <option value="name-asc">Name (A→Z)</option>
                   <option value="name-desc">Name (Z→A)</option>
                 </select>
+                <select
+                  className="border rounded px-1 py-0.5"
+                  value={bulkExportFormat}
+                  onChange={(e) => setBulkExportFormat(e.target.value as BulkExportFormat)}
+                  disabled={isBulkExporting}
+                  title="Bulk export format"
+                >
+                  <option value="json">JSON bundle</option>
+                  <option value="markdown">Markdown (.md)</option>
+                  <option value="html">HTML (.html)</option>
+                  <option value="csv">CSV (.csv)</option>
+                </select>
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={isBulkExporting || !displayedSessions.length || !sessionsHandle}
-                  onClick={() => exportAllSessionsFromHandle()}
+                  onClick={() => exportAllSessionsFromHandle(bulkExportFormat)}
                 >
                   {isBulkExporting
                     ? `Exporting… ${Math.min(bulkProgress.current, bulkProgress.total)}/${bulkProgress.total}`

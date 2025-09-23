@@ -1,8 +1,24 @@
+import JSZip from 'jszip'
 import type { ParsedSession } from '../types/session'
 import type { ResponseItem } from '../types'
 import type { MessagePart } from '../types/events'
 import { downloadText } from './download'
-import { toCSV } from '../export/csv'
+import { toCSV as toCsvString, type CsvField } from '../export/csv'
+import { resolveColumns, DEFAULT_COLUMN_KEYS as DEFAULT_COLUMN_KEYS_INTERNAL } from '../export/columns'
+
+export const DEFAULT_COLUMN_KEYS = DEFAULT_COLUMN_KEYS_INTERNAL
+
+export type BulkExportFormat = 'json' | 'markdown' | 'html' | 'csv'
+
+export interface BulkSessionRecord {
+  path: string
+  meta: ParsedSession['meta'] | undefined
+  events: readonly ResponseItem[]
+}
+
+export type BulkExportBundle =
+  | { kind: 'json'; filename: string; mime: string; text: string }
+  | { kind: 'zip'; filename: string; mime: string; archive: ArrayBuffer }
 
 function asText(content: string | ReadonlyArray<MessagePart>): string {
   return Array.isArray(content) ? content.map((p) => p.text).join('\n') : (content as string)
@@ -194,6 +210,58 @@ export function exportHtml(meta: ParsedSession['meta'] | undefined, events: read
   downloadText(name, toHtml(meta, events), 'text/html;charset=utf-8')
 }
 
+export function toCSV(
+  rows: readonly ResponseItem[],
+  columnKeys: ReadonlyArray<string> = DEFAULT_COLUMN_KEYS,
+) {
+  const keys = Array.from(columnKeys)
+  const columns = resolveColumns(keys)
+  const fields: CsvField[] = columns.map((col) => ({
+    key: col.key,
+    label: col.label,
+    extractor: (ev, index) => col.extractor(ev, index) as any,
+  }))
+  return toCsvString(rows, fields)
+}
+
+const MULTI_FILE_EXTENSIONS: Record<Exclude<BulkExportFormat, 'json'>, string> = {
+  markdown: 'md',
+  html: 'html',
+  csv: 'csv',
+}
+
+function timestampForFilename(date: Date) {
+  return date.toISOString().replace(/[:.]/g, '-')
+}
+
+function ensureUniqueFilename(name: string, used: Set<string>) {
+  if (!used.has(name)) {
+    used.add(name)
+    return name
+  }
+  const dot = name.lastIndexOf('.')
+  const base = dot >= 0 ? name.slice(0, dot) : name
+  const ext = dot >= 0 ? name.slice(dot) : ''
+  let counter = 2
+  let candidate = `${base}-${counter}${ext}`
+  while (used.has(candidate)) {
+    counter += 1
+    candidate = `${base}-${counter}${ext}`
+  }
+  used.add(candidate)
+  return candidate
+}
+
+function renderSessionContent(
+  session: BulkSessionRecord,
+  format: Exclude<BulkExportFormat, 'json'>,
+  columnKeys: ReadonlyArray<string>,
+) {
+  if (format === 'markdown') return toMarkdown(session.meta, session.events)
+  if (format === 'html') return toHtml(session.meta, session.events)
+  return toCSV(session.events, columnKeys)
+}
+
 function summarizeFilters(filters?: { type?: string; role?: string; q?: string; pf?: string; other?: boolean }) {
   if (!filters) return ''
   const parts: string[] = []
@@ -214,4 +282,55 @@ export function buildFilename(meta: ParsedSession['meta'] | undefined, bookmarks
 export function exportCsv(meta: ParsedSession['meta'] | undefined, rows: readonly ResponseItem[], bookmarksOnly: boolean, filters?: { type?: string; role?: string; q?: string; pf?: string; other?: boolean }) {
   const name = buildFilename(meta, bookmarksOnly, 'csv', filters)
   downloadText(name, toCSV(rows), 'text/csv;charset=utf-8')
+}
+
+export async function buildBulkExportBundle(
+  sessions: readonly BulkSessionRecord[],
+  format: BulkExportFormat,
+  columnKeys: ReadonlyArray<string> = DEFAULT_COLUMN_KEYS,
+  options: { source?: string; timestamp?: Date } = {},
+): Promise<BulkExportBundle> {
+  const timestamp = options.timestamp ?? new Date()
+  const source = options.source ?? '.codex/sessions'
+  const stamp = timestampForFilename(timestamp)
+
+  if (format === 'json') {
+    const sessionPayloads = sessions.map((session) => ({
+      path: session.path,
+      filename: buildFilename(session.meta, false, 'json'),
+      meta: session.meta,
+      events: session.events,
+    }))
+    const payload = {
+      exportedAt: timestamp.toISOString(),
+      total: sessionPayloads.length,
+      source,
+      sessions: sessionPayloads,
+    }
+    return {
+      kind: 'json',
+      filename: `codex-sessions-export-${stamp}.json`,
+      mime: 'application/json;charset=utf-8',
+      text: JSON.stringify(payload, null, 2),
+    }
+  }
+
+  const ext = MULTI_FILE_EXTENSIONS[format]
+  const zip = new JSZip()
+  const usedNames = new Set<string>()
+
+  sessions.forEach((session) => {
+    const baseName = buildFilename(session.meta, false, ext)
+    const uniqueName = ensureUniqueFilename(baseName, usedNames)
+    const content = renderSessionContent(session, format, columnKeys)
+    zip.file(uniqueName, content)
+  })
+
+  const archive = await zip.generateAsync({ type: 'arraybuffer' })
+  return {
+    kind: 'zip',
+    filename: `codex-sessions-export-${stamp}-${format}.zip`,
+    mime: 'application/zip',
+    archive,
+  }
 }
