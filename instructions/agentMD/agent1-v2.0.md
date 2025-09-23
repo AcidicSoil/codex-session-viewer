@@ -148,7 +148,7 @@ If any are missing: **infer pragmatic defaults** common to the domain and **note
   [content]
   ```
 
-* **Usage/validation:** *\[commands, make targets, CI job names]*
+- **Usage/validation:** *\[commands, make targets, CI job names]*
 
 **6) Stop conditions**
 

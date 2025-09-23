@@ -1,6 +1,17 @@
 {
   // Ignore patterns for markdownlint-cli2
-  "ignores": ["node_modules/**", "dist/**", "build/**"],
+  "ignores": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    "tmp/**",
+    "codefetch/",
+    ".archive/",
+    "MCP/",
+    ".taskmaster/",
+    "instructions/",
+    "docs"
+  ],
 
   // You can also include rule configuration here
   "config": {

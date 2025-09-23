@@ -162,13 +162,13 @@ If any are missing: infer pragmatic defaults common to the role and note them un
   [runnable/compilable content]
   ```
 
-* *\[Selected artifact type #2]* — *\[brief purpose]*
+- *\[Selected artifact type #2]* — *\[brief purpose]*
 
   ```[language or format]
   [content]
   ```
 
-* **Usage/validation:** *\[commands, make targets, CI job names]*
+- **Usage/validation:** *\[commands, make targets, CI job names]*
 
 **6) Stop conditions**
 

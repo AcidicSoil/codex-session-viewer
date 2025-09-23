@@ -6,9 +6,11 @@ The All Sessions list supports two sort orders:
 - Name: ascending path name (A → Z).
 
 Implementation details
+
 - A `sortKey` is computed in `useAutoDiscovery()` using `parseTimestampFromPath` from `src/utils/timestamp.ts` and exposed on each asset.
 - `SessionsList` also calls this utility locally for robustness.
 
 Limitations
+
 - If no timestamp can be parsed, items may group under the fallback.
 - When multiple timestamps exist, the first match wins.

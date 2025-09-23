@@ -18,6 +18,7 @@ interface SessionRecord {
 
 ### fileHashes
 Stores file hashes along with an optional modification timestamp to avoid re-hashing unchanged files.
+
 ```ts
 interface FileHashRecord {
   path: string

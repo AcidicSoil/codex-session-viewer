@@ -30,7 +30,7 @@ Value: instant, offline analysis; high‑signal navigation; rich diffs; filter�
 - File Tree merges: workspace files (when connected), paths from `FileChange` events, and auto‑discovered project files.
 - File Preview shows latest modified content from diffs; mismatch markers highlight divergence from workspace.
 - Diff Viewer (Monaco) with split/inline and word‑wrap toggles; per‑view theme (auto/light/dark) that honors app theme; guards for very large or binary‑looking diffs.
-- Robust diff parsing: handles standard unified diffs and headerless/hunkless `+/-/ ` formats.
+- Robust diff parsing: handles standard unified diffs and headerless/hunkless `+/-/` formats.
 - `apply_patch` rendering: parses Codex `apply_patch` envelopes into per‑file operations with status pill; toggle between raw/ rendered per event card.
 - Standalone Two‑File Diff tool: compare any two local files from the welcome screen.
 
@@ -45,9 +45,9 @@ Value: instant, offline analysis; high‑signal navigation; rich diffs; filter�
 
 ### Personas
 
-* **Individual Developer:** Reviews own sessions to learn and refactor.
-* **Code Reviewer:** Audits decisions and changes across a session.
-* **Team Lead / Researcher:** Aggregates insights across many sessions.
+- **Individual Developer:** Reviews own sessions to learn and refactor.
+- **Code Reviewer:** Audits decisions and changes across a session.
+- **Team Lead / Researcher:** Aggregates insights across many sessions.
 
 ### Key User Flows
 
@@ -59,10 +59,10 @@ Value: instant, offline analysis; high‑signal navigation; rich diffs; filter�
 
 ### UI/UX Considerations
 
-* Keyboard navigation across timeline, files, and bookmarks.
-* Large-file responsiveness via virtualization and streaming parse.
-* Accessible contrasts and semantic regions; diff color-blind safe markers.
-* Deep-linkable event selection and preserved filter state in URL.
+- Keyboard navigation across timeline, files, and bookmarks.
+- Large-file responsiveness via virtualization and streaming parse.
+- Accessible contrasts and semantic regions; diff color-blind safe markers.
+- Deep-linkable event selection and preserved filter state in URL.
 
 ## Technical Architecture
 
@@ -122,6 +122,7 @@ interface ParsedSession {
 ## Development Roadmap (updated)
 
 Delivered
+
 - Streaming parser + validators; virtualized timeline; event cards.
 - Advanced filters (type, role, function name, path, search) with deep links.
 - Bookmarks with IndexedDB persistence.
@@ -135,6 +136,7 @@ Delivered
 - Local logging hooks + optional dev log server.
 
 Deferred / Future
+
 - Very large export pipeline using a Web Worker.
 - Accessibility polish (full audit and keyboard patterns beyond current coverage).
 - Packaging as installable npm library + static site publishing workflows.
@@ -168,8 +170,8 @@ Deferred / Future
 
 **JSONL expectations:**
 
-* Line 1: `SessionMeta`
-* Lines 2+: `ResponseItem` events
+- Line 1: `SessionMeta`
+- Lines 2+: `ResponseItem` events
 
 **Supported ResponseItem types:** Message, Reasoning, FunctionCall, LocalShellCall, WebSearchCall, CustomToolCall, FileChange, Other.
 
