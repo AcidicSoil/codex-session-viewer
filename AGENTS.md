@@ -6,7 +6,7 @@
 
   1. **Behavior extensions**. Plain instruction files.
 
-     - Locations: `instructions/**/*.md`, `instructions/**/*.txt`
+     - Locations: `instructions/**/*.md`, `instructions/**/*.txt`, `.cursor/rules/**/*.mdc`
      - Ignored: paths starting with `_`, or names containing `.archive.`
   2. **Rule-packs**. Files with YAML front matter:
 
@@ -108,30 +108,6 @@
 
 ---
 
-## Validation
-
-- Behavior extension: must be readable text.
-- Rule-pack: must have front matter with `description` (string), `globs` (string), `alwaysApply` (bool).
-- Invalid items are skipped and logged in `DocFetchReport.validation_errors[]`.
-
----
-
-## Execution flow (docs integration)
-
-- **Preflight must list:**
-
-  - `DocFetchReport.context_files[]` from `@{...}`
-  - `DocFetchReport.approved_instructions[]`
-  - `DocFetchReport.approved_rule_packs[]`
-- Compose in this order:
-
-  1. Baseline
-  2. Behavior extensions
-  3. Rule-packs
-- Proceed only when `DocFetchReport.status == "OK"`.
-
----
-
 ## Failure handling
 
 - If any approved item cannot be loaded:
@@ -189,19 +165,6 @@ Also log memory batching and status coupling events when applicable:
 
 ---
 
-## Task Master Integration — Correct Usage (per README)
-
-- **Package vs CLI:** The npm package is `task-master-ai`. The CLI binary is `task-master`.
-- **MCP server (Cursor) setup:** Use a Command server with `npx -y task-master-ai` as the command. Name “Task Master”. This exposes Task Master tools inside Cursor.
-- **Configuration source of truth:** Use the `.taskmasterconfig` file created/managed by `task-master models --setup` or the `models` MCP tool. Do **not** set model choice, max tokens, temperature, or log level via environment variables.
-- **Environment variables:** Only for API keys and specific endpoints (e.g., `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `OLLAMA_BASE_URL`). For CLI, store in a project `.env`. For MCP, store under the server’s `env` block.
-- **CLI commands used by this system:** `task-master parse-prd`, `task-master list`, `task-master next`, `task-master generate`, `task-master show`, `task-master set-status`, `task-master update`, `task-master expand`, `task-master clear-subtasks`, dependency validators, and complexity analysis commands. Use exactly these spellings.
-- **Status vocabulary:** Prefer `pending`, `in-progress`, `done`, and `deferred` for Task Master. Keep any extra internal states (e.g., `verify`, `needs-local-tests`) inside this system and map them to Task Master per §3.
-
-**Logging note:** When logging to `DocFetchReport.server_actions[]`, keep `{action:"status", name:"task-master", value:"<status>", status:"ok|error"}`. This aligns with the CLI/MCP usage.
-
-**ESM note:** Task Master is ESM. If invoking scripts directly, ensure Node ESM compatibility.
-
 ## A) Preflight: Latest Docs Requirement (**MUST**, Blocking)
 
 **Goal:** Ensure the assistant retrieves and considers the *latest relevant docs* before planning, acting, or finalizing.
@@ -236,21 +199,6 @@ Also log memory batching and status coupling events when applicable:
 **Proof-of-Work Artifact (required):**
 
 - Produce and attach a `DocFetchReport` (JSON) with `status`, `tools_called[]`, `sources[]`, `coverage`, `key_guidance[]`, `gaps`, and `informed_changes[]`.
-
-**Override Path (explicit, logged):**
-
-Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
-
-```json
-{
-  "Override": {
-    "reason": "server_down|ambiguous_scope|timeboxed_spike",
-    "risk_mitigation": ["read-only analysis", "scoped PoC", "user confirmation required"],
-    "expires_after": "1 action or 30m",
-    "requested_by": "system|user"
-  }
-}
-```
 
 ---
 
@@ -300,189 +248,124 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 ---
 
-## 0) Debugging
+## 0) Debugging (Revised turn handling)
 
-- **Use consolidated docs-first flow** before touching any files or finalizing:
+- **Use consolidated docs-first flow** before touching any files or finalizing: try **contex7-mcp** → **gitmcp**. Record results in `DocFetchReport`.
+- **Turn (canonical):** exactly one *attempt cycle* consisting of (1) applying a non-empty code/config patch to address the current error class, then (2) running the allowed tests/checks per §8 (Safety Gate). The turn completes when the checks finish with pass/fail. Planning-only or analysis-only replies are **not** turns.
+- **Non-turn events (excluded):** safety deferrals (no tests executed), docs-refresh cycles, cache rebuilds, or re-running identical tests without a new patch. These do **not** increment the turn counter.
 
-  - Try **contex7-mcp** → **gitmcp**.
-  - Record results in `DocFetchReport`.
+### 0.0) Error class
 
-### 0.1) Docs Staleness Re-check Policy (**3-turn trigger**)
+- **Definition:** hash the tuple `{top 5 stack frames (symbolized), failing test ids/names, normalized primary error code/message, top 3 file paths}`. A change in this fingerprint defines a **new error class**.
 
-**Trigger:** If **three assistant responses** have occurred since the first unresolved error report **and** errors persist **after** applying suggested changes and attempting to run allowed checks, **force a docs refresh**.
+### 0.1) Docs Staleness Re-check Policy (**3-fail refresh gate**)
+
+**Trigger:** If **three consecutive turns** (as defined above) on the **same error class** fail, the **fourth cycle MUST start with a docs context refresh**.
 
 **Action:**
 
 1. Re-run the **Dynamic Docs MCP Router** (§7) to discover and rank all `*-docs-mcp` servers relevant to the error topics (derive from stack traces, failing commands, and test names).
-2. Fetch **latest pertinent docs** via the ranked chain, then `contex7-mcp` → `gitmcp`.
-3. Rebuild `DocFetchReport` with `refresh_reason: "3_turns_persistent_errors",`since\_turns: 3`, and`since\_time\_utc\` from the last successful run.
+2. Fetch **latest pertinent docs**, then run `contex7-mcp` → `gitmcp`.
+3. Rebuild `DocFetchReport` with `refresh_reason: "3_fail_cycles",`since\_turns: 3`, and`since\_time\_utc\` from the last successful run.
 4. Set `ctx.docs_ready = false` until the refreshed report returns `status == "OK"`.
 5. Compute and record `doc_delta` vs the previous report (changed sources, new guidance, version bumps). Attach to `DocFetchReport.changed_guidance[]`.
 
+**Post-refresh reset:** On a successful docs refresh, set `turns_failed_in_row = 0` and `ctx.docs_ready = true`. Proceed to plan the next patch using the new guidance.
+
 **Notes:**
 
-- Count a **turn** as one assistant message replying to the same error class. Reset the counter on a green run or a new error class.
-- If no new guidance is found, record `no_update: true` and continue debugging; otherwise update the plan per new guidance.
-- Log the refresh in memory: `task:${task_id}.observations.staleness_refresh` with UTC timestamp and topics.
+- Count a **turn** only after a full Patch+Test cycle completes. Do **not** count planning-only messages, safety deferrals, or identical test re-runs without a new patch.
+- Reset the failure counter on a green run (all checks pass), on a **new error class** (fingerprint change), or after a successful docs refresh.
+- Persist telemetry in `DocFetchReport.turns`:
 
----
-
-## 1) Startup memory bootstrap (memory)
-
-- On chat/session start: initialize **memory**.
-
-- Retrieve (project-scoped):
-
-  - **memory** → latest `memory_checkpoints` and recent task completions.
-  - **memory** → ensure a graph namespace exists for this project and load prior nodes/edges.
-
-    - **Server alias**: `memory` (e.g., Smithery "Memory Server" such as `@modelcontextprotocol/server-memory`).
-    - **Bootstrap ops** (idempotent):
-
-      - `create_entities` (or `upsert_entities`) for: `project:${PROJECT_TAG}`.
-      - `create_relations` to link existing tasks/files if present.
-      - `read_graph` / `search_nodes` to hydrate working context.
-
-- Read/write rules:
-
-  - Prefer **memory** for free-form notes and checkpoints.
-  - Prefer **memory** for **structured** facts/relations (entities, edges, observations).
-  - If memory is unavailable, record `memory_unavailable: true` in the session preamble.
-
-### 1.0) Memory MCP Server Usage Contract (**NEW**)
-
-- **Alias:** `memory`.
-- **Required tools:** `create_entities`, `create_relations`, `add_observations`, `delete_entities`, `delete_observations`, `delete_relations`, `read_graph`, `search_nodes`, `open_nodes`.
-- **Concept rules:**
-
-  - **Entities** carry `name`, `entityType`, `observations[]`. Names are unique. Observations are atomic facts.
-  - **Relations** are directed and written in **active voice**: `{from, to, relationType}`.
-  - **Observations** are strings attached to entities; add/remove independently.
-- **Operational guarantees:**
-
-  - Treat `create_*` as **idempotent upserts**. Skip duplicates silently.
-  - `delete_*` calls are **tolerant** to missing targets. No errors on non-existent items.
-  - `open_nodes` returns only requested entities and their inter-relations; silently skips misses.
-- **Usage patterns (batched, quality-first):**
-
-  - Maintain an in-memory buffer of observations and relation updates during execution.
-  - Flush to `memory` only on any of:
-
-    1. Subtask boundary reached (from §1.1),
-    2. Status transition intent (`in-progress|verify|done|blocked|needs-local-tests`),
-    3. 10 observations accumulated, or
-    4. 60s since last flush.
-  - On flush, send a single upsert with a `batch_id`, `dedupe_keys[]`, and `context` (task\_id, files\_touched, guidance\_refs).
-  - Prefer merging observations into concise summaries when multiple micro-events target the same entity within a flush window.
-- **Setup pointers (non-blocking):**
-
-  - Storage file via `MEMORY_FILE_PATH` env; default `memory.json`.
-  - Configure server in **user** MCP config or workspace `.vscode/mcp.json`. Do not embed install steps here.
-- **Prompting note:**
-
-  - If a separate chat-personalization prompt is used, it must not override gates (§A, §B) nor status flow (§3). Treat it as guidance for memory creation frequency and categories.
-
-### 1.1) Subtask plan and finish-in-one-go contract (**NEW**)
-
-- **Before starting execution**, derive a **subtask plan** with clear **Definition of Done (DoD)** per subtask.
-- **Finish-in-one-go policy:** Once execution starts, work the subtask list to completion within the session unless a blocking gate occurs (§A, §B, or external dependency). If blocked, record the block and propose an unblock plan; do not leave partial work without a recorded reason.
-- **Recording:** Persist the subtask plan to **memory** under `task:${task_id}` as `observations.plan` with timestamps.
-
-### 1.2) Execution logging to memory (**NEW**)
-
-- For each subtask: on **start** and **finish**, append an observation including `subtask_id`, `action`, `files_touched[]`, and short result.
-- Keep a running `percent_complete` on the task node. Update after each subtask.
-- Mirror links: `task:${task_id}` —\[touches]→ `file:<path>` as work proceeds, not only at the end.
-
-#### Observation schema (batched)
-
-```
+```json
 {
-  subtask_id, action, ts_utc, files_touched[],
-  summary, details_md, metrics:{time_ms?, tokens?, pass?},
-  guidance_refs[], dedupe_key
+   "turns_total": <int>,
+   "turns_failed_in_row": <int>,
+   "last_error_class": "<hash>",
+   "last_turn": {
+      "patch_id": "<hash of diff>",
+      "tests_run": ["<id>"],
+      "result": "pass|fail|deferred",
+      "time_utc": "<ISO8601>"
+   }
 }
 ```
 
-- Compute `dedupe_key` as a stable hash of `{task_id, subtask_id, action, summary}`.
-- Replace per-event writes with buffered batches per §1.0.
+---
 
-## Memory MCP Usage — Quality-over-Quantity Mode
+## 1) Memory: Boot, Plan, Log
 
-### Write policy
+### 1.a Bootstrap (idempotent)
 
-- Maintain an in-memory buffer for observations and relation updates.
-- Flush triggers (any):
+- On chat/session start, initialize **memory** (graph namespace for this project) and hydrate prior context.
+- **Server alias:** `memory` (e.g., Smithery Memory MCP `@modelcontextprotocol/server-memory`).
+- **Required tools:** `create_entities`, `create_relations`, `add_observations`, `delete_entities`, `delete_observations`, `delete_relations`, `read_graph`, `search_nodes`, `open_nodes`.
+- **Ops (treat all creates as upserts):**
 
-  1. Subtask boundary per §1.1,
-  2. Status transition intent,
+  - Upsert base entity: `project:${PROJECT_TAG}`.
+  - Link existing tasks/files if present.
+  - `read_graph` / `search_nodes` to hydrate working context.
+- **Concepts:**
+
+  - **Entities** → `{name, entityType, observations[]}` (names unique; observations are atomic facts).
+  - **Relations** → directed, **active voice**: `{from, to, relationType}`.
+  - **Observations** → strings attached to entities; add/remove independently.
+- If memory is unavailable, set `memory_unavailable: true` in the session preamble and proceed read‑only.
+
+### 1.b Subtask plan & finish-in-one-go
+
+- **Before execution**, derive a **subtask plan** with clear **Definition of Done (DoD)** per subtask.
+- **Finish-in-one-go policy:** Work the list to completion within the session unless blocked by §A/§B gates or external dependencies. If blocked, record the block and propose an unblock plan. Persist the plan under `task:${task_id}.observations.plan` with timestamps.
+
+### 1.c Logging & batching policy
+
+- Maintain an in-memory buffer of observations and relation updates.
+- **Flush triggers (any):**
+
+  1. Subtask boundary (from **§1.b**),
+  2. Status transition intent (`in-progress|verify|done|blocked|needs-local-tests`),
   3. 10 buffered observations,
   4. 60s since last flush.
-- Single-call upsert per flush with `batch_id`, `dedupe_keys[]`, and `context`.
+- **Batched upsert** on flush with `{batch_id, dedupe_keys[], context:{task_id, files_touched, guidance_refs}}`.
+- **Observation item schema:**
+  `{subtask_id, action, ts_utc, files_touched[], summary, details_md, metrics:{time_ms?, tokens?, pass?}, guidance_refs[], dedupe_key}` with `dedupe_key = hash(task_id, subtask_id, action, summary)`.
+- **Merge & summarize:** Coalesce multiple items targeting the same entity within a window into a concise summary. Avoid trivial micro-events.
+- **Mirror links while working:** `task:${task_id}` —\[touches]→ `file:<path>` as you proceed.
 
-### Observation schema
+### 1.d Consistency, errors, backoff
 
-- Item: `{subtask_id, action, ts_utc, files_touched[], summary, details_md, metrics:{time_ms?, tokens?, pass?}, guidance_refs[], dedupe_key}`.
-- `dedupe_key` = hash(task\_id, subtask\_id, action, summary). Treat creates as idempotent upserts. Skips on duplicate.
+- On finalization flush, `open_nodes` to verify write result. If mismatch, retry once with 250–500 ms backoff and record the outcome.
+- Network errors: exponential backoff starting at 250 ms, max 3 attempts per flush. On persistent failure, mark `memory_unavailable:true` and proceed read-only.
 
-### Merge & summarization
+### 1.e Task Master coupling (post‑save)
 
-- If multiple items target the same entity within a window, coalesce into one summary with bullet details.
-- Keep observations atomic but summarized; avoid trivial micro-events.
+- After any successful flush that changes `percent_complete` or carries a `status_intent`, update **Task Master** (CLI/MCP):
 
-### Read-after-write consistency
+  - Start of execution → **`in-progress`**.
+  - Internal **verify** phase (see §2.1) → keep Task Master **`in-progress`**; note verification in memory.
+  - Outcomes: success → **`done`**; failure/deferral → **`deferred`** with reason (e.g., `blocked`, `needs-local-tests`).
+- Log hook result in memory: `{hook:"task-master", result:"ok|error", ts_utc}` and reflect any `percent_complete` changes only at flush time.
 
-- On finalization: force `final:true` flush, then `open_nodes` to verify write result.
-- Retry once with 250–500 ms backoff on mismatch; record outcome as observation.
-
-### Error and backoff
-
-- Network errors: exponential backoff starting at 250 ms, max 3 attempts per flush.
-- On persistent failure: mark `memory_unavailable:true` in session preamble and proceed read-only.
-
-### Post-save Task Master coupling
-
-- After any successful flush that changes `percent_complete` or has `status_intent`:
-
-  - Update **Task Master** using either the CLI (`task-master set-status`) or the MCP server.
-
-    - **Start of execution** → set Task Master status to **`in-progress`**.
-    - **Internal `verify` phase** → **do not** set a nonstandard Task Master status. Keep **`in-progress`** and attach a note in memory (and, if supported, task details) that verification is running.
-    - **Outcomes**
-
-      - Success → set **`done`**.
-      - Failure or deferral → set **`deferred`** and include a reason note (e.g., `blocked` or `needs-local-tests`).
-
-- Record hook: `{hook:"task-master", result:"ok|error", ts_utc}` in memory.
-
-### Completion
-
-- Replace per-event writes with batch buffer per the policy above.
-- Update `percent_complete` only at flush time.
-
-### Completion
-
-- Write concise `completion_summary_md` + `evidence_refs[]`.
-- Ensure graph links and observations are updated before exit.
+---
 
 ## 2) On task completion (status → done)
 
 - **Before finalizing:**
 
   - Force a final buffer flush with `final:true`.
-  - Re-read (`open_nodes`) the affected entities to confirm merge result; if mismatch, retry once with backoff (250–500 ms).
-  - Attach a consolidated `completion_summary_md` and `evidence_refs[]` to `task:${task_id}`.
+  - Attach a consolidated `completion_summary_md` and `evidence_refs[]` to `project:${PROJECT_TAG}.task:${task_id}`.
 
 - Write a concise completion to memory including:
 
-  - `task_id`, `title`, `status`, `next step`
+  - `project`, `task_id`, `title`, `status`, `next step`
   - Files touched
   - Commit/PR link (if applicable)
   - Test results (if applicable)
 
 - **Completion criteria (explicit):**
 
-  - All subtasks from §1.1 are marked **done** and their DoD satisfied.
+  - All subtasks from **§1.b** are marked **done** and their DoD satisfied.
   - Required gates passed (§A, §B).
   - Post-completion checks executed or proposed (§2.1).
 
@@ -502,16 +385,16 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 
 - Do **NOT** write to `AGENTS.md` beyond these standing instructions.
 
-### 2.1) Post-completion checks and tests (**REVISED — Run-then-verify**)
+### 2.1) Post-completion checks and tests
 
 - **Order of operations:**
-  a) Append subtask completion logs to **memory** (§1.2).
+  a) Append subtask completion logs to **memory** (**§1.c**).
   b) Set task status to **`verify`** (new intermediate state).
   c) Evaluate the **Safety Gate** per **§8 Environment & Testing Policy**.
   d) If **safe**, run **stateless checks automatically** (see §8 Allowed Automatic Checks).
   e) If **unsafe**, **defer** execution and emit a **Local Test Instructions** block for the user.
 
-- **Recording:** Write outcomes to `task:${task_id}.observations.test_results` and also set:
+- **Recording:** Write outcomes to `project:${PROJECT_TAG}.task:${task_id}.observations.test_results` and also set:
 
   - `tests_deferred: true|false`
   - `tests_deferred_reason: <string|null>`
@@ -520,16 +403,16 @@ Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
 - **Status transitions:**
 
   - On all checks passing → set status **`done`**.
-  - On failures → set status **`blocked`** and record an unblock plan.
-  - On deferral → set status **`needs-local-tests`** and include the instructions block.
+  - On failures → set status **`deferred`** and record an unblock plan.
+  - On deferral → set status **`todo`** and include the instructions block.
 
 - **Post-save hook:**
 
   - After any successful memory flush that changes `percent_complete` or `status_intent`, call Task Master MCP to set status:
 
     - first execution flush → `in-progress`,
-    - post-completion pre-checks → `verify`,
-    - after §2.1 outcomes → `done|blocked|needs-local-tests`.
+    - post-completion pre-checks → `done`,
+    - after §2.1 outcomes → `done|deferred|`.
   - Record hook outcome in memory as an observation: `{hook:"task-master", result:"ok|error", ts_utc}`.
 
 - **Local Test Instructions (example, Proposed — not executed):**
@@ -555,11 +438,11 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 ---
 
-## 3) Status management (**REVISED**)
+## 3) Status management
 
 - Use Task Master **only** for external status sync with Task Master’s documented vocabulary.
 
-  - **`in-progress`** on start of execution after §A and §1.1 planning.
+  - **`in-progress`** on start of execution after §A and **§1.b** planning.
   - Keep **`in-progress`** during the internal **verify** phase (§2.1). Do not write `verify` to Task Master.
   - Set **`done`** when all subtasks are done, gates passed, and §2.1 checks succeed.
   - On failures or deferral via the Safety Gate (§2.1), set **`deferred`** and include a reason in the note (e.g., `blocked` or `needs-local-tests`).
@@ -592,7 +475,7 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 ---
 
-## 6) Project tech stack specifics (generic)
+## 6) Project tech stack specifics
 
 - Apply §A Preflight for the **current** stack and language(s).
 - Prefer official documentation and repositories resolved in §A.1.
@@ -600,7 +483,7 @@ uv run -q pytest -q tests/unit -k "not integration" || exit 1
 
 ---
 
-## 6.1) Layered Execution Guides (**NEW**)
+## 6.1) Layered Execution Guides
 
 Each layer defines role, task, context, reasoning, output format, and stop conditions. Use these blocks when planning and reviewing work in that layer.
 
@@ -803,9 +686,7 @@ Each layer defines role, task, context, reasoning, output format, and stop condi
 - Summarize key guidance inline in `DocFetchReport.key_guidance` and map each planned change to a guidance line.
 - Always note in the task preamble that docs were fetched and which topics/IDs were used.
 
-### Dynamic Docs MCP Router (generic, no hard-coding)
-
-**Goal:** Use any configured `*-docs-mcp` server dynamically as primary or fallback.
+### Dynamic Docs MCP Router
 
 **Discovery**
 
@@ -847,7 +728,7 @@ For each server in the chain:
 - Save chosen `primary`, evaluated `fallbacks[]`, and `coverage` summary.
 - If all providers fail, return **Docs Missing** with attempted servers and errors.
 
-**Example prompts (not hard-coded)**
+**Example prompts**
 
 - “For ANY question about a library/tool, route to the best `*-docs-mcp` dynamically.”
 - “If `[primary:vite-docs-mcp]` is present, start with that server.”
@@ -859,9 +740,7 @@ For each server in the chain:
 
 ---
 
-## 8) Environment & Testing Policy (**REVISED: Safety Gate for automatic stateless checks**)
-
-**Objective:** Allow **automatic stateless checks** post-completion when safe, while preventing environment drift or global mutations. Keep heavier or stateful tests **opt-in**.
+## 8) Environment & Testing Policy
 
 **Safety Gate checklist (used by §2.1 step c):**
 
@@ -920,12 +799,12 @@ SYSTEM: You operate under a blocking docs-first policy.
    - If the **3-turn staleness trigger** (§0.1) fires, force a docs refresh before proceeding.
 2) Planning:
    - Map each planned change to key_guidance items in DocFetchReport.
-   - Build a subtask plan with DoD (§1.1) and record to memory.
+   - Build a subtask plan with DoD (§1.b) and record to memory.
 3) Decision Gate (§B):
    - If DocFetchReport.status != OK → STOP and return "Docs Missing" with exact MCP calls.
 4) Execution:
    - Proceed only if ctx.docs_ready == true.
-   - Log subtask progress to memory (§1.2). Finish-in-one-go unless blocked.
+   - Log subtask progress to memory (§1.c). Finish-in-one-go unless blocked.
 5) Completion:
    - After memory updates, set status to **verify** and evaluate §8 Safety Gate.
    - Run allowed automatic checks or defer with Local Test Instructions (§2.1, §8).
@@ -935,79 +814,22 @@ SYSTEM: You operate under a blocking docs-first policy.
 
 ---
 
-## Prompt Registry & Precedence
-
-- **Baseline:** AGENTS.md is always authoritative. Prompts in `~/.codex/prompts` are available but inert until manually invoked.
-- **Engagement:** Prompts run only when the user explicitly types the slash command or pastes the body. The assistant must not auto-run them.
-- **Precedence:** Behavior extensions and rule-packs follow later-wins. Prompts never override baseline unless pasted inline.
-- **Recording:** When invoked, the assistant must echo which prompt was used and log it in `DocFetchReport.approved_instructions[]` as `{source: "~/.codex/prompts", command: "/<name>"}`.
-
----
-
-## Prompt Discovery & Namespacing
-
-- **Discovery:** `/foo` resolves to `~/.codex/prompts/foo.md`. No auto-run.
-- **Reserved namespace:** `/vibe-*` for YC-style playbooks and planning flows.
-- **Default shortlist:** Recommended safe manual commands:
-
-  - `/planning-process`, `/scope-control`, `/integration-test`, `/regression-guard`, `/review`, `/release-notes`, `/reset-strategy`, `/compare-outputs`.
-  - Newly available and supported: `/scaffold-fullstack`, `/api-contract`, `/openapi-generate`, `/db-bootstrap`, `/migration-plan`, `/auth-scaffold`, `/e2e-runner-setup`, `/env-setup`, `/secrets-manager-setup`, `/iac-bootstrap`, `/monitoring-setup`, `/slo-setup`, `/feature-flags`.
-
----
-
 ## Prompt→Gate Router
 
--
 - **Scope Gate:** `/scope-control`, `/plan`, `/planning-process`
 - **Test Gate:** `/integration-test`, `/regression-guard`, `/coverage-guide`
 - **Review Gate:** `/review`, `/review-branch`, `/pr-desc`, `/owners`
 - **Release Gate:** `/release-notes`, `/version-proposal`
 - **Reset path:** `/reset-strategy`
-- **Model tactics:** `/compare-outputs`, `/switch-model`, `/model-strengths`
 
 ---
 
 ## Prompt Safety & Proof Hooks
 
--
 - Prompts cannot bypass Preflight (§A) or Decision Gate (§B).
 - If a prompt suggests stateful changes, require Safety Gate review first.
 - Before acting on prompt output, confirm `DocFetchReport.status == "OK"`.
 - Append invoked prompts to `DocFetchReport.tools_called[]` as `{tool: "prompt", name: "/<cmd>", path: "~/.codex/prompts/<file>.md", time_utc}`.
-
----
-
-## Prompt Non-Goals
-
--
-- No auto-invocation of prompts.
-- Prompts must not redefine baseline gates, safety policies, or precedence.
-- If a command is unrecognized, check `~/.codex/prompts/<name>.md` and restart Codex if missing.
-
----
-
-## Install & Availability Note
-
--
-- Place your prompt catalog at `~/.codex/prompts` so slash commands like `/foo` resolve to `~/.codex/prompts/foo.md`.
-- Restart your Codex client if new prompts are not discovered. Hot‑reload is not guaranteed.
-- File naming must match the command exactly, use `.md` extension, and avoid hidden files or directories prefixed with `_`.
-- On Windows + WSL2, store prompts in the Linux home directory and, if needed, symlink from Windows paths to keep a single source of truth.
-
----
-
-## Troubleshooting
-
--
-- **Slash not recognized:** Verify `~/.codex/prompts/<name>.md` exists and the filename matches the command. Restart the client.
-- **Prompt not applied:** Prompts are inert until manually invoked. Ensure you typed the slash command or pasted the prompt body.
-- **Discovery issues:** Avoid directories starting with `_` or filenames containing `.archive.` which are ignored by design.
-
----
-
-## Version Pinning (optional)
-
-For reproducibility, pin the prompt catalog to a specific commit SHA. Record the SHA in project docs or a local dotfile so teams share the same prompt semantics across runs.
 
 ---
 
@@ -1027,13 +849,6 @@ To demonstrate prompts in practice, a full-stack app workflow includes:
 10. **Post-release** → `/error-analysis`, `/fix`, `/refactor-suggestions`, `/file-modularity`, `/dead-code-scan`, `/cleanup-branches`, `/feature-flags`.
 11. **Model tactics** → `/model-strengths`, `/model-evaluation`, `/compare-outputs`, `/switch-model`.
 
-**Prompt catalog status:** All prompts referenced in this workflow are present in `~/.codex/prompts` and can be invoked as shown. To verify, run a discovery pass and confirm the resolver paths match the command names.
-
-- Discovery check: ensure files exist at `~/.codex/prompts/<name>.md` for every command listed above.
-- If any command is not recognized, restart the client and re-check filename casing and extension.
-
----
-
 ## Terminology Normalization (Memory MCP)
 
 - “append observations” → **batched observations with flush triggers**
@@ -1044,11 +859,11 @@ To demonstrate prompts in practice, a full-stack app workflow includes:
 
 ## Retention Map (Memory sections)
 
-- Startup hydration → preserved.
-- Subtask planning DoD → preserved.
-- Execution logging → enhanced with batching and schema.
-- Completion updates → enhanced with read-back verification.
-- Status management → preserved and now post-save synchronized.
+- Startup hydration → preserved (now §1.a).
+- Subtask planning DoD → preserved (now §1.b).
+- Execution logging → enhanced with batching and schema (now §1.c).
+- Completion updates → enhanced with read-back verification (§2).
+- Status management → preserved and now post-save synchronized (§1.e, §3).
 
 ## Validation Checklist (Memory batching)
 
