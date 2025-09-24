@@ -214,11 +214,3 @@ Quick wins (low-effort, high impact)
 3. **Memory with LibSQL:** add one file DB; chats “remember” what you asked about this session last time. Easy to swap to Turso/pgvector later.
 
 4. **Embeddings & search:** build a tiny one-time embed job; use pgvector or Mastra’s LibSQL vector store.
-
-
-* * *
-
-If you want, I can draft a ready-to-drop `src/mastra/*` + a Next.js `route.ts` patch that slots into your repo’s structure (or an Express `router` version).
-
----
-
